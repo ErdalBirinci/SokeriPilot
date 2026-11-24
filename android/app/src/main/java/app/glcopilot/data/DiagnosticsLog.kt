@@ -24,29 +24,17 @@ data class DiagnosticEvent(
  */
 class DiagnosticsLog(private val capacity: Int = CAPACITY) {
 
-    private val events = ArrayList<DiagnosticEvent>(capacity)
+    private val _events = MutableStateFlow<List<DiagnosticEvent>>(emptyList())
 
-    private val _version = MutableStateFlow(0)
+    /** Newest first; the phone screen renders this list as it changes. */
+    val events: StateFlow<List<DiagnosticEvent>> = _events.asStateFlow()
 
-    /** Bumped on every change so the phone screen can re-render. */
-    val version: StateFlow<Int> = _version.asStateFlow()
-
-    @Synchronized
     fun record(event: DiagnosticEvent) {
-        if (events.size == capacity) events.removeAt(0)
-        events.add(event)
-        _version.update { it + 1 }
+        _events.update { current -> (listOf(event) + current).take(capacity) }
     }
 
-    /** Newest first. */
-    @Synchronized
-    fun snapshot(): List<DiagnosticEvent> = events.asReversed().toList()
-
-    @Synchronized
     fun clear() {
-        if (events.isEmpty()) return
-        events.clear()
-        _version.update { it + 1 }
+        _events.update { current -> if (current.isEmpty()) current else emptyList() }
     }
 
     companion object {

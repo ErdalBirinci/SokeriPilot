@@ -19,10 +19,10 @@ class DiagnosticsLogTest {
         val log = DiagnosticsLog()
         repeat(12) { log.record(event(it)) }
 
-        val snapshot = log.snapshot()
-        assertEquals(10, snapshot.size)
-        assertEquals("App 11", snapshot.first().appLabel)
-        assertEquals("App 2", snapshot.last().appLabel)
+        val events = log.events.value
+        assertEquals(10, events.size)
+        assertEquals("App 11", events.first().appLabel)
+        assertEquals("App 2", events.last().appLabel)
     }
 
     @Test
@@ -31,7 +31,7 @@ class DiagnosticsLogTest {
         log.record(event(1))
         log.record(event(2))
 
-        assertEquals(listOf("App 2", "App 1"), log.snapshot().map { it.appLabel })
+        assertEquals(listOf("App 2", "App 1"), log.events.value.map { it.appLabel })
     }
 
     @Test
@@ -47,7 +47,7 @@ class DiagnosticsLogTest {
             )
         )
 
-        val only = log.snapshot().single()
+        val only = log.events.value.single()
         assertEquals(DiagnosticEvent.Outcome.REJECTED, only.outcome)
         assertEquals(Rejection.STALE, only.reason)
         assertEquals(null, only.valueMgdl)
@@ -59,6 +59,6 @@ class DiagnosticsLogTest {
         log.record(event(1))
         log.clear()
 
-        assertTrue(log.snapshot().isEmpty())
+        assertTrue(log.events.value.isEmpty())
     }
 }

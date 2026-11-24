@@ -92,7 +92,7 @@ class MainActivity : AppCompatActivity() {
         }
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                container.diagnostics.version.collect { renderDiagnostics() }
+                container.diagnostics.events.collect { renderDiagnostics(it) }
             }
         }
         container.refreshNow()
@@ -204,7 +204,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         renderCgmDetection()
-        renderDiagnostics()
+        renderDiagnostics(container.diagnostics.events.value)
         switchXdrip.isChecked = container.settings.xDripEnabled()
         // Returning from the notification-access screen: start right away.
         if (NotificationAccess.isGranted(this) && container.settings.monitorWhileDriving()) {
@@ -380,9 +380,8 @@ class MainActivity : AppCompatActivity() {
      * its source app, then the last ten notifications with accepted/rejected reasons.
      * This is how a user diagnoses "no value in the car" without a computer.
      */
-    private fun renderDiagnostics() {
+    private fun renderDiagnostics(events: List<DiagnosticEvent>) {
         val access = NotificationAccess.isGranted(this)
-        val events = container.diagnostics.snapshot()
         val units = container.settings.units()
         val latest = container.repository.state.value.latest
         val now = System.currentTimeMillis()

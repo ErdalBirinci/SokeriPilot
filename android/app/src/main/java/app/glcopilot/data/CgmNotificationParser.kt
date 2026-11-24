@@ -27,9 +27,8 @@ private sealed class ValueResult {
 
     data class Value(val mgdl: Int) : ValueResult()
 
-    data class Rejected(val reason: Rejection) : ValueResult()
-
-    object NotGlucose : ValueResult()
+    /** [reason] is null when the notification is not glucose-related at all. */
+    data class Failed(val reason: Rejection?) : ValueResult()
 }
 
 /**
@@ -146,8 +145,9 @@ object CgmNotificationParser {
 
         val mgdl = when (val value = valueFromText(text, packageName, appLabel, ongoing)) {
             is ValueResult.Value -> value.mgdl
-            is ValueResult.Rejected -> return ParseOutcome.Rejected(value.reason)
-            ValueResult.NotGlucose -> return ParseOutcome.Ignored
+            is ValueResult.Failed -> return value.reason
+                ?.let { ParseOutcome.Rejected(it) }
+                ?: ParseOutcome.Ignored
         }
 
         val timestamp = postTimeMillis.coerceAtMost(nowMillis + FUTURE_TOLERANCE_MILLIS)
@@ -175,14 +175,14 @@ object CgmNotificationParser {
             // or as an ongoing (sensor-style) notification, so a chat message never
             // becomes a reading.
             if (!ongoing && !looksLikeCgmApp(packageName, appLabel)) {
-                return ValueResult.Rejected(Rejection.NOT_CGM_APP)
+                return ValueResult.Failed(Rejection.NOT_CGM_APP)
             }
 
             val number = match.groupValues[1].replace(',', '.').toDoubleOrNull()
-                ?: return ValueResult.NotGlucose
+                ?: return ValueResult.Failed(null)
             val unit = match.groupValues[2].lowercase().replace(" ", "")
             val mgdl = if (unit.contains("mmol")) {
-                if (number !in MIN_MMOL..MAX_MMOL) return ValueResult.Rejected(Rejection.OUT_OF_RANGE)
+                if (number !in MIN_MMOL..MAX_MMOL) return ValueResult.Failed(Rejection.OUT_OF_RANGE)
                 (number * GlucoseReading.MGDL_PER_MMOL).roundToInt()
             } else {
                 number.roundToInt()
@@ -190,17 +190,17 @@ object CgmNotificationParser {
             return if (mgdl in GlucoseReading.MIN_MGDL..GlucoseReading.MAX_MGDL) {
                 ValueResult.Value(mgdl)
             } else {
-                ValueResult.Rejected(Rejection.OUT_OF_RANGE)
+                ValueResult.Failed(Rejection.OUT_OF_RANGE)
             }
         }
 
-        if (!looksLikeCgmApp(packageName, appLabel)) return ValueResult.NotGlucose
+        if (!looksLikeCgmApp(packageName, appLabel)) return ValueResult.Failed(null)
         val bare = BARE_VALUE.find(text)?.value?.toIntOrNull()
-            ?: return ValueResult.Rejected(Rejection.NO_VALUE)
+            ?: return ValueResult.Failed(Rejection.NO_VALUE)
         return if (bare in GlucoseReading.MIN_MGDL..GlucoseReading.MAX_MGDL) {
             ValueResult.Value(bare)
         } else {
-            ValueResult.Rejected(Rejection.OUT_OF_RANGE)
+            ValueResult.Failed(Rejection.OUT_OF_RANGE)
         }
     }
 

@@ -53,38 +53,38 @@ class CgmNotificationListener : NotificationListenerService() {
         )
 
         val label = appLabel(sbn.packageName)
-        val outcome = CgmNotificationParser.evaluate(
+        val container = AppGraph.container
+
+        when (val outcome = CgmNotificationParser.evaluate(
             packageName = sbn.packageName,
             appLabel = label,
             texts = texts,
             postTimeMillis = sbn.postTime,
             ongoing = sbn.isOngoing
-        )
-        if (outcome is ParseOutcome.Ignored) return
-
-        val container = AppGraph.container
-        container.diagnostics.record(
-            when (outcome) {
-                is ParseOutcome.Accepted -> DiagnosticEvent(
-                    atMillis = System.currentTimeMillis(),
-                    packageName = sbn.packageName,
-                    appLabel = label,
-                    outcome = DiagnosticEvent.Outcome.ACCEPTED,
-                    valueMgdl = outcome.reading.mgdl
+        )) {
+            is ParseOutcome.Accepted -> {
+                container.diagnostics.record(
+                    DiagnosticEvent(
+                        atMillis = System.currentTimeMillis(),
+                        packageName = sbn.packageName,
+                        appLabel = label,
+                        outcome = DiagnosticEvent.Outcome.ACCEPTED,
+                        valueMgdl = outcome.reading.mgdl
+                    )
                 )
-                is ParseOutcome.Rejected -> DiagnosticEvent(
+                container.repository.onLocalReading(outcome.reading)
+            }
+            is ParseOutcome.Rejected -> container.diagnostics.record(
+                DiagnosticEvent(
                     atMillis = System.currentTimeMillis(),
                     packageName = sbn.packageName,
                     appLabel = label,
                     outcome = DiagnosticEvent.Outcome.REJECTED,
                     reason = outcome.reason
                 )
-                ParseOutcome.Ignored -> return
-            }
-        )
-
-        val reading = (outcome as? ParseOutcome.Accepted)?.reading ?: return
-        container.repository.onLocalReading(reading)
+            )
+            ParseOutcome.Ignored -> Unit
+        }
     }
 
     private fun appLabel(packageName: String): String? = try {
