@@ -16,6 +16,9 @@ class AppContainer(context: Context) {
     val notifier = GlucoseNotifier(appContext, settings)
     val repository = GlucoseRepository(settings = settings, notifier = notifier)
 
+    /** Last ten CGM-looking notifications, for the source-check screen. */
+    val diagnostics = DiagnosticsLog()
+
     private var started = false
 
     fun start() {

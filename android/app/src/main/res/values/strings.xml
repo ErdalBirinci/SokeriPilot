@@ -73,6 +73,17 @@
     <string name="monitor_start_failed">The driving monitor could not start. Battery optimization or a system restriction may be blocking it; reopen the app.</string>
     <string name="monitor_waiting_for_car">Monitoring starts when you connect the phone to Android Auto.</string>
 
+    <string name="section_diagnostics">Source check</string>
+    <string name="diag_last_none">Last reading: none yet</string>
+    <string name="diag_last_reading">Last reading: %1$s</string>
+    <string name="diag_value">%1$s %2$s</string>
+    <string name="diag_checked">GlucoPilot is looking at every CGM notification. The last %1$d are listed below, newest first.</string>
+    <string name="diag_no_access">Notification access is off, so GlucoPilot cannot see your CGM app yet. Allow it above.</string>
+    <string name="diag_empty">No CGM notification seen yet. Wait for your sensor app\'s next update; it should appear here within a minute. If it never does, the sensor app is not posting a value in its notification.</string>
+    <string name="diag_row_accepted">%1$s · %2$s · accepted: %3$s</string>
+    <string name="diag_row_rejected">%1$s · %2$s · rejected: %3$s</string>
+    <string name="diag_clear">Clear list</string>
+
     <string name="disclaimer">GlucoPilot is not a medical device. It does not recommend treatment or insulin doses. Alerts are advisory; always rely on your sensor\'s official app and your healthcare professional\'s guidance.</string>
 
     <string name="error_url_required">Nightscout URL is required.</string>

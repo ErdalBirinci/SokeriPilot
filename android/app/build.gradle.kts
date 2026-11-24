@@ -23,8 +23,8 @@ android {
         applicationId = "app.glcopilot"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.1.1"
         // The app ships English UI text only; do not pull library translations into the APK.
         resourceConfigurations += listOf("en")
         vectorDrawables.useSupportLibrary = true
@@ -66,6 +66,14 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    // Robolectric inflates the real phone layout so the diagnostics screen can be
+    // rendered to a PNG on this machine, without a device or emulator.
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -77,5 +85,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
     testImplementation("org.json:json:20240303")
 }

@@ -10,7 +10,9 @@ import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
+import android.text.format.DateFormat
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.widget.Switch
 import android.widget.TextView
@@ -25,6 +27,8 @@ import app.glcopilot.GlucoPilotApp
 import app.glcopilot.R
 import app.glcopilot.data.AppContainer
 import app.glcopilot.data.CgmAppDetector
+import app.glcopilot.data.DiagnosticEvent
+import app.glcopilot.data.DiagnosticsLog
 import app.glcopilot.data.CgmIntegration
 import app.glcopilot.data.GlucoseBand
 import app.glcopilot.data.GlucoseState
@@ -34,6 +38,8 @@ import app.glcopilot.data.Units
 import app.glcopilot.monitor.GlucoseMonitorService
 import app.glcopilot.monitor.MonitorLauncher
 import kotlinx.coroutines.launch
+import java.util.Date
+import kotlin.math.roundToInt
 
 /** Phone setup and live status screen. The car screen reads these settings. */
 class MainActivity : AppCompatActivity() {
@@ -55,6 +61,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etLow: EditText
     private lateinit var etHigh: EditText
     private lateinit var rgUnits: RadioGroup
+    private lateinit var tvDiagSummary: TextView
+    private lateinit var tvDiagAccess: TextView
+    private lateinit var diagList: LinearLayout
+    private lateinit var btnDiagClear: Button
 
     private val notificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -80,6 +90,11 @@ class MainActivity : AppCompatActivity() {
                 container.repository.state.collect { render(it) }
             }
         }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                container.diagnostics.version.collect { renderDiagnostics() }
+            }
+        }
         container.refreshNow()
     }
 
@@ -99,6 +114,11 @@ class MainActivity : AppCompatActivity() {
         etLow = findViewById(R.id.etLow)
         etHigh = findViewById(R.id.etHigh)
         rgUnits = findViewById(R.id.rgUnits)
+        tvDiagSummary = findViewById(R.id.tvDiagSummary)
+        tvDiagAccess = findViewById(R.id.tvDiagAccess)
+        diagList = findViewById(R.id.diagList)
+        btnDiagClear = findViewById(R.id.btnDiagClear)
+        btnDiagClear.setOnClickListener { container.diagnostics.clear() }
         findViewById<Button>(R.id.btnSaveSource).setOnClickListener { saveSource() }
         findViewById<Button>(R.id.btnSaveRange).setOnClickListener { saveRange() }
         findViewById<Button>(R.id.btnRefresh).setOnClickListener { refreshNow() }
@@ -184,6 +204,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         renderCgmDetection()
+        renderDiagnostics()
         switchXdrip.isChecked = container.settings.xDripEnabled()
         // Returning from the notification-access screen: start right away.
         if (NotificationAccess.isGranted(this) && container.settings.monitorWhileDriving()) {
@@ -353,6 +374,70 @@ class MainActivity : AppCompatActivity() {
         GlucoseBand.HIGH -> R.color.amber_600
         GlucoseBand.URGENT_HIGH -> R.color.coral_600
     }
+
+    /**
+     * Shows what the last CGM notifications actually contained: the latest value with
+     * its source app, then the last ten notifications with accepted/rejected reasons.
+     * This is how a user diagnoses "no value in the car" without a computer.
+     */
+    private fun renderDiagnostics() {
+        val access = NotificationAccess.isGranted(this)
+        val events = container.diagnostics.snapshot()
+        val units = container.settings.units()
+        val latest = container.repository.state.value.latest
+        val now = System.currentTimeMillis()
+
+        tvDiagAccess.text = if (access) {
+            getString(R.string.diag_checked, DiagnosticsLog.CAPACITY)
+        } else {
+            getString(R.string.diag_no_access)
+        }
+
+        tvDiagSummary.text = if (latest == null) {
+            getString(R.string.diag_last_none)
+        } else {
+            val value = getString(R.string.diag_value, units.format(latest.mgdl), units.label)
+            val age = TimeAgo.format(now, latest.timestampMillis)
+            getString(R.string.diag_last_reading, "$value · ${latest.source} · $age")
+        }
+
+        diagList.removeAllViews()
+        if (events.isEmpty()) {
+            diagList.addView(diagnosticLine(getString(R.string.diag_empty)))
+        } else {
+            val timeFormat = DateFormat.getTimeFormat(this)
+            events.forEach { event ->
+                val time = timeFormat.format(Date(event.atMillis))
+                val app = event.appLabel ?: event.packageName
+                val line = when (event.outcome) {
+                    DiagnosticEvent.Outcome.ACCEPTED -> getString(
+                        R.string.diag_row_accepted,
+                        time,
+                        app,
+                        getString(R.string.diag_value, units.format(event.valueMgdl ?: 0), units.label)
+                    )
+                    DiagnosticEvent.Outcome.REJECTED -> getString(
+                        R.string.diag_row_rejected,
+                        time,
+                        app,
+                        event.reason?.label ?: "unknown reason"
+                    )
+                }
+                diagList.addView(diagnosticLine(line))
+            }
+        }
+        btnDiagClear.isEnabled = events.isNotEmpty()
+    }
+
+    private fun diagnosticLine(text: String): TextView = TextView(this).apply {
+        this.text = text
+        textSize = 12f
+        setTextColor(ContextCompat.getColor(this@MainActivity, R.color.ink_muted))
+        setLineSpacing(0f, 1.2f)
+        setPadding(0, dp(7), 0, 0)
+    }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).roundToInt()
 
     private fun hideKeyboard() {
         val manager = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager

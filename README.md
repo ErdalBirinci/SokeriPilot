@@ -201,6 +201,13 @@ The value, unit (mg/dL or mmol/L), trend arrow and freshness are parsed and vali
 (20–600 mg/dL, at most 60 minutes old). Reading happens on the device only; no data is uploaded
 and no extra permission is requested.
 
+**Source check on the phone:** when a value does not reach the car, the *Source check* card on
+the phone screen shows the last reading together with the app it came from, and the last ten
+CGM-looking notifications marked **accepted** or **rejected** with the reason (no text, no value,
+not recognised as a CGM app, outside 20–600 mg/dL, older than 60 minutes). The list is kept in
+memory only, disappears with the process and is never written to disk or logged, so no glucose
+history is created.
+
 **Car-bound monitoring:** GlucoPilot watches the official `androidx.car.app.connection` signal.
 The moment the phone is projected into a head unit, monitoring starts in the background and the
 current data is refreshed, so the cockpit and the car notification are ready without opening
@@ -338,12 +345,12 @@ value it found. Without a phone it exits with `No connected device`.
 ### Verifications run on this machine
 
 - `:app:assembleDebug` — **BUILD SUCCESSFUL**; APK: `android/app/build/outputs/apk/debug/app-debug.apk` (~4.5 MB, minSdk 26 / targetSdk 35; English resources only).
-- `:app:testDebugUnitTest` — **74 tests, 0 failures**.
+- `:app:testDebugUnitTest` — **85 tests, 0 failures**.
 - `node tools/security-check.mjs` — **32/32 PASS**.
 - `python tools/check_xml.py` — 19 resource XML files are well formed.
 - `node tools/smoke.mjs` — landing page 5/5 HTTP 200, including the signed APK download.
 - `node tools/live-check.mjs` — **3/3 PASS** on the published site: hero JPEG 97.7 KB, APK
-  `application/vnd.android.package-archive` 795.1 KB (v1.1.0) with SHA-256 `e2c4abc4…`.
+  `application/vnd.android.package-archive` 800.2 KB (v1.1.1) with SHA-256 `d3264b9b…`.
 - Landing page measured at 1024 and 1200 px widths: no horizontal overflow, the notification
   stays inside the map, and the cockpit falls back to a single column on mobile (430 px).
 

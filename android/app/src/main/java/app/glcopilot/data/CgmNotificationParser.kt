@@ -2,6 +2,36 @@ package app.glcopilot.data
 
 import kotlin.math.roundToInt
 
+/** Why a notification that looked related did not become a reading. */
+enum class Rejection(val label: String) {
+    NO_TEXT("no text in the notification"),
+    NO_VALUE("no glucose value found"),
+    NOT_CGM_APP("not recognised as a CGM app"),
+    OUT_OF_RANGE("value outside 20-600 mg/dL"),
+    STALE("posted more than 60 minutes ago"),
+    INVALID_TIME("no valid post time")
+}
+
+/** What the parser made of a single notification. */
+sealed class ParseOutcome {
+
+    data class Accepted(val reading: GlucoseReading) : ParseOutcome()
+
+    data class Rejected(val reason: Rejection) : ParseOutcome()
+
+    /** Clearly unrelated (a chat message, a media title); not worth recording. */
+    object Ignored : ParseOutcome()
+}
+
+private sealed class ValueResult {
+
+    data class Value(val mgdl: Int) : ValueResult()
+
+    data class Rejected(val reason: Rejection) : ValueResult()
+
+    object NotGlucose : ValueResult()
+}
+
 /**
  * Reads a glucose value out of another CGM app's notification text.
  *
@@ -84,26 +114,53 @@ object CgmNotificationParser {
         postTimeMillis: Long,
         ongoing: Boolean = false,
         nowMillis: Long = System.currentTimeMillis()
-    ): GlucoseReading? {
+    ): GlucoseReading? =
+        (evaluate(packageName, appLabel, texts, postTimeMillis, ongoing, nowMillis) as? ParseOutcome.Accepted)
+            ?.reading
+
+    /**
+     * Same rules as [parse], but reports why a CGM-looking notification was rejected so
+     * the phone can show it in the source-check screen.
+     */
+    fun evaluate(
+        packageName: String,
+        appLabel: String?,
+        texts: List<String?>,
+        postTimeMillis: Long,
+        ongoing: Boolean = false,
+        nowMillis: Long = System.currentTimeMillis()
+    ): ParseOutcome {
         val text = texts
             .filterNotNull()
             .joinToString(separator = " ")
             .replace('\u00A0', ' ')
             .replace('\n', ' ')
             .trim()
-        if (text.isEmpty()) return null
+        if (text.isEmpty()) {
+            return if (looksLikeCgmApp(packageName, appLabel)) {
+                ParseOutcome.Rejected(Rejection.NO_TEXT)
+            } else {
+                ParseOutcome.Ignored
+            }
+        }
 
-        val mgdl = valueFromText(text, packageName, appLabel, ongoing) ?: return null
+        val mgdl = when (val value = valueFromText(text, packageName, appLabel, ongoing)) {
+            is ValueResult.Value -> value.mgdl
+            is ValueResult.Rejected -> return ParseOutcome.Rejected(value.reason)
+            ValueResult.NotGlucose -> return ParseOutcome.Ignored
+        }
 
         val timestamp = postTimeMillis.coerceAtMost(nowMillis + FUTURE_TOLERANCE_MILLIS)
-        if (timestamp <= 0L) return null
-        if (timestamp < nowMillis - MAX_AGE_MILLIS) return null
+        if (timestamp <= 0L) return ParseOutcome.Rejected(Rejection.INVALID_TIME)
+        if (timestamp < nowMillis - MAX_AGE_MILLIS) return ParseOutcome.Rejected(Rejection.STALE)
 
-        return GlucoseReading(
-            mgdl = mgdl,
-            timestampMillis = timestamp,
-            trend = trendFrom(text),
-            source = sourceLabel(packageName, appLabel)
+        return ParseOutcome.Accepted(
+            GlucoseReading(
+                mgdl = mgdl,
+                timestampMillis = timestamp,
+                trend = trendFrom(text),
+                source = sourceLabel(packageName, appLabel)
+            )
         )
     }
 
@@ -112,30 +169,42 @@ object CgmNotificationParser {
         packageName: String,
         appLabel: String?,
         ongoing: Boolean
-    ): Int? {
+    ): ValueResult {
         UNIT_PATTERN.find(text)?.let { match ->
             // A bare "128 mg/dL" is not enough: accept it only from a CGM-looking app
             // or as an ongoing (sensor-style) notification, so a chat message never
             // becomes a reading.
-            if (!ongoing && !looksLikeCgmApp(packageName, appLabel, text)) return null
+            if (!ongoing && !looksLikeCgmApp(packageName, appLabel)) {
+                return ValueResult.Rejected(Rejection.NOT_CGM_APP)
+            }
 
-            val number = match.groupValues[1].replace(',', '.').toDoubleOrNull() ?: return null
+            val number = match.groupValues[1].replace(',', '.').toDoubleOrNull()
+                ?: return ValueResult.NotGlucose
             val unit = match.groupValues[2].lowercase().replace(" ", "")
             val mgdl = if (unit.contains("mmol")) {
-                if (number !in MIN_MMOL..MAX_MMOL) return null
+                if (number !in MIN_MMOL..MAX_MMOL) return ValueResult.Rejected(Rejection.OUT_OF_RANGE)
                 (number * GlucoseReading.MGDL_PER_MMOL).roundToInt()
             } else {
                 number.roundToInt()
             }
-            return mgdl.takeIf { it in GlucoseReading.MIN_MGDL..GlucoseReading.MAX_MGDL }
+            return if (mgdl in GlucoseReading.MIN_MGDL..GlucoseReading.MAX_MGDL) {
+                ValueResult.Value(mgdl)
+            } else {
+                ValueResult.Rejected(Rejection.OUT_OF_RANGE)
+            }
         }
 
-        if (!looksLikeCgmApp(packageName, appLabel, text)) return null
-        val bare = BARE_VALUE.find(text)?.value?.toIntOrNull() ?: return null
-        return bare.takeIf { it in GlucoseReading.MIN_MGDL..GlucoseReading.MAX_MGDL }
+        if (!looksLikeCgmApp(packageName, appLabel)) return ValueResult.NotGlucose
+        val bare = BARE_VALUE.find(text)?.value?.toIntOrNull()
+            ?: return ValueResult.Rejected(Rejection.NO_VALUE)
+        return if (bare in GlucoseReading.MIN_MGDL..GlucoseReading.MAX_MGDL) {
+            ValueResult.Value(bare)
+        } else {
+            ValueResult.Rejected(Rejection.OUT_OF_RANGE)
+        }
     }
 
-    private fun looksLikeCgmApp(packageName: String, appLabel: String?, text: String): Boolean {
+    private fun looksLikeCgmApp(packageName: String, appLabel: String?): Boolean {
         if (CgmAppCatalog.labelFor(packageName) != null) return true
         val haystack = "$packageName ${appLabel.orEmpty()}".lowercase()
         return CGM_HINTS.any { haystack.contains(it) }

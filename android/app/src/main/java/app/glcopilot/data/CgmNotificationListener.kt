@@ -17,7 +17,8 @@ import app.glcopilot.monitor.CarConnectionWatcher
  * same repository the car screen reads.
  *
  * The package itself is filtered out so GlucoPilot never eats its own status
- * notification.
+ * notification. Every CGM-looking notification is also recorded in
+ * [DiagnosticsLog], so the phone can explain why no value reached the car.
  */
 class CgmNotificationListener : NotificationListenerService() {
 
@@ -51,15 +52,39 @@ class CgmNotificationListener : NotificationListenerService() {
             extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)?.joinToString(" ")
         )
 
-        val reading = CgmNotificationParser.parse(
+        val label = appLabel(sbn.packageName)
+        val outcome = CgmNotificationParser.evaluate(
             packageName = sbn.packageName,
-            appLabel = appLabel(sbn.packageName),
+            appLabel = label,
             texts = texts,
             postTimeMillis = sbn.postTime,
             ongoing = sbn.isOngoing
-        ) ?: return
+        )
+        if (outcome is ParseOutcome.Ignored) return
 
-        AppGraph.container.repository.onLocalReading(reading)
+        val container = AppGraph.container
+        container.diagnostics.record(
+            when (outcome) {
+                is ParseOutcome.Accepted -> DiagnosticEvent(
+                    atMillis = System.currentTimeMillis(),
+                    packageName = sbn.packageName,
+                    appLabel = label,
+                    outcome = DiagnosticEvent.Outcome.ACCEPTED,
+                    valueMgdl = outcome.reading.mgdl
+                )
+                is ParseOutcome.Rejected -> DiagnosticEvent(
+                    atMillis = System.currentTimeMillis(),
+                    packageName = sbn.packageName,
+                    appLabel = label,
+                    outcome = DiagnosticEvent.Outcome.REJECTED,
+                    reason = outcome.reason
+                )
+                ParseOutcome.Ignored -> return
+            }
+        )
+
+        val reading = (outcome as? ParseOutcome.Accepted)?.reading ?: return
+        container.repository.onLocalReading(reading)
     }
 
     private fun appLabel(packageName: String): String? = try {
