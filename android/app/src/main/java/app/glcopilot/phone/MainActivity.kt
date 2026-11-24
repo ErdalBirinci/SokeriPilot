@@ -1,0 +1,365 @@
+package app.glcopilot.phone
+
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.res.ColorStateList
+import android.os.Build
+import android.os.Bundle
+import android.view.View
+import android.view.inputmethod.InputMethodManager
+import android.widget.Button
+import android.widget.EditText
+import android.widget.RadioGroup
+import android.widget.Switch
+import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import app.glcopilot.GlucoPilotApp
+import app.glcopilot.R
+import app.glcopilot.data.AppContainer
+import app.glcopilot.data.CgmAppDetector
+import app.glcopilot.data.CgmIntegration
+import app.glcopilot.data.GlucoseBand
+import app.glcopilot.data.GlucoseState
+import app.glcopilot.data.NotificationAccess
+import app.glcopilot.data.TimeAgo
+import app.glcopilot.data.Units
+import app.glcopilot.monitor.GlucoseMonitorService
+import app.glcopilot.monitor.MonitorLauncher
+import kotlinx.coroutines.launch
+
+/** Phone setup and live status screen. The car screen reads these settings. */
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var container: AppContainer
+
+    private lateinit var tvGlucose: TextView
+    private lateinit var tvTrend: TextView
+    private lateinit var tvBand: TextView
+    private lateinit var tvMeta: TextView
+    private lateinit var switchXdrip: Switch
+    private lateinit var switchMonitor: Switch
+    private lateinit var switchAutoCar: Switch
+    private lateinit var tvCgm: TextView
+    private lateinit var tvAccess: TextView
+    private lateinit var btnAccess: Button
+    private lateinit var etUrl: EditText
+    private lateinit var etSecret: EditText
+    private lateinit var etLow: EditText
+    private lateinit var etHigh: EditText
+    private lateinit var rgUnits: RadioGroup
+
+    private val notificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                container.settings.setNotificationsEnabled(true)
+                toast(getString(R.string.notifications_granted))
+                if (container.settings.monitorWhileDriving()) startMonitorIfConfigured(quiet = true)
+            }
+        }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        container = (application as GlucoPilotApp).container
+        bindViews()
+        loadSettings()
+        bindActions()
+
+        render(container.repository.state.value)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                container.repository.state.collect { render(it) }
+            }
+        }
+        container.refreshNow()
+    }
+
+    private fun bindViews() {
+        tvGlucose = findViewById(R.id.tvGlucose)
+        tvTrend = findViewById(R.id.tvTrend)
+        tvBand = findViewById(R.id.tvBand)
+        tvMeta = findViewById(R.id.tvMeta)
+        switchXdrip = findViewById(R.id.switchXdrip)
+        switchMonitor = findViewById(R.id.switchMonitor)
+        switchAutoCar = findViewById(R.id.switchAutoCar)
+        tvCgm = findViewById(R.id.tvCgm)
+        tvAccess = findViewById(R.id.tvAccess)
+        btnAccess = findViewById(R.id.btnNotificationAccess)
+        etUrl = findViewById(R.id.etUrl)
+        etSecret = findViewById(R.id.etSecret)
+        etLow = findViewById(R.id.etLow)
+        etHigh = findViewById(R.id.etHigh)
+        rgUnits = findViewById(R.id.rgUnits)
+        findViewById<Button>(R.id.btnSaveSource).setOnClickListener { saveSource() }
+        findViewById<Button>(R.id.btnSaveRange).setOnClickListener { saveRange() }
+        findViewById<Button>(R.id.btnRefresh).setOnClickListener { refreshNow() }
+        findViewById<Button>(R.id.btnNotifications).setOnClickListener { requestNotifications() }
+        btnAccess.setOnClickListener { openNotificationAccess() }
+    }
+
+    private fun loadSettings() {
+        switchXdrip.isChecked = container.settings.xDripEnabled()
+        switchMonitor.isChecked = container.settings.monitorWhileDriving()
+        switchAutoCar.isChecked = container.settings.autoStartOnCar()
+        renderCgmDetection()
+        etUrl.setText(container.settings.nightscoutConfig()?.baseUrl.orEmpty())
+        etSecret.setText("")
+        val range = container.settings.glucoseRange()
+        etLow.setText(range.low.toString())
+        etHigh.setText(range.high.toString())
+        when (container.settings.units()) {
+            Units.MG_DL -> rgUnits.check(R.id.rbMgdl)
+            Units.MMOL_L -> rgUnits.check(R.id.rbMmol)
+        }
+    }
+
+    private fun bindActions() {
+        switchXdrip.setOnCheckedChangeListener { _, checked ->
+            container.settings.setXDripEnabled(checked)
+            if (container.settings.monitorWhileDriving()) startMonitorIfConfigured(quiet = true)
+        }
+        switchMonitor.setOnCheckedChangeListener { _, checked ->
+            container.settings.setMonitorWhileDriving(checked)
+            if (checked) startMonitorIfConfigured() else stopMonitor()
+        }
+        switchAutoCar.setOnCheckedChangeListener { _, checked ->
+            container.settings.setAutoStartOnCar(checked)
+            if (checked) startMonitorIfConfigured(quiet = true)
+        }
+        rgUnits.setOnCheckedChangeListener { _, checkedId ->
+            container.settings.saveUnits(
+                if (checkedId == R.id.rbMmol) Units.MMOL_L else Units.MG_DL
+            )
+            render(container.repository.state.value)
+        }
+    }
+
+    private fun saveSource() {
+        val error = container.settings.saveNightscout(
+            baseUrl = etUrl.text.toString(),
+            apiSecret = etSecret.text?.toString()
+        )
+        if (error != null) {
+            toast(error)
+            return
+        }
+        etSecret.setText("")
+        hideKeyboard()
+        toast(getString(R.string.saved))
+        container.refreshNow()
+        if (container.settings.monitorWhileDriving()) startMonitorIfConfigured(quiet = true)
+    }
+
+    private fun saveRange() {
+        val units = container.settings.units()
+        val low = units.parseToMgdl(etLow.text.toString())
+        val high = units.parseToMgdl(etHigh.text.toString())
+        if (low == null || high == null) {
+            toast(getString(R.string.error_range))
+            return
+        }
+        val error = container.settings.saveRange(low, high)
+        if (error != null) {
+            toast(error)
+            return
+        }
+        toast(getString(R.string.saved))
+        render(container.repository.state.value)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (container.settings.monitorWhileDriving()) startMonitorIfConfigured(quiet = true)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        renderCgmDetection()
+        switchXdrip.isChecked = container.settings.xDripEnabled()
+        // Returning from the notification-access screen: start right away.
+        if (NotificationAccess.isGranted(this) && container.settings.monitorWhileDriving()) {
+            startMonitorIfConfigured(quiet = true)
+        }
+    }
+
+    /** Opens the one system screen that lets GlucoPilot read the CGM app's values. */
+    private fun openNotificationAccess() {
+        try {
+            startActivity(NotificationAccess.settingsIntent())
+        } catch (_: RuntimeException) {
+            toast(getString(R.string.access_off))
+        }
+    }
+
+    /**
+     * Shows installed CGM apps and the one-time notification access. With access
+     * granted, every CGM app feeds the cockpit without any setup inside that app.
+     * xDrip+ broadcasts stay enabled automatically when available.
+     */
+    private fun renderCgmDetection() {
+        val detected = CgmAppDetector.detect(this)
+        val broadcast = detected.filter { it.integration == CgmIntegration.XDRIP_BROADCAST }
+        val access = NotificationAccess.isGranted(this)
+
+        if (broadcast.isNotEmpty() && !container.settings.xDripUserChose()) {
+            container.settings.autoEnableXDrip(true)
+            switchXdrip.isChecked = true
+        }
+
+        val labels = detected.joinToString(", ") { it.label }
+            .ifEmpty { getString(R.string.source_cgm_app) }
+
+        tvAccess.text = if (access) {
+            getString(R.string.access_on)
+        } else {
+            getString(R.string.access_off)
+        }
+        btnAccess.visibility = if (access) View.GONE else View.VISIBLE
+
+        tvCgm.text = when {
+            detected.isNotEmpty() && access -> getString(R.string.cgm_auto_on, labels)
+            detected.isNotEmpty() -> getString(R.string.cgm_needs_access, labels)
+            container.settings.nightscoutConfig() != null -> getString(R.string.source_nightscout)
+            else -> getString(R.string.cgm_not_found)
+        }
+    }
+
+    /**
+     * Starts the background service when driving mode is on. Keeps CGM current in
+     * the notification while navigation or media is open in Android Auto.
+     */
+    private fun startMonitorIfConfigured(quiet: Boolean = false) {
+        if (!notificationAllowed()) {
+            if (!quiet) requestNotifications()
+            return
+        }
+        when (MonitorLauncher.start(this)) {
+            MonitorLauncher.Result.STARTED -> Unit
+            MonitorLauncher.Result.DISABLED -> stopMonitor()
+            MonitorLauncher.Result.NO_SOURCE -> {
+                if (quiet) {
+                    stopMonitor()
+                } else {
+                    switchMonitor.isChecked = false
+                    container.settings.setMonitorWhileDriving(false)
+                    toast(getString(R.string.monitor_requires_source))
+                }
+            }
+            MonitorLauncher.Result.NOT_CONNECTED -> {
+                if (!quiet) toast(getString(R.string.monitor_waiting_for_car))
+            }
+            MonitorLauncher.Result.BLOCKED -> {
+                if (!quiet) toast(getString(R.string.monitor_start_failed))
+            }
+        }
+    }
+
+    private fun stopMonitor() {
+        stopService(Intent(this, GlucoseMonitorService::class.java))
+        container.notifier.cancelStatus()
+    }
+
+    private fun notificationAllowed(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+
+    private fun refreshNow() {
+        if (container.settings.nightscoutConfig() == null) {
+            toast(getString(R.string.car_waiting_body))
+            return
+        }
+        container.refreshNow()
+    }
+
+    private fun requestNotifications() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            container.settings.setNotificationsEnabled(true)
+            toast(getString(R.string.notifications_granted))
+        }
+    }
+
+    private fun render(state: GlucoseState) {
+        val units = container.settings.units()
+        val range = container.settings.glucoseRange()
+        val latest = state.latest
+        val now = System.currentTimeMillis()
+
+        if (latest == null) {
+            tvGlucose.text = "--"
+            tvTrend.text = ""
+            tvMeta.text = state.lastError ?: getString(R.string.car_waiting_body)
+            applyBandPill(
+                text = getString(R.string.label_waiting),
+                background = R.color.canvas_alt,
+                foreground = R.color.ink_muted
+            )
+            return
+        }
+
+        val band = range.band(latest.mgdl)
+        tvGlucose.text = units.format(latest.mgdl)
+        tvTrend.text = latest.trend.arrow
+        applyBandPill(
+            text = "${band.label} · ${units.label}",
+            background = bandBackground(band),
+            foreground = bandForeground(band)
+        )
+
+        tvMeta.text = buildString {
+            append(TimeAgo.format(now, latest.timestampMillis))
+            append(" · ").append(latest.source)
+            latest.sensorBatteryPercent?.let { append(" · sensor %").append(it) }
+            if (TimeAgo.isStale(now, latest.timestampMillis)) append(" · stale data")
+            state.lastError?.let { append(" · ").append(it) }
+        }
+    }
+
+    private fun applyBandPill(text: String, background: Int, foreground: Int) {
+        tvBand.text = text
+        tvBand.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(this, background))
+        tvBand.setTextColor(ContextCompat.getColor(this, foreground))
+    }
+
+    private fun bandBackground(band: GlucoseBand): Int = when (band) {
+        GlucoseBand.IN_RANGE -> R.color.mint_100
+        GlucoseBand.LOW, GlucoseBand.URGENT_LOW -> R.color.coral_100
+        GlucoseBand.HIGH -> R.color.amber_100
+        GlucoseBand.URGENT_HIGH -> R.color.coral_100
+    }
+
+    private fun bandForeground(band: GlucoseBand): Int = when (band) {
+        GlucoseBand.IN_RANGE -> R.color.mint_600
+        GlucoseBand.LOW -> R.color.coral_600
+        GlucoseBand.URGENT_LOW -> R.color.coral_600
+        GlucoseBand.HIGH -> R.color.amber_600
+        GlucoseBand.URGENT_HIGH -> R.color.coral_600
+    }
+
+    private fun hideKeyboard() {
+        val manager = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+        manager?.hideSoftInputFromWindow(etSecret.windowToken, View.GONE)
+    }
+
+    private fun toast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+}

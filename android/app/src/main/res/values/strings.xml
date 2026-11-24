@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GlucoPilot</string>
+    <string name="tagline">Driving cockpit for type 1 diabetes</string>
+
+    <string name="section_live">Live glucose</string>
+    <string name="section_source">CGM source</string>
+    <string name="cgm_needs_access">Detected: %1$s · allow notification access once and values start arriving automatically.</string>
+    <string name="cgm_auto_on">GlucoPilot reads new values from %1$s automatically. No setup inside that app is needed.</string>
+    <string name="cgm_not_found">No CGM app found yet. Install your sensor\'s app, or connect Nightscout.</string>
+    <string name="access_title">Automatic CGM reading</string>
+    <string name="access_on">Notification access is on. Every new CGM notification updates the car screen.</string>
+    <string name="access_off">One-time permission: Android only lets an app read another app\'s data through notification access. After granting it, values arrive automatically — no per-app setup, nothing leaves the phone.</string>
+    <string name="action_notification_access">Allow notification access</string>
+    <string name="access_granted">Notification access granted.</string>
+    <string name="auto_car_switch">Start automatically when Android Auto connects</string>
+    <string name="auto_car_note">Monitoring starts when the phone is projected into your head unit and stops when the connection ends; nothing runs in the background otherwise.</string>
+    <string name="section_range">Target range</string>
+
+    <string name="label_waiting">Waiting for CGM</string>
+    <string name="label_no_reading">No readings yet</string>
+    <string name="hint_source">Listen to xDrip+ broadcasts</string>
+    <string name="hint_nightscout_url">Nightscout URL (https://…)</string>
+    <string name="hint_nightscout_secret">Nightscout API key</string>
+    <string name="hint_secret_note">The key is not stored on the device; only the SHA-1 digest required by Nightscout is kept.</string>
+    <string name="action_save_source">Save source</string>
+    <string name="action_save_range">Save range</string>
+    <string name="action_refresh">Try now</string>
+    <string name="action_notifications">Grant notification permission</string>
+    <string name="action_recent">Recent readings</string>
+    <string name="action_back">Back</string>
+
+    <string name="label_low">Low threshold (mg/dL)</string>
+    <string name="label_high">High threshold (mg/dL)</string>
+    <string name="unit_mgdl">mg/dL</string>
+    <string name="unit_mmol">mmol/L</string>
+
+    <string name="source_xdrip">xDrip+</string>
+    <string name="source_nightscout">Nightscout</string>
+    <string name="source_cgm_app">your CGM app</string>
+
+    <string name="car_row_trend">Trend</string>
+    <string name="car_row_source">Source</string>
+    <string name="car_row_range">Target range</string>
+    <string name="car_row_status">Status</string>
+    <string name="car_waiting_body">Open GlucoPilot on your phone and allow notification access so values can be read from your CGM app.</string>
+    <string name="car_stale">The last reading is stale. Check the sensor and connection.</string>
+    <string name="car_warning_title">Warning</string>
+    <string name="car_notify_permission">Car notifications are off: open GlucoPilot on your phone and grant notification permission. Until then, glucose is only visible on this screen.</string>
+    <string name="car_monitor_off">Driving mode is off: open GlucoPilot on your phone and turn on Driving mode so the notification appears while navigation or music is open.</string>
+    <string name="car_source_missing">No CGM source: open GlucoPilot on your phone and allow notification access (one tap), or connect Nightscout.</string>
+    <string name="car_service_failed">The driving monitor service could not start. Reopen GlucoPilot on your phone; if the problem persists, exclude the app from battery optimization.</string>
+    <string name="car_title_recent">Recent readings</string>
+    <string name="car_no_items">No readings yet.</string>
+
+    <string name="notif_channel_name">Glucose alerts</string>
+    <string name="notif_channel_desc">Low and high glucose notifications</string>
+    <string name="notif_title">Glucose %1$s</string>
+
+    <string name="notif_status_channel_name">Driving status</string>
+    <string name="notif_status_channel_desc">Silent current glucose status while navigation or music is open</string>
+    <string name="notif_status_title">Glucose %1$s</string>
+    <string name="notif_status_waiting">Waiting for CGM</string>
+    <string name="notif_stale">stale data</string>
+    <string name="notif_action_cockpit">Cockpit</string>
+    <string name="notif_action_open">Open app</string>
+    <string name="notif_action_mute">Mute 30 min</string>
+
+    <string name="monitor_title">Driving mode</string>
+    <string name="monitor_switch">Show glucose while navigation or music is open</string>
+    <string name="monitor_note">Android Auto does not allow other apps to keep a persistent window on top. GlucoPilot uses a car notification instead: the value updates with every reading, a short alert appears when out of range, and one tap opens the cockpit.</string>
+    <string name="monitor_requires_source">Allow notification access for your CGM app first, or connect Nightscout.</string>
+    <string name="monitor_start_failed">The driving monitor could not start. Battery optimization or a system restriction may be blocking it; reopen the app.</string>
+    <string name="monitor_waiting_for_car">Monitoring starts when you connect the phone to Android Auto.</string>
+
+    <string name="disclaimer">GlucoPilot is not a medical device. It does not recommend treatment or insulin doses. Alerts are advisory; always rely on your sensor\'s official app and your healthcare professional\'s guidance.</string>
+
+    <string name="error_url_required">Nightscout URL is required.</string>
+    <string name="error_secret_required">Nightscout API key is required.</string>
+    <string name="error_range">Thresholds are invalid. Low must be between 55 and 120, high between 120 and 300 mg/dL, and low must be below high.</string>
+    <string name="saved">Saved.</string>
+    <string name="notifications_granted">Notification permission granted.</string>
+</resources>

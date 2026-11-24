@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="canvas">#F5F8F6</color>
+    <color name="canvas_alt">#EEF4F1</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="ink">#0A1A16</color>
+    <color name="ink_muted">#5C6F69</color>
+
+    <color name="mint_600">#0E9F7C</color>
+    <color name="mint_100">#DCF5EC</color>
+    <color name="sky_600">#2F7FE0</color>
+    <color name="sky_100">#E6F0FD</color>
+    <color name="amber_600">#B8791A</color>
+    <color name="amber_100">#FBEFD8</color>
+    <color name="coral_600">#C4443F</color>
+    <color name="coral_100">#FCE7E5</color>
+
+    <color name="line">#E2EAE6</color>
+    <color name="icon_background">#EAF6F1</color>
+</resources>
