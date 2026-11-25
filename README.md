@@ -545,6 +545,8 @@ version so the published hash stays tied to its source. Old versions stay downlo
 
 ## 8. License and attribution
 
+- **SokeriPilot is MIT-licensed** — see [LICENSE](LICENSE). That covers the Android app, the
+  tools and the landing page, so the project can be described and reused as open source.
 - Android for Cars App Library and Google samples: Apache-2.0.
 - xDrip+ and Nightscout are distributed under their own licenses; their source code is not in
   this repository, only the documented protocols are used.
