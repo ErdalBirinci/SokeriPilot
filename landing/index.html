@@ -10,9 +10,12 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="showcase.css">
+  <link rel="stylesheet" href="signals.css">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
+  <div class="progress" aria-hidden="true"><span class="progress__bar"></span></div>
 
   <div class="announce">
     <div class="container announce__inner">
@@ -40,10 +43,10 @@
       </a>
 
       <nav class="nav__links" aria-label="Sections">
-        <a href="#why">Why it's different</a>
-        <a href="#cockpit">Driving mode</a>
-        <a href="#security">Security</a>
-        <a href="#setup">Setup</a>
+        <a href="#screens">App screens</a>
+        <a href="#cockpit">In the car</a>
+        <a href="#detail">Every signal</a>
+        <a href="#security">Privacy</a>
         <a href="#faq">FAQ</a>
       </nav>
 
@@ -80,7 +83,21 @@
           </ul>
         </div>
 
-        <div class="hero__stage">
+        <div class="hero__stage" data-tilt="4">
+          <div class="float-card float-card--prediction" aria-hidden="true">
+            <span class="float-card__tag float-card__tag--coral">Low soon</span>
+            <strong>≈ 27 min to 70</strong>
+            <span>Projected from the last 15 min</span>
+          </div>
+          <div class="float-card float-card--sensor" aria-hidden="true">
+            <span class="float-card__tag float-card__tag--amber">Sensor</span>
+            <strong>Warming up</strong>
+            <span>Ready in about 24 min</span>
+          </div>
+          <div class="float-card float-card--tir" aria-hidden="true">
+            <span class="float-card__ring"><b>82%</b></span>
+            <div><strong>This drive</strong><span>in range</span></div>
+          </div>
           <figure class="shot">
             <div class="shot__frame">
               <div class="shot__glow" aria-hidden="true"></div>
@@ -139,6 +156,131 @@
       <p class="marquee__note container">Values are read from the sensor app you already run — no extra setup inside it, and nothing leaves your phone.</p>
     </section>
 
+    <section class="section section--screens" id="screens">
+      <div class="container">
+        <div class="section__head reveal">
+          <p class="eyebrow"><span class="eyebrow__dot"></span> App screens</p>
+          <h2>Every screen, <span class="grad">in detail</span>.</h2>
+          <p class="section__lede">
+            The setup screen, the alert stack and the health export — drawn at the density you
+            actually get on the phone, not a concept render. Swipe through them below.
+          </p>
+        </div>
+
+        <div class="screens">
+          <div class="phone-slot phone-slot--left reveal">
+            <article class="phone phone--left" aria-hidden="true">
+              <div class="phone__frame">
+                <span class="phone__notch"></span>
+                <div class="phone__screen">
+                  <div class="ph-status"><span>9:41</span><span>5G · 82%</span></div>
+                  <div class="ph-head">
+                    <span class="ph-brand"><span class="ph-dot"></span>GlucoPilot</span>
+                    <span class="ph-ver">1.2.0</span>
+                  </div>
+                  <div class="ph-live">
+                    <div class="ph-live__top"><span>Dexcom G7 · now</span><span class="ph-pill ph-pill--ok">In range</span></div>
+                    <div class="ph-value">128<span>mg/dL</span><em>↗</em></div>
+                    <svg class="ph-spark" viewBox="0 0 220 46" preserveAspectRatio="none" aria-hidden="true">
+                      <path d="M0 34 C16 32 24 22 38 24 S60 36 76 30 S100 14 116 20 S140 32 156 26 S180 18 196 22 S212 16 220 18" />
+                    </svg>
+                    <div class="ph-live__meta"><span>70–180 mg/dL</span><span>82% this drive</span></div>
+                  </div>
+                  <p class="ph-section">Setup check</p>
+                  <ul class="ph-rows">
+                    <li><span class="ph-check">✓</span>Notification access</li>
+                    <li><span class="ph-check">✓</span>Notification permission</li>
+                    <li><span class="ph-check">✓</span>Live CGM value</li>
+                    <li><span class="ph-check ph-check--wait">•</span>Car connection</li>
+                  </ul>
+                  <div class="ph-toggle"><span>Predictive alerts</span><span class="ph-switch is-on"></span></div>
+                  <div class="ph-last"><span>Last drive</span><strong>32 min · 78% · low 64</strong></div>
+                  <div class="ph-btnrow"><span class="ph-btn">Export settings</span><span class="ph-btn ph-btn--ghost">Import</span></div>
+                </div>
+              </div>
+            </article>
+            <p class="phone__label"><span>01</span> Setup, live value and last drive</p>
+          </div>
+
+          <div class="phone-slot phone-slot--center reveal">
+            <article class="phone phone--center" aria-hidden="true">
+              <div class="phone__frame">
+                <span class="phone__notch"></span>
+                <div class="phone__screen">
+                  <div class="ph-status"><span>9:41</span><span>5G · 82%</span></div>
+                  <div class="ph-head">
+                    <span class="ph-brand"><span class="ph-dot"></span>Sensor</span>
+                    <span class="ph-ver">Live</span>
+                  </div>
+                  <div class="ph-status-card ph-status-card--amber">
+                    <span class="ph-pill ph-pill--amber">Warming up</span>
+                    <strong>Sensor is warming up</strong>
+                    <span class="ph-muted">Ready in about 24 minutes</span>
+                  </div>
+                  <div class="ph-battery">
+                    <div><span>Sensor battery</span><strong>82%</strong></div>
+                    <i class="ph-bar"><b></b></i>
+                  </div>
+                  <div class="ph-pred">
+                    <div class="ph-pred__top"><span class="ph-pill ph-pill--coral">Low soon</span><strong>≈ 27 min</strong></div>
+                    <p>Current slope reaches 70 mg/dL</p>
+                    <svg class="ph-spark ph-spark--small" viewBox="0 0 220 40" preserveAspectRatio="none" aria-hidden="true">
+                      <path d="M0 8 C24 10 36 18 54 18 S84 30 104 30 S138 38 160 36 S196 40 220 38" />
+                      <path class="ph-threshold" d="M0 33H220" />
+                    </svg>
+                  </div>
+                  <div class="ph-alert">
+                    <span class="ph-alert__title">Urgent low · 54 mg/dL</span>
+                    <p>Dexcom G7 · just now</p>
+                    <div class="ph-alert__actions"><span>Got it</span><span>Mute 30 min</span></div>
+                  </div>
+                  <div class="ph-pause"><span>Sensor change paused</span><strong>1:52 left</strong></div>
+                </div>
+              </div>
+            </article>
+            <p class="phone__label"><span>02</span> Sensor state, prediction and alerts</p>
+          </div>
+
+          <div class="phone-slot phone-slot--right reveal">
+            <article class="phone phone--right" aria-hidden="true">
+              <div class="phone__frame">
+                <span class="phone__notch"></span>
+                <div class="phone__screen">
+                  <div class="ph-status"><span>9:41</span><span>5G · 82%</span></div>
+                  <div class="ph-head">
+                    <span class="ph-brand"><span class="ph-dot"></span>Health &amp; backup</span>
+                    <span class="ph-ver">Private</span>
+                  </div>
+                  <div class="ph-health">
+                    <div class="ph-health__row"><span>Health Connect</span><span class="ph-switch is-on"></span></div>
+                    <p class="ph-muted">Write-only · blood glucose</p>
+                    <div class="ph-record">
+                      <span class="ph-record__dot"></span>
+                      <div><strong>128 mg/dL</strong><span>Written just now</span></div>
+                    </div>
+                  </div>
+                  <div class="ph-card">
+                    <p class="ph-section">Settings file</p>
+                    <p>Range, units and Nightscout digest — never the raw key.</p>
+                    <div class="ph-btnrow"><span class="ph-btn">Export</span><span class="ph-btn ph-btn--ghost">Import</span></div>
+                  </div>
+                  <div class="ph-note">
+                    <span class="ph-note__lock">⌾</span>
+                    <div><strong>No server, no analytics</strong><span>Everything stays on this phone.</span></div>
+                  </div>
+                  <ul class="ph-rows ph-rows--tight">
+                    <li><span class="ph-check">✓</span>Nightscout digest only</li>
+                    <li><span class="ph-check">✓</span>Health data never read back</li>
+                  </ul>
+                </div>
+              </div>
+            </article>
+            <p class="phone__label"><span>03</span> Health Connect and settings backup</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="section" id="why">
       <div class="container">
         <div class="section__head reveal">
@@ -187,7 +329,7 @@
       </div>
     </section>
 
-    <section class="section cockpit" id="cockpit">
+    <section class="section section--night cockpit" id="cockpit">
       <div class="container cockpit__grid">
         <div class="cockpit__copy reveal">
           <p class="eyebrow"><span class="eyebrow__dot"></span> Notification + Cockpit</p>
@@ -200,7 +342,7 @@
           <ul class="checklist">
             <li><span aria-hidden="true">✓</span> Navigation, music and calls stay in default Android Auto</li>
             <li><span aria-hidden="true">✓</span> The silent status notification updates with every reading: value, trend, age</li>
-                          <li><span aria-hidden="true">✓</span> A short alert when out of range; mute for 30 minutes</li>
+            <li><span aria-hidden="true">✓</span> A short alert when out of range; mute for 30 minutes</li>
             <li><span aria-hidden="true">✓</span> “Low soon” / “High soon” before the threshold, from the measured slope</li>
             <li><span aria-hidden="true">✓</span> A 90-minute trend line and session time in range inside the cockpit</li>
             <li><span aria-hidden="true">✓</span> Urgent lows repeat until acknowledged with “Got it”</li>
@@ -215,41 +357,132 @@
         </div>
 
         <div class="cockpit__visual reveal">
-          <div class="car car--cockpit" aria-hidden="true">
-            <div class="car__top">
-              <span class="car__brand"><span class="car__dot"></span> Android Auto</span>
-              <span class="car__time">14:32</span>
-              <span class="tag tag--alert">Cockpit</span>
-            </div>
-
-            <div class="car__cockpit">
-              <div class="car__cockpit-main">
-                <div class="car__cgm-head">
-                  <span class="car__cgm-dot"></span> GlucoPilot
-                  <span class="car__cgm-live">live</span>
+          <div class="dash" data-tilt="5">
+            <div class="dash__frame" aria-hidden="true">
+              <div class="dash__screen">
+                <div class="dash__map">
+                  <svg viewBox="0 0 360 300" preserveAspectRatio="xMidYMid slice">
+                    <rect width="360" height="300" fill="#e8f0ea" />
+                    <path d="M-20 240 C60 220 90 150 160 150 S260 190 380 90" fill="none" stroke="#cfe2d8" stroke-width="28" />
+                    <path d="M-20 240 C60 220 90 150 160 150 S260 190 380 90" fill="none" stroke="#2f7fe0" stroke-width="7" stroke-linecap="round" stroke-dasharray="0 18" />
+                    <path d="M40 -10 C60 80 120 100 140 160 S150 250 200 320" fill="none" stroke="#ffffff" stroke-width="14" />
+                    <circle cx="160" cy="150" r="8" fill="#2f7fe0" stroke="#fff" stroke-width="4" />
+                  </svg>
+                  <span class="dash__map-label">Maps</span>
                 </div>
-                <div class="car__cockpit-value">68<span>mg/dL</span><em>↘</em></div>
-                <div class="car__band car__band--alert">Low · 54–69</div>
-                <div class="car__meta">Dexcom G7 · 1 min ago</div>
-                <svg class="car__spark" viewBox="0 0 240 54" preserveAspectRatio="none" aria-hidden="true">
-                  <path class="car__spark-line" d="M0 16 C18 18 28 26 44 24 S68 16 84 24 S110 42 128 38 S154 26 170 34 S198 46 214 40 S230 44 240 42" />
-                </svg>
-              </div>
-
-              <div class="car__cockpit-aside">
-                <div><span>In range</span><strong>78%</strong></div>
-                <div><span>Sensor</span><strong>6 days</strong></div>
-                <div><span>Last reading</span><strong>1 min</strong></div>
+                <div class="dash__panel">
+                  <div class="dash__panel-top"><span class="dash__brand"><span class="dash__dot"></span>GlucoPilot</span><span class="dash__age">now</span></div>
+                  <div class="dash__value">112<span>mg/dL</span><em>↗</em></div>
+                  <span class="dash__band">In range · 70–180</span>
+                  <svg class="dash__chart" viewBox="0 0 260 110" preserveAspectRatio="none">
+                    <rect x="0" y="26" width="260" height="58" rx="6" fill="rgba(14,159,124,0.08)" />
+                    <path d="M0 70 C24 74 38 52 62 56 S98 76 122 66 S158 34 182 42 S216 58 240 50 S252 44 260 46" fill="none" stroke="#0e9f7c" stroke-width="2.4" stroke-linecap="round" />
+                    <circle cx="260" cy="46" r="3.5" fill="#0e9f7c" />
+                  </svg>
+                  <div class="dash__stats">
+                    <div><span>This drive</span><strong>82%</strong></div>
+                    <div><span>Sensor</span><strong>82%</strong></div>
+                    <div><span>Source</span><strong>1 min</strong></div>
+                  </div>
+                </div>
+                <div class="dash__toast">
+                  <span class="dash__toast-tag">Low soon</span>
+                  <p>70 mg/dL in about 27 min</p>
+                  <div class="dash__toast-actions"><span>Got it</span><span>Mute 30 min</span></div>
+                </div>
+                <span class="dash__glare"></span>
               </div>
             </div>
-
-            <div class="car__cockpit-actions">
-              <span>‹ Maps</span>
-              <span>Recent readings</span>
-              <span>Mute 30 min</span>
-            </div>
+            <div class="dash__shadow"></div>
           </div>
+          <div class="dash__chips"><span>90-minute trend</span><span>Session TIR</span><span>Sensor battery</span></div>
           <p class="car__caption">Tapping the notification opens the cockpit full screen. Back returns to Maps; navigation keeps running in the background.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="detail">
+      <div class="container">
+        <div class="section__head reveal">
+          <p class="eyebrow"><span class="eyebrow__dot"></span> Behind the cockpit</p>
+          <h2>Every signal, <span class="grad">surfaced</span>.</h2>
+          <p class="section__lede">
+            Six pieces of work happen while you drive. Each one is small, explainable and visible
+            on the phone — no black box between the sensor app and the car screen.
+          </p>
+        </div>
+
+        <div class="bento">
+          <article class="bento__tile reveal">
+            <div class="viz viz--chart" aria-hidden="true">
+              <svg viewBox="0 0 280 110" preserveAspectRatio="none">
+                <rect x="0" y="66" width="280" height="34" rx="5" fill="rgba(14,159,124,0.09)" />
+                <path d="M0 28 C34 30 52 44 80 46 S124 62 150 68 S190 88 220 86 S256 70 280 64" fill="none" stroke="#c4443f" stroke-width="2.4" stroke-linecap="round" />
+                <path d="M0 84H280" fill="none" stroke="#c4443f" stroke-width="1.4" stroke-dasharray="4 6" />
+                <circle cx="280" cy="64" r="4" fill="#c4443f" />
+              </svg>
+              <span class="viz__chip viz__chip--coral">Low soon · 27 min</span>
+            </div>
+            <h3>Projection, not a guess</h3>
+            <p>A least-squares slope over the last 15 minutes; a warning only when at least three readings agree and the threshold is inside the horizon.</p>
+          </article>
+
+          <article class="bento__tile reveal">
+            <div class="viz viz--pills" aria-hidden="true">
+              <span class="viz__pill viz__pill--amber">Warming up</span>
+              <span class="viz__pill viz__pill--sky">Signal lost</span>
+              <span class="viz__pill viz__pill--coral">Sensor finished</span>
+              <div class="viz__battery"><span>Battery</span><strong>18%</strong><i><b></b></i></div>
+            </div>
+            <h3>The sensor explains itself</h3>
+            <p>Warm-up, signal loss and sensor end are read from the CGM app's own notifications, so the cockpit says why data stopped.</p>
+          </article>
+
+          <article class="bento__tile reveal">
+            <div class="viz viz--alert" aria-hidden="true">
+              <div class="viz__notification">
+                <span class="viz__notification-tag">Urgent low</span>
+                <strong>54 mg/dL</strong>
+                <span>Repeat 2 of 3 · 5 min</span>
+                <div class="viz__notification-actions"><b>Got it</b><b>Mute 30 min</b></div>
+              </div>
+            </div>
+            <h3>Escalation with an exit</h3>
+            <p>An urgent low repeats every five minutes, at most three times. One tap on “Got it” quiets it for half an hour.</p>
+          </article>
+
+          <article class="bento__tile reveal">
+            <div class="viz viz--stats" aria-hidden="true">
+              <div><span>Minutes</span><strong>32</strong></div>
+              <div><span>In range</span><strong>78%</strong></div>
+              <div><span>Lowest</span><strong>64</strong></div>
+              <div><span>Low events</span><strong>1</strong></div>
+            </div>
+            <h3>A drive you can compare</h3>
+            <p>Four numbers, stored locally when monitoring stops: minutes, session time in range, the lowest value and how many readings were low.</p>
+          </article>
+
+          <article class="bento__tile reveal">
+            <div class="viz viz--health" aria-hidden="true">
+              <div class="viz__health-head"><span>Health Connect</span><span class="viz__switch"></span></div>
+              <div class="viz__health-record"><span></span><div><strong>128 mg/dL</strong><small>Interstitial fluid · now</small></div></div>
+              <small class="viz__health-note">Write-only · revoke any time</small>
+            </div>
+            <h3>Health Connect, if you want it</h3>
+            <p>New readings can be written as blood glucose records. Nothing is read back, the permission is revocable, and it is off by default.</p>
+          </article>
+
+          <article class="bento__tile reveal">
+            <div class="viz viz--checks" aria-hidden="true">
+              <div class="viz__check"><span>✓</span>Notification access</div>
+              <div class="viz__check"><span>✓</span>Notification permission</div>
+              <div class="viz__check"><span>✓</span>Live CGM value</div>
+              <div class="viz__check viz__check--wait"><span>•</span>Car connection</div>
+              <div class="viz__export"><span>Export settings</span><span>Import</span></div>
+            </div>
+            <h3>Checked before you pull out</h3>
+            <p>The setup screen shows the four things the car needs, and the same file moves your range, units and digest to a new phone.</p>
+          </article>
         </div>
       </div>
     </section>

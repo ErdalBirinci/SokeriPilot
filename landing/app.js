@@ -39,6 +39,36 @@
     });
   }
 
+  /* Reading progress */
+  var progressBar = document.querySelector(".progress__bar");
+  if (progressBar) {
+    var syncProgress = function () {
+      var max = document.documentElement.scrollHeight - window.innerHeight;
+      progressBar.style.width = (max > 0 ? Math.min(100, (window.scrollY / max) * 100) : 0) + "%";
+    };
+    syncProgress();
+    window.addEventListener("scroll", syncProgress, { passive: true });
+    window.addEventListener("resize", syncProgress, { passive: true });
+  }
+
+  /* Subtle 3D tilt for the product scenes (pointer devices, motion allowed) */
+  if (!reduceMotion.matches && window.matchMedia("(pointer: fine)").matches) {
+    document.querySelectorAll("[data-tilt]").forEach(function (scene) {
+      var strength = Number(scene.getAttribute("data-tilt")) || 5;
+      scene.addEventListener("pointermove", function (event) {
+        var rect = scene.getBoundingClientRect();
+        var x = (event.clientX - rect.left) / rect.width - 0.5;
+        var y = (event.clientY - rect.top) / rect.height - 0.5;
+        scene.style.setProperty("--tx", (x * strength).toFixed(2) + "deg");
+        scene.style.setProperty("--ty", (-y * strength).toFixed(2) + "deg");
+      });
+      scene.addEventListener("pointerleave", function () {
+        scene.style.removeProperty("--tx");
+        scene.style.removeProperty("--ty");
+      });
+    });
+  }
+
   /* Head-unit overlay: keep the cockpit plane locked to the photo's screen */
   var shotFrame = document.querySelector(".shot__frame");
   if (shotFrame) {
