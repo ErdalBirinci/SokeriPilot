@@ -116,6 +116,21 @@ check("landing: text and button contrast meet WCAG AA", () => {
   return pairs.map((p) => `${p.name} ${ratio(p.fg.startsWith("#") ? p.fg : tokens[p.fg], tokens[p.bg]).toFixed(2)}`).join(" · ");
 });
 
+check("landing: every primary-button gradient stop is readable", () => {
+  const rule = /\.btn--primary\s*\{[^}]*background:\s*linear-gradient\(([^;]+)\)/i.exec(css)?.[1];
+  if (!rule) throw new Error("no .btn--primary gradient");
+  const resolved = rule.replace(/var\(--([a-z0-9-]+)\)/gi, (_, name) => tokens[name] ?? _);
+  const stops = (resolved.match(/#[0-9a-f]{3,8}/gi) ?? []);
+  if (!stops.length) throw new Error("could not read the gradient colours");
+  const worst = stops
+    .map((hex) => ({ hex, value: ratio(hex, "#ffffff") }))
+    .sort((a, b) => a.value - b.value)[0];
+  if (worst.value < 4.5) {
+    throw new Error(`${worst.hex} is ${worst.value.toFixed(2)}:1 against the white label`);
+  }
+  return `${stops.length} stops, worst ${worst.value.toFixed(2)}:1`;
+});
+
 check("landing: motion can be disabled", () => {
   const css = read("landing/styles.css");
   if (!/prefers-reduced-motion/.test(css)) throw new Error("no reduced-motion block");

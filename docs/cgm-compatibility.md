@@ -14,19 +14,30 @@ The catalog lives in `android/app/src/main/java/app/sokeripilot/data/CgmAppCatal
 notification parser and the broadcast mapper are covered by unit tests, so a new format is added
 with a fixture, not by hope.
 
-## Verified today
+## Status legend
 
-| App | Package(s) | Path | Notes |
-| --- | --- | --- | --- |
-| Dexcom G6 | `com.dexcom.g6` | Notification | Value in the ongoing notification body |
-| Dexcom G7 | `com.dexcom.g7` | Notification | Same pattern, separate package |
-| FreeStyle LibreLink | `com.freestylelibre.app.{tr,gb,de,fr,it,es,us,in,br,ch,be,sa,nl,ca,au,nz}` | Notification | One package per region |
-| FreeStyle Libre 3 | `com.freestylelibre3.app.us` | Notification | Additional regional packages can be added the same way |
-| xDrip+ | `com.eveningoutpost.dexdrip` | Broadcast (+ notification fallback) | Best source; broadcast must be enabled |
-| Juggluco | `tk.glucodata` | Broadcast (+ notification fallback) | Sends xDrip-compatible broadcasts |
-| Diabox | `com.bubblesoft.android.diabox` | Notification | No verified broadcast |
-| CamAPS FX | `uk.org.cambsdiabetes.camaps` | Notification | Only the notification path is used |
-| AndroidAPS | `info.nightscout.androidaps` | Notification | Prefer xDrip+ broadcast if both are installed |
+- **Parsed** — a parser fixture covers the notification (or broadcast) this app produces, so the
+  value is extracted in a unit test. This is what "supported" means here.
+- **Detected only** — the package is in the catalog so the app can be named and pointed at, but no
+  fixture exists yet. It may work; if the app's notification text differs, no value is read.
+
+## Catalog entries
+
+| App | Package(s) | Path | Status | Notes |
+| --- | --- | --- | --- | --- |
+| Dexcom G6 | `com.dexcom.g6` | Notification | Parsed | Value in the ongoing notification body |
+| Dexcom G7 | `com.dexcom.g7` | Notification | Parsed | Same pattern, separate package |
+| FreeStyle LibreLink | `com.freestylelibre.app.{tr,gb,de,fr,it,es,us,in,br,ch,be,sa,nl,ca,au,nz}` | Notification | Parsed | One package per region |
+| FreeStyle Libre 3 | `com.freestylelibre3.app.us` | Notification | Parsed | Additional regional packages can be added the same way |
+| xDrip+ | `com.eveningoutpost.dexdrip` | Broadcast (+ notification fallback) | Parsed | Best source; broadcast must be enabled |
+| Juggluco | `tk.glucodata` | Broadcast (+ notification fallback) | Parsed | Sends xDrip-compatible broadcasts |
+| Diabox | `com.bubblesoft.android.diabox` | Notification | Parsed | No verified broadcast |
+| CamAPS FX | `uk.org.cambsdiabetes.camaps` | Notification | **Detected only** | Catalogued for naming; no fixture yet, so parsing is unproven |
+| AndroidAPS | `info.nightscout.androidaps` | Notification | **Detected only** | Catalogued for naming; prefer xDrip+ broadcast if both are installed |
+
+The two "detected only" rows were added because their packages are stable and worth naming in the
+UI, not because their notification format was verified. A contribution that adds the fixture (and
+moves the row to *Parsed*) is welcome — see the steps below.
 
 Packages are matched only against the declared `<queries>` list in `AndroidManifest.xml` — Android 11+
 package visibility forbids a blanket scan, and `QUERY_ALL_PACKAGES` is deliberately not used.

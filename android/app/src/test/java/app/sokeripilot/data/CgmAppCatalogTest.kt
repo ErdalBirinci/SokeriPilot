@@ -85,7 +85,7 @@ class CgmAppCatalogTest {
     }
 
     @Test
-    fun `hybrid closed loop apps are readable through their notifications`() {
+    fun `hybrid closed loop apps are catalogued for notification detection`() {
         val apps = CgmAppCatalog.detect(
             setOf("uk.org.cambsdiabetes.camaps", "info.nightscout.androidaps")
         )

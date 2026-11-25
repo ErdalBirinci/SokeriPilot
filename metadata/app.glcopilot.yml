@@ -29,7 +29,6 @@ Builds:
     subdir: android
     gradle:
       - yes
-    prebuild: sed -i '/keystore.properties/d' app/build.gradle.kts || true
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
