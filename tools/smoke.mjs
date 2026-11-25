@@ -29,6 +29,11 @@ const targets = [
     mustInclude: `"current": "${release.current}"`
   },
   { path: "/download/", type: "text/html", mustInclude: "Every signed release" },
+  { path: "/install/", type: "text/html", mustInclude: "From download to the cockpit" },
+  { path: "/privacy/", type: "text/html", mustInclude: "Your readings stay with you" },
+  { path: "/404.html", type: "text/html", mustInclude: "This page took a wrong turn" },
+  { path: "/robots.txt", type: "text/plain", mustInclude: "Sitemap:" },
+  { path: "/sitemap.xml", types: ["application/xml", "text/xml"], mustInclude: "<urlset" },
   ...release.releases.map((item) => ({
     path: `/download/${item.file}`,
     types: ["application/vnd.android.package-archive", "application/octet-stream"],

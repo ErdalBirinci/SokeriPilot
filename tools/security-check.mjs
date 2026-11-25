@@ -59,6 +59,9 @@ const manifest = read(manifestPath);
 const mainSources = walk("android/app/src/main/java").filter((file) => file.endsWith(".kt"));
 const landingFiles = [
   "landing/index.html",
+  "landing/install/index.html",
+  "landing/privacy/index.html",
+  "landing/404.html",
   "landing/download/index.html",
   "landing/styles.css",
   "landing/showcase.css",
@@ -361,8 +364,24 @@ check("landing: CSP is defined and strict", () => {
   return "self-only CSP";
 });
 
+check("landing: security headers cover what meta cannot", () => {
+  const headers = read("landing/_headers");
+  assert(headers.includes("Content-Security-Policy:"), "no CSP response header");
+  assert(headers.includes("frame-ancestors 'none'"), "frame-ancestors missing (meta cannot express it)");
+  assert(headers.includes("Strict-Transport-Security:"), "HSTS missing");
+  assert(headers.includes("X-Content-Type-Options: nosniff"), "nosniff missing for documents");
+  assert(headers.includes("X-Frame-Options: DENY"), "X-Frame-Options missing");
+  assert(headers.includes("Referrer-Policy: no-referrer"), "Referrer-Policy missing");
+  assert(headers.includes("Permissions-Policy:"), "Permissions-Policy missing");
+  return "CSP (frame-ancestors), HSTS, nosniff, DENY, no-referrer";
+});
+
 check("landing: no inline script/style", () => {
-  assert(!/<script(?![^>]*\bsrc=)/i.test(html), "script without src present");
+  // A JSON-LD block is data, never executed; every executable script must load from a file.
+  assert(
+    !/<script(?![^>]*\bsrc=)(?![^>]*type="application\/ld\+json")/i.test(html),
+    "script without src present"
+  );
   assert(!/\sstyle="/i.test(html), "inline style present");
   assert(!/<style/i.test(html), "inline style block present");
   assert(!/\son[a-z]+\s*=/i.test(html), "inline event handler present");
@@ -407,6 +426,56 @@ check("landing: local asset references exist", () => {
   }
   assert(html.includes("assets/favicon.svg"), "favicon reference missing");
   return `${local.length} local references verified`;
+});
+
+check("landing: every static page carries its own CSP and no executable code", () => {
+  for (const page of [
+    "landing/install/index.html",
+    "landing/privacy/index.html",
+    "landing/404.html",
+    "landing/download/index.html"
+  ]) {
+    const content = read(page);
+    assert(content.includes('http-equiv="Content-Security-Policy"'), `${page} has no CSP meta`);
+    assert(content.includes("default-src 'self'"), `${page} CSP is not self-only`);
+    assert(!/'unsafe-(inline|eval)'/.test(content), `${page} weakens the CSP`);
+    assert(!/<script/i.test(content), `${page} contains a script`);
+  }
+  return "install, privacy, 404 and archive: script-free with a strict CSP";
+});
+
+check("landing: structured data matches the release", () => {
+  const block = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html)?.[1];
+  assert(block, "JSON-LD block missing");
+  const data = JSON.parse(block);
+  const release = JSON.parse(read("landing/releases.json"));
+  assert(data["@type"] === "MobileApplication", `JSON-LD type is ${data["@type"]}`);
+  assert(data.softwareVersion === release.current, `JSON-LD version is ${data.softwareVersion}`);
+  assert(
+    data.downloadUrl.endsWith(`/download/GlucoPilot-${release.current}.apk`),
+    `JSON-LD downloadUrl is ${data.downloadUrl}`
+  );
+  return `MobileApplication ${data.softwareVersion}`;
+});
+
+check("site: crawler files agree with the published origin", () => {
+  const origin = JSON.parse(read("deploy/site.json")).urls.production.replace(/\/+$/, "");
+  const robots = read("landing/robots.txt");
+  const sitemap = read("landing/sitemap.xml");
+  assert(robots.includes(`Sitemap: ${origin}/sitemap.xml`), "robots.txt points at another sitemap");
+  for (const path of ["/", "/install/", "/privacy/", "/download/"]) {
+    assert(sitemap.includes(`<loc>${origin}${path}</loc>`), `sitemap is missing ${path}`);
+  }
+  return `robots + sitemap on ${origin}`;
+});
+
+check("site: a missing path answers with the 404 page", () => {
+  assert(exists("landing/404.html"), "landing/404.html is missing");
+  const worker = read("deploy/worker.js");
+  assert(worker.includes("/404.html"), "the worker does not serve the 404 page");
+  assert(worker.includes("status: 404"), "the 404 fallback loses the status code");
+  assert(read("landing/404.html").includes('href="/#download"'), "the 404 page has no way back to the download");
+  return "branded 404 with a download link";
 });
 
 check("landing: accessibility basics", () => {

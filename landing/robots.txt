@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://glucopilot-civgdk.freebuff.site/sitemap.xml

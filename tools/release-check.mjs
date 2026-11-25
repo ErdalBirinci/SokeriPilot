@@ -147,15 +147,22 @@ check("release: landing page pins the current release", () => {
 });
 
 check("release: stylesheet stamp is consistent", () => {
-  const stamps = [...html.matchAll(/\?v=([^"]+)"/g)].map((match) => match[1]);
-  assert(stamps.length >= 3, `only ${stamps.length} stamped stylesheet links`);
-  const wrong = stamps.filter((stamp) => stamp !== manifest.assetStamp);
-  assert(wrong.length === 0, `index.html still uses ?v=${wrong[0]}`);
-  assert(
-    archive.includes(`../styles.css?v=${manifest.assetStamp}`),
-    `the archive page targets ?v=${manifest.assetStamp} with a different stamp`
-  );
-  return `${stamps.length} links at ?v=${manifest.assetStamp}`;
+  const pages = {
+    "landing/index.html": html,
+    "landing/download/index.html": archive,
+    "landing/install/index.html": read("landing/install/index.html"),
+    "landing/privacy/index.html": read("landing/privacy/index.html"),
+    "landing/404.html": read("landing/404.html")
+  };
+  let total = 0;
+  for (const [file, content] of Object.entries(pages)) {
+    const stamps = [...content.matchAll(/\?v=([^"]+)"/g)].map((match) => match[1]);
+    assert(stamps.length >= 1, `${file} has no stamped stylesheet`);
+    const wrong = stamps.filter((stamp) => stamp !== manifest.assetStamp);
+    assert(wrong.length === 0, `${file} still uses ?v=${wrong[0]}`);
+    total += stamps.length;
+  }
+  return `${total} links across ${Object.keys(pages).length} pages at ?v=${manifest.assetStamp}`;
 });
 
 check("release: every APK has its own download headers", () => {
@@ -186,6 +193,18 @@ check("release: archive page lists every release", () => {
   }
   assert(archive.includes(current.certSha256), "the archive does not show the signing certificate");
   return `${releases.length} versions with size and hash`;
+});
+
+check("release: install guide follows the current release", () => {
+  const guide = read("landing/install/index.html");
+  const links = [...guide.matchAll(/download\/GlucoPilot-([0-9.]+)\.apk/g)].map((match) => match[1]);
+  assert(links.length >= 1, "the install guide has no APK link");
+  const stale = links.filter((version) => version !== manifest.current);
+  assert(stale.length === 0, `the install guide still links ${stale.join(", ")}`);
+  assert(guide.includes(current.file), "the guide names another file");
+  assert(guide.includes(`${(current.size / 1024 / 1024).toFixed(1)} MB`), "the guide shows another size");
+  assert(guide.includes(current.sha256.slice(0, 8)), "the guide shows another hash prefix");
+  return `${current.file} · size and hash prefix shown`;
 });
 
 check("release: archive page assets resolve", () => {
@@ -219,6 +238,11 @@ check("release: social preview points at the live site", () => {
     html.includes(`property="og:image" content="${origin}/assets/android-auto.jpg"`),
     "og:image does not point at the hero image"
   );
+  assert(
+    html.includes(`name="twitter:image" content="${origin}/assets/android-auto.jpg"`),
+    "twitter:image is missing"
+  );
+  assert(html.includes('property="og:image:width" content="1392"'), "og:image:width is missing");
   assert(html.includes('name="twitter:card" content="summary_large_image"'), "twitter:card is missing");
   return origin;
 });

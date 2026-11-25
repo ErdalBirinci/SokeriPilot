@@ -34,14 +34,25 @@ recorded in `releases.json`. A different certificate means the update cannot ins
 
 ## 3. Update the manifest, then the things it feeds
 
-Add an entry to `landing/releases.json` (`version`, `versionCode`, `date`, `file`, `size`, `sha256`,
-`certSha256`), move `current`, and bump `assetStamp` to `<version>-1`. Then:
+Let the tool do the mechanical part; it reads size, SHA-256 and (with the portable SDK) the APK's
+versionName and certificate, and refuses a signer that differs from the published one:
 
-- `landing/index.html` — announcement tag, download links, version/size rows, SHA-256 and certificate
-- `landing/_headers` — one block per APK; never a `/download/*.apk` wildcard, which would rename
-  archived builds
-- `landing/download/index.html` — the archive row, and the "Latest" flag
-- every stylesheet link and the archive page move to the new `?v=<assetStamp>`
+```bash
+node tools/release.mjs --apk landing/download/GlucoPilot-<version>.apk          # dry run
+node tools/release.mjs --apk landing/download/GlucoPilot-<version>.apk --write  # apply
+```
+
+It writes the manifest entry, moves `current`, sets `assetStamp` to `<version>-1`, and updates:
+
+- `landing/index.html` — announcement tag, download links, version/size rows, SHA-256, certificate, JSON-LD
+- `landing/_headers` — one block per APK; never a `/download/*.apk` wildcard, which renames archived builds
+- `landing/download/index.html` — the new archive row and the "Latest" flag
+- `landing/install/index.html` — file name, size and hash prefix
+- every stylesheet link on all five pages (`?v=<assetStamp>`), including the install guide, privacy page and 404
+
+Still by hand: the announcement sentence, the release-notes section and any copy that describes the
+new features. Running the tool for the version that is already current is a no-op, which is what CI
+checks.
 
 ## 4. Check locally
 
@@ -52,8 +63,10 @@ python -m http.server 4173 --bind 127.0.0.1 --directory landing &
 node tools/smoke.mjs
 ```
 
-`release-check` fails if the page hash, size, links, headers, archive or asset stamp disagree with
-`releases.json`, or if the APK's versionName or certificate differ from the manifest.
+`release-check` fails if the page hash, size, links, headers, archive, install guide or asset stamp
+disagree with `releases.json`, or if the APK's versionName or certificate differ from the manifest.
+`security-check` additionally proves the HTTP security headers, the strict CSP on every page, the
+JSON-LD block and that `robots.txt`/`sitemap.xml` use the production origin.
 
 ## 5. Preview before production
 
@@ -65,7 +78,9 @@ BASE_URL=https://glucopilot-civgdk-preview.freebuff.site node tools/live-check.m
 
 The live check compares the served bytes with the local APK, checks that each stylesheet response is
 fresh at the current `?v=` stamp (a cached document pairing with an old stylesheet is the failure
-this catches), and verifies the archive, the manifest and the QR asset.
+this catches), and verifies the archive, the manifest, the QR asset, the security headers, the
+install and privacy pages with the crawler files, and that an unknown path answers with the branded
+404 page.
 
 ## 6. Production
 
@@ -85,6 +100,15 @@ git add -A
 git commit -m "Release <version>"
 git tag -a v<version> -m "GlucoPilot <version>"
 ```
+
+After any change to the signing key or its backup, prove the backup still restores:
+
+```bash
+KEYSTORE_PASSPHRASE='…' bash tools/keystore-drill.sh
+```
+
+For unattended monitoring, schedule `node tools/watch.mjs` (it writes `dist/watch.json` and posts to
+`WATCH_WEBHOOK` when set, so cron exits non-zero on a failing site).
 
 The tag is what ties the published APK hash to the source that produced it. `v1.2.0` is the commit
 that was live with 1.2.0.

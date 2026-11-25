@@ -1,4 +1,10 @@
 # Cloudflare Workers static assets: response header overrides.
+#
+# Every response carries the security headers below. Each page also repeats the
+# CSP in a <meta> tag, because a meta policy is the only copy that survives when
+# the file is opened without headers; `frame-ancestors` is ignored in <meta>, so
+# the header is what actually stops the site being framed.
+#
 # Each APK is listed by its own name so the download filename always matches the
 # version being served; a wildcard here would rename an archived build.
 # The package MIME type is what Android installers and browsers use for the
@@ -8,6 +14,14 @@
 # HTML, CSS and JS revalidate on every request: the landing links its
 # stylesheets with ?v=, so a cached document can never pair a new page with a
 # stale stylesheet after a deploy.
+
+/*
+  Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
 
 /
   Cache-Control: public, max-age=0, must-revalidate

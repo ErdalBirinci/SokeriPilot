@@ -240,6 +240,71 @@ try {
 }
 
 /* ------------------------------------------------------------------ */
+/* 8. Security headers                                                 */
+/* ------------------------------------------------------------------ */
+
+try {
+  const { response } = await request("/");
+  const header = (name) => response.headers.get(name) ?? "";
+  const csp = header("content-security-policy");
+  const missing = [];
+  if (!csp.includes("default-src 'self'")) missing.push("CSP default-src");
+  if (!csp.includes("frame-ancestors 'none'")) missing.push("CSP frame-ancestors");
+  if (!header("strict-transport-security").includes("max-age=")) missing.push("HSTS");
+  if (header("x-content-type-options").toLowerCase() !== "nosniff") missing.push("nosniff");
+  if (header("x-frame-options").toUpperCase() !== "DENY") missing.push("X-Frame-Options");
+  if (header("referrer-policy") !== "no-referrer") missing.push("Referrer-Policy");
+  if (missing.length > 0) throw new Error(`missing or weak: ${missing.join(", ")}`);
+  pass("live: security headers", "CSP with frame-ancestors · HSTS · nosniff · DENY · no-referrer");
+} catch (error) {
+  fail("live: security headers", error.message);
+}
+
+/* ------------------------------------------------------------------ */
+/* 9. Guide pages and crawler files                                    */
+/* ------------------------------------------------------------------ */
+
+try {
+  const pages = [
+    { path: "/install/", marker: "From download to the cockpit" },
+    { path: "/privacy/", marker: "Your readings stay with you" }
+  ];
+  const details = [];
+  for (const page of pages) {
+    const { response, body, type } = await request(page.path);
+    if (response.status !== 200) throw new Error(`${page.path} HTTP ${response.status}`);
+    if (type !== "text/html") throw new Error(`${page.path} content-type ${type || "(none)"}`);
+    if (!body.toString("utf8").includes(page.marker)) throw new Error(`${page.path} is not the expected page`);
+    details.push(`${page.path} ${kb(body.length)}`);
+  }
+  const robots = await request("/robots.txt");
+  if (robots.response.status !== 200) throw new Error(`robots.txt HTTP ${robots.response.status}`);
+  if (!robots.body.toString("utf8").includes(`${origin}/sitemap.xml`)) throw new Error("robots.txt points elsewhere");
+  const sitemap = await request("/sitemap.xml");
+  if (sitemap.response.status !== 200) throw new Error(`sitemap.xml HTTP ${sitemap.response.status}`);
+  for (const path of ["/install/", "/privacy/"]) {
+    if (!sitemap.body.toString("utf8").includes(`${origin}${path}`)) throw new Error(`sitemap is missing ${path}`);
+  }
+  pass("live: guide pages and crawler files", `${details.join(" · ")} · robots + sitemap`);
+} catch (error) {
+  fail("live: guide pages and crawler files", error.message);
+}
+
+/* ------------------------------------------------------------------ */
+/* 10. Unknown path                                                    */
+/* ------------------------------------------------------------------ */
+
+try {
+  const { response, body, type } = await request("/this-path-does-not-exist");
+  if (response.status !== 404) throw new Error(`HTTP ${response.status}, expected 404`);
+  if (type !== "text/html") throw new Error(`content-type ${type || "(none)"}`);
+  if (!body.toString("utf8").includes("This page took a wrong turn")) throw new Error("the branded 404 page is missing");
+  pass("live: unknown path", "404 text/html · branded page with a download link");
+} catch (error) {
+  fail("live: unknown path", error.message);
+}
+
+/* ------------------------------------------------------------------ */
 
 console.log("");
 if (failures.length > 0) {

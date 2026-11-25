@@ -14,13 +14,31 @@
   <meta property="og:image" content="https://glucopilot-civgdk.freebuff.site/assets/android-auto.jpg">
   <meta property="og:image:alt" content="A car head unit running Android Auto: Maps on the left, the GlucoPilot cockpit on the right showing 128 mg/dL and an in-range band.">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://glucopilot-civgdk.freebuff.site/assets/android-auto.jpg">
+  <meta name="theme-color" content="#0e9f7c">
+  <meta property="og:image:width" content="1392">
+  <meta property="og:image:height" content="752">
   <meta name="color-scheme" content="light">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=1.2.0-7">
-  <link rel="stylesheet" href="showcase.css?v=1.2.0-7">
-  <link rel="stylesheet" href="signals.css?v=1.2.0-7">
+  <link rel="stylesheet" href="styles.css?v=1.2.0-8">
+  <link rel="stylesheet" href="showcase.css?v=1.2.0-8">
+  <link rel="stylesheet" href="signals.css?v=1.2.0-8">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "MobileApplication",
+    "name": "GlucoPilot",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Android 8.0 or newer",
+    "softwareVersion": "1.2.0",
+    "url": "https://glucopilot-civgdk.freebuff.site/",
+    "downloadUrl": "https://glucopilot-civgdk.freebuff.site/download/GlucoPilot-1.2.0.apk",
+    "description": "Shows CGM readings as a silent Android Auto car notification and a one-tap cockpit. Reads the sensor app already installed; no account, no analytics, no dosing advice.",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -334,6 +352,91 @@
             <h3>Bright and calm</h3>
             <p>A spacious setup screen on the phone; short, readable lines in the car. Soft contrast that is easy on the eyes at night.</p>
           </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="compare">
+      <div class="container">
+        <div class="section__head reveal">
+          <p class="eyebrow"><span class="eyebrow__dot"></span> Compare</p>
+          <h2>Does it replace what you already use?</h2>
+          <p class="section__lede">
+            No. GlucoPilot sits beside your sensor app and your navigation instead of taking them over.
+            Here is where it helps, and where another tool is the better answer.
+          </p>
+        </div>
+        <div class="compare reveal">
+          <div class="compare__wrap">
+            <table>
+              <caption>GlucoPilot 1.2.0 compared with the common alternatives for seeing CGM data in a car.</caption>
+              <thead>
+                <tr>
+                  <th scope="col">What you compare</th>
+                  <th scope="col" class="compare__ours">GlucoPilot</th>
+                  <th scope="col">Sensor app + phone mount</th>
+                  <th scope="col">Nightscout in a car browser</th>
+                  <th scope="col">AndroidAPS / Juggluco</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Reading while Maps is open</th>
+                  <td class="compare__ours">Silent car notification beside navigation, one tap opens the cockpit</td>
+                  <td>Not visible; you look at the phone</td>
+                  <td>Depends on the browser; not a car interface</td>
+                  <td>Not visible on the car screen</td>
+                </tr>
+                <tr>
+                  <th scope="row">Setup inside the sensor app</th>
+                  <td class="compare__ours">None — one system permission, nothing to configure</td>
+                  <td>Nothing, but the value stays on the phone</td>
+                  <td>Server URL and access token</td>
+                  <td>Guided setup with more options to choose</td>
+                </tr>
+                <tr>
+                  <th scope="row">CGM sources</th>
+                  <td class="compare__ours">Any app that posts a notification, plus xDrip+ and Nightscout</td>
+                  <td>The maker's own sensor only</td>
+                  <td>Whatever your Nightscout server receives</td>
+                  <td>Its supported source set</td>
+                </tr>
+                <tr>
+                  <th scope="row">Where readings go</th>
+                  <td class="compare__ours">Nowhere by default; your own Nightscout only if you add it</td>
+                  <td>The maker's cloud</td>
+                  <td>Your server</td>
+                  <td>Your server or your phone</td>
+                </tr>
+                <tr>
+                  <th scope="row">Account, ads, tracking</th>
+                  <td class="compare__ours">None</td>
+                  <td>Usually an account</td>
+                  <td>Depends on your server</td>
+                  <td>None</td>
+                </tr>
+                <tr>
+                  <th scope="row">Dosing advice</th>
+                  <td class="compare__ours">None, by design</td>
+                  <td>None</td>
+                  <td>None</td>
+                  <td>Yes — a different, more demanding tool</td>
+                </tr>
+                <tr>
+                  <th scope="row">How it is installed</th>
+                  <td class="compare__ours">Signed APK from this page, <a href="install/">step by step</a></td>
+                  <td>Play Store</td>
+                  <td>A web page</td>
+                  <td>Play Store or APK</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="compare__note">
+            The limit is deliberate: Android Auto does not let a third-party app draw over Maps, and
+            GlucoPilot does not talk to the sensor directly. That is why it runs alongside the maker's app
+            rather than replacing it.
+          </p>
         </div>
       </div>
     </section>
@@ -724,6 +827,7 @@
               <li><strong>Android Auto:</strong> apps installed outside Play only appear after developer mode and <em>Unknown sources</em> are enabled in the Android Auto app.</li>
               <li><strong>Battery:</strong> if your phone freezes background apps, set GlucoPilot to <em>Unrestricted</em> or the car notification stops updating.</li>
             </ul>
+            <p class="download__archive"><a href="install/">Step-by-step install guide →</a></p>
             <p class="download__archive"><a href="download/">All releases, sizes and hashes →</a></p>
           </div>
 
@@ -786,8 +890,10 @@
       <div class="footer__col">
         <h3>Resources</h3>
         <a href="#setup">Setup</a>
+        <a href="install/">Install guide</a>
         <a href="#faq">FAQ</a>
         <a href="download/">All releases</a>
+        <a href="privacy/">Privacy</a>
         <a href="#top">Back to top</a>
       </div>
       <div class="footer__col">

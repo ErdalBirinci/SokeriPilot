@@ -1992,3 +1992,206 @@ html.js .reveal.is-in {
     transform: none;
   }
 }
+
+/* ---------- comparison ---------- */
+
+.compare {
+  margin-top: clamp(24px, 4vw, 38px);
+}
+
+.compare__wrap,
+.guide__table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+}
+
+.compare table,
+.guide__table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.compare caption {
+  padding: 14px 16px 0;
+  color: var(--ink-2);
+  font-size: 12px;
+  text-align: left;
+}
+
+.compare th,
+.compare td,
+.guide__table th,
+.guide__table td {
+  padding: 13px 16px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--line);
+}
+
+.compare thead th,
+.guide__table th {
+  background: rgba(8, 24, 21, 0.03);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.compare tbody th {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.compare td,
+.guide__table td {
+  color: var(--ink-2);
+}
+
+.compare tr:last-child th,
+.compare tr:last-child td,
+.guide__table tr:last-child td {
+  border-bottom: 0;
+}
+
+.compare__ours {
+  background: rgba(14, 159, 124, 0.07);
+  color: var(--ink);
+}
+
+.compare__note {
+  margin-top: 16px;
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ---------- guide, legal and 404 pages ---------- */
+
+.guide__list {
+  display: grid;
+  gap: clamp(18px, 2.6vw, 26px);
+  margin-top: 30px;
+  padding: 0;
+  list-style: none;
+}
+
+.guide__list > li {
+  padding: 22px 24px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+}
+
+.guide__list h2 {
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+}
+
+.guide__list p,
+.guide__section > p {
+  color: var(--ink-2);
+  font-size: 14.5px;
+  line-height: 1.66;
+}
+
+.guide__list p + p {
+  margin-top: 10px;
+}
+
+.guide__note {
+  padding-left: 14px;
+  border-left: 2px solid rgba(14, 159, 124, 0.35);
+  font-size: 13px !important;
+}
+
+.guide__section {
+  margin-top: clamp(32px, 5vw, 50px);
+}
+
+.guide__section h2 {
+  margin-bottom: 12px;
+  font-size: 1.3rem;
+  letter-spacing: -0.025em;
+}
+
+.guide__code {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #0f2b25;
+  color: #dff5ee;
+  font-size: 13px;
+  overflow-x: auto;
+}
+
+.guide__list code {
+  white-space: nowrap;
+}
+
+.guide__code code,
+.guide__note code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.94em;
+}
+
+.guide__back {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: clamp(30px, 5vw, 44px);
+}
+
+.guide .fineprint,
+.legal .fineprint,
+.notfound .fineprint {
+  margin-top: 24px;
+}
+
+.legal__section {
+  margin-top: clamp(26px, 4vw, 38px);
+}
+
+.legal__section h2 {
+  margin-bottom: 10px;
+  font-size: 1.18rem;
+  letter-spacing: -0.02em;
+}
+
+.legal p,
+.legal li {
+  color: var(--ink-2);
+  font-size: 14.5px;
+  line-height: 1.68;
+}
+
+.legal p + p {
+  margin-top: 12px;
+}
+
+.legal ul {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.notfound__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+@media (max-width: 560px) {
+  .guide__list > li {
+    padding: 18px 18px;
+  }
+}

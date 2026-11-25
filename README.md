@@ -7,7 +7,8 @@ screen. It does not recommend doses and does not collect data.
 ```
 android/     Android app (Kotlin + Android for Cars App Library)
 landing/     Marketing site (dependency-free HTML/CSS/JS), release manifest and signed APK archive
-tools/       Executable security, release and smoke checks
+store/       Play listing copy, data-safety answers, IOT rationale and the feature graphic
+tools/       Security, release, smoke, live and scheduled checks; release and keystore tools
 RELEASE.md   The release sequence: build, manifest, preview gate, tag, rollback
 ```
 
@@ -376,6 +377,26 @@ hand-edited symbol fails the release instead of shipping:
 node tools/qr.mjs
 ```
 
+**Scheduled watch (for cron or Task Scheduler):**
+
+```bash
+node tools/watch.mjs                                    # runs live-check, writes dist/watch.json
+WATCH_WEBHOOK=https://hooks.example/… node tools/watch.mjs   # posts a short message on failure
+```
+
+**Signing-key restore drill:**
+
+```bash
+KEYSTORE_PASSPHRASE='…' bash tools/keystore-drill.sh
+```
+
+It decrypts `backups/*.tar.gz.enc`, proves the keystore is byte-identical to the live one and that
+its certificate SHA-256 equals the one in `releases.json`, without touching the live key or
+building anything. Run it after any key or backup change.
+
+**Continuous integration:** `.github/workflows/ci.yml` runs the web checks, the smoke test, the
+release tool's idempotency check and the Android unit tests on every push and pull request.
+
 **Published site check (single command):**
 
 ```bash
@@ -410,17 +431,20 @@ value it found. Without a phone it exits with `No connected device`.
 
 - `:app:assembleDebug` — **BUILD SUCCESSFUL**; APK: `android/app/build/outputs/apk/debug/app-debug.apk` (~4.5 MB, minSdk 26 / targetSdk 35; English resources only).
 - `:app:testDebugUnitTest` — **132 tests, 0 failures**.
-- `node tools/security-check.mjs` — **31/31 PASS**.
-- `node tools/release-check.mjs` — **12/12 PASS**: manifest, both APK files byte for byte, page,
-  headers, archive, the QR payload decoded and compared with `deploy/site.json`, and the APK's own
-  versionName and certificate.
+- `node tools/security-check.mjs` — **36/36 PASS** (adds the HTTP security headers, the
+  install/privacy/404 pages, the JSON-LD block and the crawler files).
+- `node tools/release-check.mjs` — **13/13 PASS**: manifest, both APK files byte for byte, page,
+  headers, archive, install guide, the stylesheet stamp across all five pages, the QR payload
+  decoded and compared with `deploy/site.json`, and the APK's own versionName and certificate.
 - `python tools/check_xml.py` — 19 resource XML files are well formed.
-- `node tools/smoke.mjs` — landing page 11/11 HTTP 200: the three stylesheets at the current stamp,
-  `releases.json`, the QR code, the archive page and both signed APKs.
-- `node tools/live-check.mjs` — **7/7 PASS** on the published site: page pins 1.2.0 and its hashes,
-  all stylesheets fresh at `?v=`, hero JPEG 97.7 KB, APK
-  `application/vnd.android.package-archive` 898.6 KB with SHA-256 `464a15e4…`, the archive page and
-  `releases.json` served.
+- `node tools/smoke.mjs` — landing page 16/16 HTTP 200: the three stylesheets at the current stamp,
+  `releases.json`, the QR code, the archive page, the install guide, the privacy page, the 404
+  page, `robots.txt`, `sitemap.xml` and both signed APKs.
+- `node tools/live-check.mjs` — **10/10 PASS** on the published site: page pins 1.2.0 and its
+  hashes, all stylesheets fresh at `?v=`, hero JPEG 97.7 KB, APK
+  `application/vnd.android.package-archive` 898.6 KB with SHA-256 `464a15e4…`, the archive page,
+  `releases.json`, the security headers, the install/privacy pages with `robots.txt` and
+  `sitemap.xml`, and the branded 404 for an unknown path.
 - `node tools/qr.mjs` — the install QR decodes to
   `https://glucopilot-civgdk.freebuff.site/#download`; it was also decoded independently with jsQR
   in Chromium.
@@ -478,9 +502,11 @@ the user can exclude the app from battery optimization.
 ### Releasing an update
 
 `landing/releases.json` describes a release once, and `RELEASE.md` is the ordered checklist. In
-short: build and sign, copy the APK into `landing/download/`, add the manifest entry, update the page
-version, size, hash and links, add the `_headers` block and the archive row, bump `assetStamp`, then
-run `release-check`, `security-check` and `smoke`. Deploy to **preview** first and run `live-check`
+short: build and sign, copy the APK into `landing/download/`, then let
+`node tools/release.mjs --apk landing/download/GlucoPilot-<version>.apk --write` update the manifest,
+the page version/size/hash/links, the `_headers` block, the archive row, the install guide and the
+`assetStamp` on every page. Update the announcement copy, then run `release-check`, `security-check`
+and `smoke`. Deploy to **preview** first and run `live-check`
 against the preview URL; only then deploy production and run it again. Tag the commit with the
 version so the published hash stays tied to its source. Old versions stay downloadable from
 `/download/`; a bad release is rolled back by checking out the tag and deploying again.
