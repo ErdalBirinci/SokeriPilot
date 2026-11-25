@@ -298,6 +298,14 @@
   font-weight: 550;
 }
 
+.cockpit__caption {
+  max-width: 46ch;
+  margin-top: 22px;
+  color: rgba(234, 246, 241, 0.62);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
 /* Signal bento */
 
 .bento {
@@ -496,7 +504,7 @@
   align-content: center;
 }
 
-.viz__stats div {
+.viz--stats div {
   display: grid;
   gap: 1px;
   padding: 10px 11px;

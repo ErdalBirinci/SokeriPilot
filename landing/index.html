@@ -9,9 +9,9 @@
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=1.2.0">
-  <link rel="stylesheet" href="showcase.css?v=1.2.0">
-  <link rel="stylesheet" href="signals.css?v=1.2.0">
+  <link rel="stylesheet" href="styles.css?v=1.2.0-2">
+  <link rel="stylesheet" href="showcase.css?v=1.2.0-2">
+  <link rel="stylesheet" href="signals.css?v=1.2.0-2">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -396,7 +396,7 @@
             <div class="dash__shadow"></div>
           </div>
           <div class="dash__chips"><span>90-minute trend</span><span>Session TIR</span><span>Sensor battery</span></div>
-          <p class="car__caption">Tapping the notification opens the cockpit full screen. Back returns to Maps; navigation keeps running in the background.</p>
+          <p class="cockpit__caption">Tapping the notification opens the cockpit full screen. Back returns to Maps; navigation keeps running in the background.</p>
         </div>
       </div>
     </section>
@@ -638,132 +638,50 @@
       <div class="container">
         <div class="section__head section__head--left reveal">
           <p class="eyebrow"><span class="eyebrow__dot"></span> What's new</p>
-          <h2>New in 1.2.0</h2>
+          <h2>Release notes.</h2>
           <p class="section__lede">
-            The cockpit becomes a co-pilot: it warns before you leave range, draws the last 90
-            minutes, explains what the sensor itself is doing, checks the setup before you drive,
-            and keeps a small summary of every drive on the phone. Everything below is in the
-            signed APK on this page.
+            Everything the cockpit gained in 1.2.0, and the releases that led to it. All of it is
+            in the signed APK on this page.
           </p>
         </div>
 
-        <div class="features">
-          <article class="card reveal">
-            <span class="card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M3 16l4-5 3 3 5-8 3 5 3-2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 20h18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-            </span>
-            <span class="card__tag">1.2.0</span>
-            <h3>Warns before you leave range</h3>
-            <p>Reads the last 15 minutes as a straight-line trend. If your low is about 30 minutes away — 45 for a high — one “Low soon” or “High soon” alert appears, at most every half hour and only while driving. It is a projection of the measured slope, not dosing advice.</p>
-          </article>
-
-          <article class="card reveal">
-            <span class="card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M3 17c2.4-.6 3.4-4 5.5-4s2.7 3 4.6 3 3-6 5.1-6 2.6 2 3.8 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3 6v12h18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            <span class="card__tag">1.2.0</span>
-            <h3>The last 90 minutes, drawn</h3>
-            <p>The cockpit now shows your trend line over a soft target band, so the shape of the climb or fall is visible at a glance. Time in range is counted from the moment this drive started, so the percentage matches the drive you are in.</p>
-          </article>
-
-          <article class="card reveal">
-            <span class="card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-            </span>
-            <span class="card__tag">1.2.0</span>
-            <h3>Knows what the sensor is doing</h3>
-            <p>Warm-up, signal loss and a finished sensor are read from the CGM app's own notifications, so a gap is explained instead of looking like a dead connection. Sensor battery is shown in the cockpit, with one quiet notice at 15% or less.</p>
-          </article>
-
-          <article class="card reveal">
-            <span class="card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M12 3.6a5.3 5.3 0 0 0-5.3 5.3c0 4.1-1.6 5.3-1.6 5.3h13.8s-1.6-1.2-1.6-5.3A5.3 5.3 0 0 0 12 3.6Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.2 17.4a1.9 1.9 0 0 0 3.6 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M17 5h4M19 3v4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-            </span>
-            <span class="card__tag">1.2.0</span>
-            <h3>An urgent low that does not give up</h3>
-            <p>At 54 mg/dL or below the alert repeats every five minutes, at most three times, and each repeat alerts again instead of updating silently. “Got it” on the notification quiets it for half an hour.</p>
-          </article>
-
-          <article class="card reveal">
-            <span class="card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.6 6.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            <span class="card__tag">1.2.0</span>
-            <h3>Sensor change, one tap</h3>
-            <p>The “No glucose data” reminder now carries a “Sensor change” action that pauses it for two hours — from the car notification or the phone button, with a live countdown. The reminder returns on its own if the sensor is still silent afterwards.</p>
-          </article>
-
-          <article class="card reveal">
-            <span class="card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="5.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M15.4 15.4 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M8.8 11.2l1.7 1.7 3-3.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            <span class="card__tag">1.2.0</span>
-            <h3>A setup check before you drive</h3>
-            <p>Four rows on the phone show whether notification access, notification permission, a live CGM value and the car connection are working — so a silent notification is caught in the driveway, not on the motorway.</p>
-          </article>
-
-          <article class="card reveal">
-            <span class="card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M3.6 13.4l1.7-4.1a2.4 2.4 0 0 1 2.2-1.5h9a2.4 2.4 0 0 1 2.2 1.5l1.7 4.1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.4" y="13.4" width="17.2" height="4.2" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6.8 17.6v1.6M17.2 17.6v1.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-            </span>
-            <span class="card__tag">1.2.0</span>
-            <h3>Your drive, written down</h3>
-            <p>When monitoring stops, the phone keeps the drive's minutes, time in range, lowest value and low count. Four small numbers, stored locally with no upload, so you can compare drives without exporting anything.</p>
-          </article>
-
-          <article class="card reveal">
-            <span class="card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.2A4.2 4.2 0 0 1 12 8a4.2 4.2 0 0 1 7 2.8C19 15.6 12 20 12 20Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12h2l1-2 1.6 4 1-2H17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            <span class="card__tag">1.2.0</span>
-            <h3>Health Connect and a settings backup</h3>
-            <p>Optional, write-only Health Connect export of new readings: you grant it, you can revoke it, and GlucoPilot never reads health data back. Settings can be exported to a file and imported on a new phone; the file carries the Nightscout digest, never the raw key.</p>
-          </article>
-          <article class="card reveal">
-            <span class="card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M12 3.6a5.3 5.3 0 0 0-5.3 5.3c0 4.1-1.6 5.3-1.6 5.3h13.8s-1.6-1.2-1.6-5.3A5.3 5.3 0 0 0 12 3.6Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.2 17.4a1.9 1.9 0 0 0 3.6 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-            </span>
-            <span class="card__tag">1.1.0</span>
-            <h3>Reads any CGM app</h3>
-            <p>Dexcom, Libre, Diabox, xDrip+ — whatever posts the value in a notification, GlucoPilot picks it up. One system permission, and no settings to change inside the CGM app.</p>
-          </article>
-
-          <article class="card reveal">
-            <span class="card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M3.6 13.4l1.7-4.1a2.4 2.4 0 0 1 2.2-1.5h9a2.4 2.4 0 0 1 2.2 1.5l1.7 4.1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.4" y="13.4" width="17.2" height="4.2" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6.8 17.6v1.6M17.2 17.6v1.6M6.6 15.5h.01M17.4 15.5h.01" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-            </span>
-            <span class="card__tag">1.1.0</span>
-            <h3>Only runs in the car</h3>
-            <p>Monitoring and the status notification start the moment Android Auto connects, and stop when the phone is unplugged. Nothing is started at boot, so the app stays quiet away from the car.</p>
-          </article>
-
-          <article class="card reveal">
-            <span class="card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="5.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M15.4 15.4 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M8.8 11.2l1.7 1.7 3-3.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            <span class="card__tag">1.1.1</span>
-            <h3>Shows why a value is missing</h3>
-            <p>When nothing reaches the car, Source check lists the last reading with its app and the last ten notifications, each marked accepted or rejected with the reason.</p>
-          </article>
-
-          <article class="card reveal">
-            <span class="card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7.4V12l3 1.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            <span class="card__tag">1.1.2</span>
-            <h3>Warns when the sensor goes quiet</h3>
-            <p>If no new reading arrives for 15 minutes, a single high-priority “No glucose data” alert appears in the car and clears itself when readings return — so an old value never looks current.</p>
-          </article>
-
-          <article class="card reveal">
-            <span class="card__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M12 3.6a5.3 5.3 0 0 0-5.3 5.3c0 4.1-1.6 5.3-1.6 5.3h13.8s-1.6-1.2-1.6-5.3A5.3 5.3 0 0 0 12 3.6Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.2 17.4a1.9 1.9 0 0 0 3.6 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4 4l16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-            </span>
-            <span class="card__tag">1.1.3</span>
-            <h3>Quiet through a sensor change</h3>
-            <p>The “No glucose data” alert now waits for a reading that arrives during the drive, so a warming-up sensor no longer sets it off. A new “I’m changing my sensor” button pauses the reminder for two hours and counts the minutes down while the screen is open.</p>
-          </article>
-        </div>
+        <ol class="releases">
+          <li class="release reveal">
+            <span class="release__ver">1.2.0</span>
+            <div>
+              <h3>Warnings before range, a drawn trend and sensor state</h3>
+              <p>A “Low soon” / “High soon” projection from the last 15 minutes, a 90-minute trend line with the session's time in range, and the sensor's own warm-up, signal-loss and battery state. An urgent low repeats until it is acknowledged, a sensor change pauses the missing-data reminder for two hours, and the phone keeps a four-number drive summary, a setup check and an optional write-only Health Connect export with a settings backup.</p>
+            </div>
+          </li>
+          <li class="release reveal">
+            <span class="release__ver">1.1.3</span>
+            <div>
+              <h3>Quiet through a sensor change</h3>
+              <p>The “No glucose data” alert waits for a reading from the current drive, so a warming-up sensor no longer sets it off; “I'm changing my sensor” pauses the reminder for two hours with a countdown.</p>
+            </div>
+          </li>
+          <li class="release reveal">
+            <span class="release__ver">1.1.2</span>
+            <div>
+              <h3>Warns when the sensor goes quiet</h3>
+              <p>If no new reading arrives for 15 minutes, one high-priority “No glucose data” alert appears in the car and clears itself when readings return.</p>
+            </div>
+          </li>
+          <li class="release reveal">
+            <span class="release__ver">1.1.1</span>
+            <div>
+              <h3>Shows why a value is missing</h3>
+              <p>When nothing reaches the car, Source check lists the last reading and the last ten notifications, each marked accepted or rejected with the reason.</p>
+            </div>
+          </li>
+          <li class="release reveal">
+            <span class="release__ver">1.1.0</span>
+            <div>
+              <h3>Reads any CGM app, only in the car</h3>
+              <p>Dexcom, Libre, Diabox, xDrip+ — any app that posts the value in a notification. One system permission, and monitoring starts and stops with Android Auto.</p>
+            </div>
+          </li>
+        </ol>
       </div>
     </section>
 

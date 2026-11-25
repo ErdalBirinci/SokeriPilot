@@ -242,6 +242,10 @@ h2 {
   margin-inline: auto;
 }
 
+.section__head--left .section__lede {
+  margin-inline: 0;
+}
+
 /* ---------- eyebrow ---------- */
 
 .eyebrow {
@@ -813,240 +817,6 @@ html.js .shot__ui {
   }
 }
 
-.tag {
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: var(--mint-soft);
-  color: var(--mint-ink);
-  font-size: 10px;
-  font-weight: 650;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.tag--alert {
-  background: var(--coral-soft);
-  color: var(--coral);
-}
-
-.car {
-  position: relative;
-  z-index: 4;
-  padding: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.92);
-  border-radius: 24px;
-  background: linear-gradient(158deg, #ffffff 0%, #f2faf6 60%, #eaf6f2 100%);
-  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(8, 24, 21, 0.06);
-  transform: rotateX(3deg) rotateY(-5deg) translateZ(16px);
-  transform-style: preserve-3d;
-  transition: transform 0.5s var(--ease);
-}
-
-.car__top {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 2px 4px 12px;
-  border-bottom: 1px solid var(--line);
-}
-
-.car__brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 11.5px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-}
-
-.car__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--sky);
-  box-shadow: 0 0 0 3px rgba(47, 127, 224, 0.14);
-}
-
-.car__time {
-  margin-left: auto;
-  color: var(--muted);
-  font-size: 10.5px;
-  font-variant-numeric: tabular-nums;
-}
-
-.car__cgm-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--ink-2);
-  font-size: 11px;
-  font-weight: 650;
-}
-
-.car__cgm-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--mint);
-  box-shadow: 0 0 0 2px rgba(14, 159, 124, 0.16);
-}
-
-.car__cgm-live {
-  margin-left: auto;
-  color: var(--mint-ink);
-  font-size: 8.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.car__band {
-  align-self: flex-start;
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: var(--mint-soft);
-  color: var(--mint-ink);
-  font-size: 9px;
-  font-weight: 650;
-  white-space: nowrap;
-}
-
-.car__band--alert {
-  background: var(--coral-soft);
-  color: var(--coral);
-}
-
-.car__spark {
-  width: 100%;
-  height: 42px;
-  margin-top: 2px;
-  overflow: visible;
-}
-
-.car__spark-line {
-  fill: none;
-  stroke: var(--mint);
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-
-.car__meta {
-  color: var(--muted);
-  font-size: 9px;
-}
-
-.car__caption {
-  max-width: 46ch;
-  margin-top: 22px;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-/* cockpit: the screen opened from the notification */
-
-.car--cockpit {
-  width: 100%;
-  transform: none;
-}
-
-.car__cockpit {
-  display: grid;
-  grid-template-columns: 1.3fr 0.7fr;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 2px 12px;
-}
-
-.car__cockpit-main {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.car__cockpit-value {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  font-size: clamp(56px, 7vw, 72px);
-  font-weight: 660;
-  letter-spacing: -0.06em;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.car__cockpit-value span {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 550;
-  letter-spacing: 0;
-}
-
-.car__cockpit-value em {
-  margin-left: auto;
-  color: var(--coral);
-  font-size: 24px;
-  font-style: normal;
-}
-
-.car--cockpit .car__cgm-live {
-  color: var(--coral);
-}
-
-.car__cockpit .car__spark {
-  height: 56px;
-  margin-top: 6px;
-}
-
-.car__cockpit .car__spark-line {
-  stroke: var(--coral);
-}
-
-.car__cockpit-aside {
-  display: grid;
-  gap: 7px;
-}
-
-.car__cockpit-aside div {
-  display: grid;
-  gap: 0;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--canvas);
-}
-
-.car__cockpit-aside span {
-  color: var(--muted);
-  font-size: 8.5px;
-}
-
-.car__cockpit-aside strong {
-  font-size: 12px;
-  letter-spacing: -0.01em;
-}
-
-.car__cockpit-actions {
-  display: flex;
-  gap: 6px;
-  padding-top: 10px;
-  border-top: 1px solid var(--line);
-}
-
-.car__cockpit-actions span {
-  flex: 1;
-  padding: 8px 4px;
-  border-radius: 9px;
-  background: var(--canvas);
-  text-align: center;
-  font-size: 9px;
-  font-weight: 600;
-}
-
-.car__cockpit-actions span:first-child {
-  background: var(--ink);
-  color: #fff;
-}
-
 /* ---------- feature cards ---------- */
 
 .features {
@@ -1089,19 +859,6 @@ html.js .shot__ui {
   height: 26px;
 }
 
-.card__tag {
-  display: inline-flex;
-  align-items: center;
-  margin-bottom: 10px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: var(--mint-soft);
-  color: var(--mint-ink);
-  font-size: 11px;
-  font-weight: 650;
-  letter-spacing: 0.04em;
-}
-
 .card h3 {
   margin-bottom: 8px;
   font-size: 1.0625rem;
@@ -1111,6 +868,49 @@ html.js .shot__ui {
 }
 
 .card p {
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.62;
+}
+
+/* ---------- release notes ---------- */
+
+.releases {
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+
+.release {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: clamp(16px, 3vw, 40px);
+  padding: clamp(22px, 3vw, 30px) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.release__ver {
+  justify-self: start;
+  align-self: start;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--mint-soft);
+  color: var(--mint-ink);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.release h3 {
+  margin-bottom: 6px;
+  font-size: 1.0625rem;
+  font-weight: 660;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.release p {
+  max-width: 72ch;
   color: var(--ink-2);
   font-size: 14px;
   line-height: 1.62;
@@ -1807,6 +1607,43 @@ html.js .reveal.is-in {
   transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
 }
 
+/* Release announcement (shown above the header, scrolls away) */
+.announce {
+  background: linear-gradient(90deg, var(--mint-soft), var(--sky-soft));
+  border-bottom: 1px solid var(--line);
+}
+
+.announce__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 10px 0;
+  font-size: 14px;
+}
+
+.announce__tag {
+  background: var(--mint-ink);
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.announce__inner p {
+  flex: 1 1 320px;
+  margin: 0;
+  color: var(--ink-2);
+}
+
+.announce__inner a {
+  color: var(--mint-ink);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* ---------- responsive ---------- */
 
 @media (max-width: 1080px) {
@@ -1817,14 +1654,6 @@ html.js .reveal.is-in {
   .hero__stage {
     min-height: 0;
     margin-top: 8px;
-  }
-
-  .car {
-    transform: none;
-  }
-
-  .features {
-    grid-template-columns: repeat(2, 1fr);
   }
 
   .cockpit__grid,
@@ -1928,19 +1757,6 @@ html.js .reveal.is-in {
     flex: 1 1 100%;
   }
 
-  .car {
-    padding: 12px;
-    border-radius: 20px;
-  }
-
-  .car__cockpit {
-    grid-template-columns: 1fr;
-  }
-
-  .car__cockpit-aside {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
   .metric {
     padding: 20px 18px;
   }
@@ -1955,6 +1771,26 @@ html.js .reveal.is-in {
 
   .cta__card {
     border-radius: 26px;
+  }
+
+  .release {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .announce__tag {
+    order: 1;
+  }
+
+  .announce__inner a {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .announce__inner p {
+    order: 3;
+    flex: 1 1 100%;
+    font-size: 13px;
   }
 }
 
@@ -1977,69 +1813,4 @@ html.js .reveal.is-in {
     opacity: 1;
     transform: none;
   }
-}
-
-/* Release announcement (shown above the header, scrolls away) */
-.announce {
-  background: linear-gradient(90deg, var(--mint-soft), var(--sky-soft));
-  border-bottom: 1px solid var(--line);
-}
-
-.announce__inner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 14px;
-  padding: 10px 0;
-  font-size: 14px;
-}
-
-.announce__tag {
-  background: var(--mint-ink);
-  color: #fff;
-  border-radius: 999px;
-  padding: 2px 10px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.announce__inner p {
-  flex: 1 1 320px;
-  margin: 0;
-  color: var(--ink-2);
-}
-
-.announce__inner a {
-  color: var(--mint-ink);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-
-/* Announcement bar: stack the text under the tag and link on phones */
-@media (max-width: 560px) {
-  .announce__inner {
-    align-items: center;
-  }
-
-  .announce__tag {
-    order: 1;
-  }
-
-  .announce__inner a {
-    order: 2;
-    margin-left: auto;
-  }
-
-  .announce__inner p {
-    order: 3;
-    flex: 1 1 100%;
-    font-size: 13px;
-  }
-}
-
-/* Left-aligned section heads keep their lede aligned with the heading */
-.section__head--left .section__lede {
-  margin-inline: 0;
 }

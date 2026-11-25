@@ -10,6 +10,8 @@ const base = process.env.BASE_URL ?? "http://127.0.0.1:4173";
 const targets = [
   { path: "/", type: "text/html", mustInclude: "GlucoPilot" },
   { path: "/styles.css", type: "text/css", mustInclude: "--mint" },
+  { path: "/showcase.css", type: "text/css", mustInclude: "float-card" },
+  { path: "/signals.css", type: "text/css", mustInclude: "dash__panel" },
   { path: "/app.js", type: "javascript", mustInclude: "prefers-reduced-motion" },
   { path: "/assets/favicon.svg", type: "image/svg+xml", mustInclude: "<svg" },
   {

@@ -57,7 +57,13 @@ function walk(dir, acc = []) {
 const manifestPath = "android/app/src/main/AndroidManifest.xml";
 const manifest = read(manifestPath);
 const mainSources = walk("android/app/src/main/java").filter((file) => file.endsWith(".kt"));
-const landingFiles = ["landing/index.html", "landing/styles.css", "landing/app.js"];
+const landingFiles = [
+  "landing/index.html",
+  "landing/styles.css",
+  "landing/showcase.css",
+  "landing/signals.css",
+  "landing/app.js"
+];
 
 /* ------------------------------------------------------------------ */
 /* Android manifest                                                    */
@@ -363,10 +369,13 @@ check("landing: no inline script/style", () => {
 });
 
 check("landing: no external resources", () => {
-  assert(!/(src|href)="https?:/i.test(html), "external URL reference present");
-  assert(!/url\(\s*['"]?https?:/i.test(read("landing/styles.css")), "external URL in CSS");
+  for (const file of landingFiles) {
+    const content = read(file);
+    assert(!/(src|href)="https?:/i.test(content), `external reference in ${file}`);
+    assert(!/url\(\s*['"]?https?:/i.test(content), `external URL in ${file}`);
+  }
   assert(!/\b(fetch|XMLHttpRequest|WebSocket|sendBeacon)\b/.test(js), "network call present");
-  return "zero third-party requests";
+  return `zero third-party requests across ${landingFiles.length} files`;
 });
 
 check("landing: no dangerous DOM APIs", () => {
@@ -378,7 +387,9 @@ check("landing: no dangerous DOM APIs", () => {
 });
 
 check("landing: local asset references exist", () => {
-  const refs = [...html.matchAll(/(?:src|href)="([^"#][^"]*)"/g)].map((m) => m[1]);
+  const refs = [...html.matchAll(/(?:src|href)="([^"#][^"]*)"/g)].map((m) =>
+    m[1].split(/[?#]/)[0]
+  );
   const local = refs.filter((ref) => !ref.startsWith("#") && !ref.startsWith("mailto:"));
   for (const ref of local) {
     assert(exists("landing/" + ref), `missing file: ${ref}`);
@@ -388,9 +399,11 @@ check("landing: local asset references exist", () => {
 });
 
 check("landing: release APK download is published", () => {
-  assert(html.includes('href="download/GlucoPilot-1.2.0.apk"'), "APK download link missing");
-  assert(exists("landing/download/GlucoPilot-1.2.0.apk"), "APK file missing from landing/download");
-  const size = statSync(join(ROOT, "landing/download/GlucoPilot-1.2.0.apk")).size;
+  const apk = "GlucoPilot-1.2.0.apk";
+  const path = `landing/download/${apk}`;
+  assert(html.includes(`href="download/${apk}"`), "APK download link missing");
+  assert(exists(path), "APK file missing from landing/download");
+  const size = statSync(join(ROOT, path)).size;
   assert(size > 500_000, `APK size is suspiciously small: ${size} bytes`);
   return `${(size / 1024 / 1024).toFixed(2)} MB signed APK`;
 });

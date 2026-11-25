@@ -386,7 +386,7 @@ value it found. Without a phone it exits with `No connected device`.
 - `:app:testDebugUnitTest` — **132 tests, 0 failures**.
 - `node tools/security-check.mjs` — **32/32 PASS**.
 - `python tools/check_xml.py` — 19 resource XML files are well formed.
-- `node tools/smoke.mjs` — landing page 5/5 HTTP 200, including the signed APK download.
+- `node tools/smoke.mjs` — landing page 7/7 HTTP 200, including both extra stylesheets and the signed APK download.
 - `node tools/live-check.mjs` — **3/3 PASS** on the published site: hero JPEG 97.7 KB, APK
   `application/vnd.android.package-archive` 898.6 KB (v1.2.0) with SHA-256 `464a15e4…`.
 - `apksigner.bat verify --print-certs` (build-tools 35.0.0) — 1.2.0 and 1.1.3 both **Verifies**
