@@ -143,9 +143,12 @@ README. It needs Python 3.9+ and Pillow.
 
 CI runs `python tools/doc-images.py --check --tolerate-renderer`. The runner is Linux and Skia
 antialiases text differently from the Windows render these images were cropped from, so exact
-bytes cannot match; in that mode the check compares the layout — card count, card sizes and a
-coarse content difference — and still fails when a card is added, resized or visibly repainted.
-Byte equality is what `--check` enforces on the machine that produced the screenshots.
+bytes cannot match; in that mode the check compares the card count, the card sizes (±2 px) and a
+64×64 greyscale content difference. That difference measures 0.0–0.2/255 between the two
+platforms and the threshold is 2.0, so it fails on a layout change and on an edit that visibly
+repaints a card — a replaced value reads 2.7, a recoloured pill 5.7 — while a one-word copy edit
+(under 0.4) stays below it. Byte equality is what `--check` enforces on the machine that produced
+the screenshots.
 
 ---
 
@@ -576,8 +579,9 @@ mirror with `tools/pages-build.mjs`.
 - `node tools/live-check.mjs` — **10/10** on preview and on production.
 - `node tools/qr.mjs` — decodes to `https://glucopilot-civgdk.freebuff.site/#download`.
 - `python tools/doc-images.py --check` — all 10 README images regenerate byte-identically from
-  the committed render; CI runs the same check with `--tolerate-renderer` and passes, comparing
-  layout instead of platform-specific antialiasing.
+  the committed render. CI runs the same check with `--tolerate-renderer`: the two platforms differ
+  by 0.0–0.2/255, and against a 2.0 threshold it passes, comparing geometry and coarse content
+  instead of antialiasing.
 
 ### APK signing continuity (1.1.3 → 1.2.1)
 

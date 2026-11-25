@@ -53,7 +53,12 @@ CARDS = [
     "phone-target-range",
 ]
 
-RENDERER_TOLERANCE = 12.0  # mean difference out of 255 when another platform rendered it
+# Mean difference out of 255 between two renders of the same screen. Measured across the
+# Windows render the images come from and the Linux CI runner: 0.0-0.2, so 2.0 leaves about
+# ten times headroom. For scale, on a 782x558 card a replaced value reads 2.7, a recoloured
+# status pill 5.7, a tinted card 31; a one-word copy edit stays under 0.4 and is therefore
+# only caught by the byte check.
+RENDERER_TOLERANCE = 2.0
 SIZE_TOLERANCE = 2   # pixels a card may differ by before the layout counts as changed
 
 BACKGROUND_TOLERANCE = 4  # how far a pixel may sit from the canvas colour and still be canvas
