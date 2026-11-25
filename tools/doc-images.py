@@ -12,9 +12,10 @@ files the README shows:
 
 Run it after a UI change:
 
-    python tools/doc-images.py             # crop the render that already exists
-    python tools/doc-images.py --gradle    # re-run the render tests first
-    python tools/doc-images.py --check     # exit 1 if the committed images are stale
+    python tools/doc-images.py                        # crop the render that already exists
+    python tools/doc-images.py --gradle               # re-run the render tests first
+    python tools/doc-images.py --check                # exit 1 if the committed images are stale
+    python tools/doc-images.py --check --tolerate-renderer   # CI: another platform rendered it
 
 Requires Python 3.9+ and Pillow (pip install pillow).
 """
@@ -52,6 +53,10 @@ CARDS = [
     "phone-target-range",
 ]
 
+RENDERER_TOLERANCE = 12.0  # mean difference out of 255 when another platform rendered it
+SIZE_TOLERANCE = 2   # pixels a card may differ by before the layout counts as changed
+
+BACKGROUND_TOLERANCE = 4  # how far a pixel may sit from the canvas colour and still be canvas
 CARD_MARGIN_X = 20   # canvas visible around a card, in render pixels
 CARD_MARGIN_Y = 16
 FULL_WIDTH = 411     # README width for the whole-screen image
@@ -77,8 +82,10 @@ def find_cards(image: Image.Image) -> list[tuple[int, int, int, int]]:
     background = canvas_colour(image)
 
     def is_background(x: int, y: int) -> bool:
+        # A tolerance, not equality: another platform's renderer rounds the canvas colour
+        # slightly differently, and exact matching then finds one card instead of seven.
         r, g, b = pixels[x, y]
-        return abs(r - background[0]) <= 1 and abs(g - background[1]) <= 1 and abs(b - background[2]) <= 1
+        return max(abs(r - background[0]), abs(g - background[1]), abs(b - background[2])) <= BACKGROUND_TOLERANCE
 
     sample_x = list(range(30, width - 30, 6))
 
@@ -159,6 +166,33 @@ def build(render: Path) -> dict[Path, bytes]:
     return outputs
 
 
+def mean_difference(left: Image.Image, right: Image.Image) -> float:
+    """How different two same-sized images are, 0-255, robust to hinting differences."""
+    size = (64, 64)
+    a = left.convert("L").resize(size, Image.LANCZOS).tobytes()
+    b = right.convert("L").resize(size, Image.LANCZOS).tobytes()
+    return sum(abs(x - y) for x, y in zip(a, b)) / len(a)
+
+
+def compare(path: Path, data: bytes, tolerate_renderer: bool) -> tuple[bool, str]:
+    """Return (is_current, note) for one generated image."""
+    if path.exists() and path.read_bytes() == data:
+        return True, ""
+    if not path.exists():
+        return False, ""
+    if not tolerate_renderer:
+        return False, ""
+
+    committed = Image.open(path).convert("RGB")
+    fresh = Image.open(io.BytesIO(data)).convert("RGB")
+    if abs(committed.width - fresh.width) > SIZE_TOLERANCE or abs(committed.height - fresh.height) > SIZE_TOLERANCE:
+        return False, f"{committed.size} → {fresh.size}"
+    difference = mean_difference(committed, fresh)
+    if difference > RENDERER_TOLERANCE:
+        return False, f"content changed (difference {difference:.1f}/255)"
+    return True, f"{path.name}: same layout, another renderer (difference {difference:.1f}/255)"
+
+
 def run_gradle() -> None:
     android = ROOT / "android"
     gradle = ROOT / ".toolchain" / "gradle-8.9" / "bin" / "gradle"
@@ -177,6 +211,11 @@ def main() -> int:
     parser.add_argument("--render", type=Path, default=RENDER, help="phone-screen.png to crop")
     parser.add_argument("--gradle", action="store_true", help="run the render tests before cropping")
     parser.add_argument("--check", action="store_true", help="fail if the committed images are stale")
+    parser.add_argument(
+        "--tolerate-renderer",
+        action="store_true",
+        help="another platform rendered the PNG (CI): compare layout, not exact pixels",
+    )
     args = parser.parse_args()
 
     if args.gradle:
@@ -189,15 +228,20 @@ def main() -> int:
         return 1
 
     if args.check:
-        stale = []
+        stale, notes = [], []
         for path, data in outputs.items():
-            if not path.exists() or path.read_bytes() != data:
-                stale.append(path.relative_to(ROOT))
+            current, note = compare(path, data, args.tolerate_renderer)
+            if not current:
+                stale.append(f"{path.relative_to(ROOT)}{' — ' + note if note else ''}")
+            elif note:
+                notes.append(note)
         if stale:
             print("stale images, run `python tools/doc-images.py`:")
-            for path in stale:
-                print("  " + str(path))
+            for entry in stale:
+                print("  " + entry)
             return 1
+        for note in notes:
+            print("note: " + note)
         print(f"all {len(outputs)} README images are up to date")
         return 0
 

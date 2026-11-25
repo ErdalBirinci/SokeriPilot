@@ -141,6 +141,12 @@ and writes the seven card crops, the full screen, and copies the trend bitmap an
 fails loudly when the number of cards changes, so a new card cannot silently fall out of the
 README. It needs Python 3.9+ and Pillow.
 
+CI runs `python tools/doc-images.py --check --tolerate-renderer`. The runner is Linux and Skia
+antialiases text differently from the Windows render these images were cropped from, so exact
+bytes cannot match; in that mode the check compares the layout — card count, card sizes and a
+coarse content difference — and still fails when a card is added, resized or visibly repainted.
+Byte equality is what `--check` enforces on the machine that produced the screenshots.
+
 ---
 
 ## 2. What it does
@@ -570,7 +576,8 @@ mirror with `tools/pages-build.mjs`.
 - `node tools/live-check.mjs` — **10/10** on preview and on production.
 - `node tools/qr.mjs` — decodes to `https://glucopilot-civgdk.freebuff.site/#download`.
 - `python tools/doc-images.py --check` — all 10 README images regenerate byte-identically from
-  the committed render, so the gallery cannot drift from the UI unnoticed.
+  the committed render; CI runs the same check with `--tolerate-renderer` and passes, comparing
+  layout instead of platform-specific antialiasing.
 
 ### APK signing continuity (1.1.3 → 1.2.1)
 
