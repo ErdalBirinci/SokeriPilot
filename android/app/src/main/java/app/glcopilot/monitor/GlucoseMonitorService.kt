@@ -56,7 +56,12 @@ class GlucoseMonitorService : Service() {
             val staleGuard = StaleGuard()
             while (isActive) {
                 container.repository.state.value.latest?.let { latest ->
-                    when (staleGuard.onCheck(System.currentTimeMillis(), latest.timestampMillis)) {
+                    val action = staleGuard.onCheck(
+                        System.currentTimeMillis(),
+                        latest.timestampMillis,
+                        container.settings.sensorChangePauseUntil()
+                    )
+                    when (action) {
                         StaleAction.ALERT -> container.notifier.notifyStale()
                         StaleAction.CLEARED -> container.notifier.cancelStale()
                         StaleAction.NONE -> Unit

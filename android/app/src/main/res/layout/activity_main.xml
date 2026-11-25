@@ -101,6 +101,27 @@
                 android:text="@string/car_waiting_body"
                 android:textColor="@color/ink_muted"
                 android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tvSensorPause"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:lineSpacingExtra="2dp"
+                android:text="@string/sensor_change_explained"
+                android:textColor="@color/ink_muted"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btnSensorPause"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/canvas_alt"
+                android:text="@string/action_sensor_change"
+                android:textAllCaps="false"
+                android:textColor="@color/ink"
+                android:textSize="14sp" />
         </LinearLayout>
 
         <!-- Driving mode -->

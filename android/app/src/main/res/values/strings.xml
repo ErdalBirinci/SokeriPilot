@@ -68,6 +68,11 @@
     <string name="notif_stale_alert_title">No glucose data</string>
     <string name="notif_stale_alert_body">No new reading for 15 minutes. Check the sensor and the CGM app on your phone.</string>
 
+    <string name="action_sensor_change">I\'m changing my sensor</string>
+    <string name="action_sensor_resume">Resume stale-data reminders</string>
+    <string name="sensor_change_explained">Changing a sensor? This pauses the “No glucose data” reminder for two hours, so a warm-up does not interrupt a drive. The cockpit keeps showing how old the last value is.</string>
+    <string name="sensor_change_paused">Sensor change · %1$d min of quiet left. You can resume the reminder at any time.</string>
+
     <string name="monitor_title">Driving mode</string>
     <string name="monitor_switch">Show glucose while navigation or music is open</string>
     <string name="monitor_note">Android Auto does not allow other apps to keep a persistent window on top. GlucoPilot uses a car notification instead: the value updates with every reading, a short alert appears when out of range, and one tap opens the cockpit.</string>

@@ -113,6 +113,23 @@ class SettingsRepository(context: Context) {
         prefs.edit().putBoolean(KEY_AUTO_NOTIFICATIONS, enabled).apply()
     }
 
+    /** End of an explicit sensor-change pause for the stale reminder (epoch ms); 0 = not paused. */
+    fun sensorChangePauseUntil(): Long = prefs.getLong(KEY_SENSOR_PAUSE_UNTIL, 0L)
+
+    fun staleRemindersPaused(nowMillis: Long = System.currentTimeMillis()): Boolean =
+        sensorChangePauseUntil() > nowMillis
+
+    /** Keeps the "No glucose data" reminder quiet while a replacement sensor warms up. */
+    fun pauseStaleReminders(minutes: Long = SENSOR_CHANGE_PAUSE_MINUTES) {
+        prefs.edit()
+            .putLong(KEY_SENSOR_PAUSE_UNTIL, System.currentTimeMillis() + minutes * 60_000L)
+            .apply()
+    }
+
+    fun clearStalePause() {
+        prefs.edit().remove(KEY_SENSOR_PAUSE_UNTIL).apply()
+    }
+
     /** Time until which alerts are muted (epoch ms); 0 = no mute. */
     fun mutedUntil(): Long = prefs.getLong(KEY_MUTED_UNTIL, 0L)
 
@@ -144,5 +161,9 @@ class SettingsRepository(context: Context) {
         private const val KEY_AUTO_CAR = "auto_start_on_car"
         private const val KEY_AUTO_NOTIFICATIONS = "read_cgm_notifications"
         private const val KEY_MUTED_UNTIL = "alerts_muted_until"
+        private const val KEY_SENSOR_PAUSE_UNTIL = "sensor_change_pause_until"
+
+        /** Sensor warm-up fits comfortably inside two hours on current CGM systems. */
+        private const val SENSOR_CHANGE_PAUSE_MINUTES = 120L
     }
 }

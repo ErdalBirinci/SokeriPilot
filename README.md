@@ -75,15 +75,23 @@ broadcast + Nightscout pair offers the widest device coverage and the most matur
 - xDrip+ listening switch; Nightscout URL + API key.
 - Target range thresholds (low 55–120, high 120–300 mg/dL) and mg/dL ↔ mmol/L display.
 - Driving mode switch: background monitoring + car notification.
+- "I'm changing my sensor" pause: keeps the "No glucose data" reminder quiet for two hours
+  while a replacement sensor warms up.
 - Notification permission flow (Android 13+).
 
 **Alerts**
 
 - Only outside the target bands; at most one notification per band every 10 minutes.
 - Car notification via `CarAppExtender`; high-priority channel, silent repeats.
-- If no new reading arrives for 15 minutes, one **"No glucose data"** reminder is posted per
-  stale episode and cleared when fresh data returns, so a silent sensor never leaves a stale
-  number looking current. `StaleGuard` keeps it to one alert until data flows again.
+- If a reading that was flowing in this driving session stops for 15 minutes, one **"No glucose
+  data"** reminder is posted per stale episode and cleared when fresh data returns, so a silent
+  sensor never leaves a stale number looking current. `StaleGuard` keeps it to one alert until
+  data flows again.
+- Only readings that arrive after monitoring started count as flowing data. A sensor change or
+  warm-up leaves a value that was already on the phone, even a few minutes old; that is shown as
+  an age in the cockpit and notification instead of an alarm. The phone's **"I'm changing my
+  sensor"** button also pauses the reminder for two hours, and the alert returns on its own if
+  the sensor is still silent when the pause ends.
 
 ---
 
@@ -124,9 +132,11 @@ default experience through four mechanisms:
 2. **Short alert** — when the value leaves the target range, a high-priority notification comes
    forward briefly; it is limited to once every 10 minutes per band and can be silenced with the
    "Mute 30 min" action.
-3. **Stale-data reminder** — if no reading arrives for 15 minutes, one high-priority "No
-   glucose data" notification appears, so a dead sensor never leaves an old value looking
-   current. It is cleared as soon as fresh data returns.
+3. **Stale-data reminder** — if readings that were flowing in this session stop for 15
+   minutes, one high-priority "No glucose data" notification appears, so a dead sensor never
+   leaves an old value looking current. It is cleared as soon as fresh data returns. A gap that
+   predates the drive (sensor change, warm-up) stays visible as a reading age instead of an
+   alarm, and the phone can pause the reminder for two hours while a new sensor settles.
 4. **One-tap cockpit** — tapping the notification opens GlucoPilot's car screen via
    `CarPendingIntent`; Back returns the user to Maps or music.
 
@@ -295,7 +305,8 @@ Coverage: notification parsing (mg/dL and mmol/L, both trend notations, unit-les
 known apps, unrelated apps rejected, stale/future timestamps), Nightscout URL security and the
 SHA-1 vector, band boundaries, trend thresholds, Nightscout JSON parsing
 (malformed/missing/future-dated records), xDrip broadcast validation and slope-unit conversion,
-unit conversion, relative time and alert policy (throttle, band change, mute window).
+unit conversion, relative time and alert policy (throttle, band change, mute window, stale
+session gating and the sensor-change pause).
 
 **Static security and code checks** (run on this machine):
 
@@ -351,7 +362,7 @@ value it found. Without a phone it exits with `No connected device`.
 ### Verifications run on this machine
 
 - `:app:assembleDebug` — **BUILD SUCCESSFUL**; APK: `android/app/build/outputs/apk/debug/app-debug.apk` (~4.5 MB, minSdk 26 / targetSdk 35; English resources only).
-- `:app:testDebugUnitTest` — **89 tests, 0 failures**.
+- `:app:testDebugUnitTest` — **96 tests, 0 failures**.
 - `node tools/security-check.mjs` — **32/32 PASS**.
 - `python tools/check_xml.py` — 19 resource XML files are well formed.
 - `node tools/smoke.mjs` — landing page 5/5 HTTP 200, including the signed APK download.

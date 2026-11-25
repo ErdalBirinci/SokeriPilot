@@ -37,6 +37,7 @@ import app.glcopilot.data.TimeAgo
 import app.glcopilot.data.Units
 import app.glcopilot.monitor.GlucoseMonitorService
 import app.glcopilot.monitor.MonitorLauncher
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
 import kotlin.math.roundToInt
@@ -56,6 +57,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvCgm: TextView
     private lateinit var tvAccess: TextView
     private lateinit var btnAccess: Button
+    private lateinit var btnSensorPause: Button
+    private lateinit var tvSensorPause: TextView
     private lateinit var etUrl: EditText
     private lateinit var etSecret: EditText
     private lateinit var etLow: EditText
@@ -95,6 +98,15 @@ class MainActivity : AppCompatActivity() {
                 container.diagnostics.events.collect { renderDiagnostics(it) }
             }
         }
+        // Refreshes the sensor-change countdown while the screen stays open.
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                while (true) {
+                    renderSensorPause()
+                    delay(SENSOR_PAUSE_TICK_MILLIS)
+                }
+            }
+        }
         container.refreshNow()
     }
 
@@ -109,6 +121,8 @@ class MainActivity : AppCompatActivity() {
         tvCgm = findViewById(R.id.tvCgm)
         tvAccess = findViewById(R.id.tvAccess)
         btnAccess = findViewById(R.id.btnNotificationAccess)
+        btnSensorPause = findViewById(R.id.btnSensorPause)
+        tvSensorPause = findViewById(R.id.tvSensorPause)
         etUrl = findViewById(R.id.etUrl)
         etSecret = findViewById(R.id.etSecret)
         etLow = findViewById(R.id.etLow)
@@ -124,6 +138,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnRefresh).setOnClickListener { refreshNow() }
         findViewById<Button>(R.id.btnNotifications).setOnClickListener { requestNotifications() }
         btnAccess.setOnClickListener { openNotificationAccess() }
+        btnSensorPause.setOnClickListener { toggleSensorPause() }
     }
 
     private fun loadSettings() {
@@ -318,6 +333,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * A replacement sensor spends up to two hours warming up with no readings. Marking
+     * the change here keeps the "No glucose data" reminder quiet instead of alarming
+     * mid-drive; the cockpit still shows the age of the last value.
+     */
+    private fun toggleSensorPause() {
+        if (container.settings.staleRemindersPaused()) {
+            container.settings.clearStalePause()
+        } else {
+            container.settings.pauseStaleReminders()
+        }
+        renderSensorPause()
+    }
+
+    private fun renderSensorPause() {
+        val remaining = container.settings.sensorChangePauseUntil() - System.currentTimeMillis()
+        if (remaining > 0) {
+            val minutes = ((remaining + 59_999L) / 60_000L).toInt()
+            tvSensorPause.text = getString(R.string.sensor_change_paused, minutes)
+            btnSensorPause.setText(R.string.action_sensor_resume)
+        } else {
+            tvSensorPause.setText(R.string.sensor_change_explained)
+            btnSensorPause.setText(R.string.action_sensor_change)
+        }
+    }
+
     private fun render(state: GlucoseState) {
         val units = container.settings.units()
         val range = container.settings.glucoseRange()
@@ -445,5 +486,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun toast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    private companion object {
+        /** The countdown is shown in whole minutes; half a minute keeps it accurate. */
+        const val SENSOR_PAUSE_TICK_MILLIS = 30_000L
     }
 }
