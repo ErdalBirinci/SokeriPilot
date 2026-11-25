@@ -1995,7 +1995,7 @@ html.js .reveal.is-in {
 }
 
 .announce__tag {
-  background: var(--mint);
+  background: var(--mint-ink);
   color: #fff;
   border-radius: 999px;
   padding: 2px 10px;
@@ -2016,3 +2016,30 @@ html.js .reveal.is-in {
   white-space: nowrap;
 }
 
+
+/* Announcement bar: stack the text under the tag and link on phones */
+@media (max-width: 560px) {
+  .announce__inner {
+    align-items: center;
+  }
+
+  .announce__tag {
+    order: 1;
+  }
+
+  .announce__inner a {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .announce__inner p {
+    order: 3;
+    flex: 1 1 100%;
+    font-size: 13px;
+  }
+}
+
+/* Left-aligned section heads keep their lede aligned with the heading */
+.section__head--left .section__lede {
+  margin-inline: 0;
+}
