@@ -2010,10 +2010,14 @@ html.js .reveal.is-in {
 .compare table,
 .guide__table {
   width: 100%;
-  min-width: 720px;
   border-collapse: collapse;
   font-size: 14px;
   line-height: 1.5;
+}
+
+/* Five columns only stay readable with a floor; the two-column guide table wraps instead. */
+.compare table {
+  min-width: 680px;
 }
 
 .compare caption {
@@ -2105,10 +2109,10 @@ html.js .reveal.is-in {
   margin-top: 10px;
 }
 
-.guide__note {
+p.guide__note {
   padding-left: 14px;
   border-left: 2px solid rgba(14, 159, 124, 0.35);
-  font-size: 13px !important;
+  font-size: 13px;
 }
 
 .guide__section {
@@ -2149,7 +2153,6 @@ html.js .reveal.is-in {
 }
 
 .guide .fineprint,
-.legal .fineprint,
 .notfound .fineprint {
   margin-top: 24px;
 }

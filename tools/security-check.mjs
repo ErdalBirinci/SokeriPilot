@@ -355,25 +355,37 @@ check("tests: unit tests present", () => {
 const html = read("landing/index.html");
 const js = read("landing/app.js");
 
-check("landing: CSP is defined and strict", () => {
-  assert(html.includes('http-equiv="Content-Security-Policy"'), "CSP meta missing");
-  assert(html.includes("default-src 'self'"), "default-src self missing");
-  assert(html.includes("script-src 'self'"), "script-src self missing");
-  assert(!html.includes("'unsafe-inline'"), "unsafe-inline present");
-  assert(!html.includes("'unsafe-eval'"), "unsafe-eval present");
-  return "self-only CSP";
-});
-
-check("landing: security headers cover what meta cannot", () => {
+check("site: one strict CSP for every response", () => {
   const headers = read("landing/_headers");
-  assert(headers.includes("Content-Security-Policy:"), "no CSP response header");
-  assert(headers.includes("frame-ancestors 'none'"), "frame-ancestors missing (meta cannot express it)");
+  const policy = /Content-Security-Policy:\s*(.+)/.exec(headers)?.[1] ?? "";
+  const directives = [
+    "default-src 'self'",
+    "img-src 'self' data:",
+    "style-src 'self'",
+    "script-src 'self'",
+    "connect-src 'none'",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'none'",
+    "frame-ancestors 'none'"
+  ];
+  for (const directive of directives) assert(policy.includes(directive), `CSP is missing ${directive}`);
+  assert(!/'unsafe-(inline|eval)'/.test(policy), "the CSP allows inline or eval");
+  for (const page of [
+    "landing/index.html",
+    "landing/download/index.html",
+    "landing/install/index.html",
+    "landing/privacy/index.html",
+    "landing/404.html"
+  ]) {
+    assert(!read(page).includes('http-equiv="Content-Security-Policy"'), `${page} keeps a second CSP copy`);
+  }
   assert(headers.includes("Strict-Transport-Security:"), "HSTS missing");
   assert(headers.includes("X-Content-Type-Options: nosniff"), "nosniff missing for documents");
   assert(headers.includes("X-Frame-Options: DENY"), "X-Frame-Options missing");
   assert(headers.includes("Referrer-Policy: no-referrer"), "Referrer-Policy missing");
   assert(headers.includes("Permissions-Policy:"), "Permissions-Policy missing");
-  return "CSP (frame-ancestors), HSTS, nosniff, DENY, no-referrer";
+  return "header CSP with frame-ancestors, HSTS, nosniff, DENY, no-referrer; no meta copies";
 });
 
 check("landing: no inline script/style", () => {
@@ -428,20 +440,17 @@ check("landing: local asset references exist", () => {
   return `${local.length} local references verified`;
 });
 
-check("landing: every static page carries its own CSP and no executable code", () => {
+check("landing: the static pages carry no executable code", () => {
   for (const page of [
     "landing/install/index.html",
     "landing/privacy/index.html",
     "landing/404.html",
     "landing/download/index.html"
   ]) {
-    const content = read(page);
-    assert(content.includes('http-equiv="Content-Security-Policy"'), `${page} has no CSP meta`);
-    assert(content.includes("default-src 'self'"), `${page} CSP is not self-only`);
-    assert(!/'unsafe-(inline|eval)'/.test(content), `${page} weakens the CSP`);
-    assert(!/<script/i.test(content), `${page} contains a script`);
+    assert(!/<script/i.test(read(page)), `${page} contains a script`);
+    assert(!/\sstyle="/i.test(read(page)), `${page} has an inline style`);
   }
-  return "install, privacy, 404 and archive: script-free with a strict CSP";
+  return "install, privacy, 404 and archive: script-free and style-attribute-free";
 });
 
 check("landing: structured data matches the release", () => {

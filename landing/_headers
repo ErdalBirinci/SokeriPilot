@@ -1,9 +1,8 @@
 # Cloudflare Workers static assets: response header overrides.
 #
-# Every response carries the security headers below. Each page also repeats the
-# CSP in a <meta> tag, because a meta policy is the only copy that survives when
-# the file is opened without headers; `frame-ancestors` is ignored in <meta>, so
-# the header is what actually stops the site being framed.
+# Every response carries the security headers below, and this block is the only
+# copy of the CSP: a <meta> policy cannot express `frame-ancestors`, so keeping a
+# second copy in each page would only be a place for the two to drift apart.
 #
 # Each APK is listed by its own name so the download filename always matches the
 # version being served; a wildcard here would rename an archived build.

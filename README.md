@@ -431,7 +431,7 @@ value it found. Without a phone it exits with `No connected device`.
 
 - `:app:assembleDebug` — **BUILD SUCCESSFUL**; APK: `android/app/build/outputs/apk/debug/app-debug.apk` (~4.5 MB, minSdk 26 / targetSdk 35; English resources only).
 - `:app:testDebugUnitTest` — **132 tests, 0 failures**.
-- `node tools/security-check.mjs` — **36/36 PASS** (adds the HTTP security headers, the
+- `node tools/security-check.mjs` — **35/35 PASS** (adds the single header CSP, the
   install/privacy/404 pages, the JSON-LD block and the crawler files).
 - `node tools/release-check.mjs` — **13/13 PASS**: manifest, both APK files byte for byte, page,
   headers, archive, install guide, the stylesheet stamp across all five pages, the QR payload
