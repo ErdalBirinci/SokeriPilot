@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SokeriPilot — feature graphic 1024×500</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1024px; height: 500px; overflow: hidden; }
+  body {
+    font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: #081815; background: #f4f8f6; position: relative;
+  }
+  .mesh { position: absolute; inset: 0; overflow: hidden; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.62; }
+  .b1 { width: 420px; height: 420px; left: -120px; top: -160px; background: #bdf0e1; }
+  .b2 { width: 380px; height: 380px; right: -90px; top: -110px; background: #dae9fb; }
+  .b3 { width: 360px; height: 360px; right: 120px; bottom: -220px; background: #fdf0d6; }
+  .page { position: relative; height: 100%; padding: 54px 58px; display: flex; gap: 40px; }
+  .copy { width: 560px; }
+  header { display: flex; align-items: center; gap: 12px; }
+  .mark { width: 40px; height: 40px; }
+  .brand { font-size: 25px; font-weight: 750; letter-spacing: -0.025em; }
+  h1 { margin-top: 22px; font-size: 46px; line-height: 1.06; letter-spacing: -0.035em; font-weight: 800; }
+  .grad { background: linear-gradient(100deg, #0e9f7c 10%, #16c79b 55%, #2f9fd8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  p { margin-top: 14px; font-size: 19px; line-height: 1.42; color: #33473f; }
+  .chips { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+  .chip { font-size: 13.5px; color: #075b47; background: #e2f6ef; border: 1px solid #c6ebdf; padding: 7px 12px; border-radius: 999px; }
+  .cockpit {
+    flex: 1; display: flex; flex-direction: column; justify-content: center;
+    border-radius: 24px; padding: 22px 24px; color: #f2fffb;
+    background: linear-gradient(150deg, #0b211c, #081815 58%, #0c2a23);
+    box-shadow: 0 28px 52px -34px rgba(6, 50, 38, 0.6);
+  }
+  .row1 { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #a8c6bd; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #16c79b; box-shadow: 0 0 0 4px rgba(22,199,155,.16); }
+  .badge { margin-left: auto; font-size: 12.5px; font-weight: 650; color: #06231c; background: #7ff0cd; padding: 5px 10px; border-radius: 999px; }
+  .value { display: flex; align-items: baseline; gap: 8px; margin-top: 12px; }
+  .value b { font-size: 68px; font-weight: 800; letter-spacing: -0.045em; line-height: 0.95; }
+  .value span { font-size: 18px; color: #9fbcb3; font-weight: 600; }
+  .value em { font-style: normal; font-size: 15px; color: #7ff0cd; font-weight: 650; margin-left: 4px; }
+  .meta { display: flex; gap: 7px; margin-top: 12px; flex-wrap: wrap; }
+  .pill { font-size: 12px; color: #cfe6df; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); padding: 5px 9px; border-radius: 999px; }
+</style>
+</head>
+<body>
+  <div class="mesh"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+  <div class="page">
+    <div class="copy">
+      <header>
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="9" fill="#EAF6F1" />
+          <path d="M16 5C16 5 8.5 13.5 8.5 18.5a7.5 7.5 0 0 0 15 0C23.5 13.5 16 5 16 5Z" fill="#0E9F7C" />
+          <path d="M12 18h2.6l1.2-2.6 1.9 5.2 1.4-2.6H22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span class="brand">SokeriPilot</span>
+      </header>
+      <h1>Your glucose <span class="grad">in sight</span>,<br>your eyes on the road.</h1>
+      <p>CGM value and alerts beside Android Auto navigation — one tap to the cockpit.</p>
+      <div class="chips">
+        <span class="chip">Reads your CGM app</span>
+        <span class="chip">No account · no analytics</span>
+        <span class="chip">Warns before range</span>
+      </div>
+    </div>
+    <div class="cockpit">
+      <div class="row1"><span class="dot"></span> Live CGM <span class="badge">In range</span></div>
+      <div class="value"><b>128</b><span>mg/dL</span><em>→ steady</em></div>
+      <svg width="300" height="70" viewBox="0 0 300 70" aria-hidden="true">
+        <rect x="0" y="16" width="300" height="34" fill="rgba(22,199,155,0.10)" />
+        <path d="M0 50 L26 46 L52 52 L78 40 L104 44 L130 33 L156 38 L182 27 L208 31 L234 23 L260 29 L286 21 L300 24"
+              fill="none" stroke="#16c79b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <div class="meta">
+        <span class="pill">70–180 mg/dL</span>
+        <span class="pill">90 min trend</span>
+        <span class="pill">Sensor 82%</span>
+        <span class="pill">Warns before range</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

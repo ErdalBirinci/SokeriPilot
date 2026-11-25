@@ -93,15 +93,23 @@ export GRADLE_USER_HOME="$PWD/../.toolchain/gradle-home"
 ```
 
 Output: `android/app/build/outputs/bundle/release/app-release.aab`. The certificate must stay
-`6d882da0…9f96`; Play App Signing can keep the same upload key.
+`6d882da0…9f96`; Play App Signing can keep the same upload key. 1.2.1 was built this way
+(1.7 MB) and copied to the git-ignored `dist/` for upload.
+
+## Alternative store: F-Droid / IzzyOnDroid
+
+The app does not depend on Play services, so `metadata/app.glcopilot.yml` holds the F-Droid build
+recipe (MIT, `v1.2.1`, `subdir: android`, Gradle build with the release keystore line stripped).
+IzzyOnDroid reads the same metadata; both need the version tag to exist before the first build.
+The applicationId stays `app.glcopilot` there too, which is what keeps updates working.
 
 ## Graphic assets
 
 | Asset | Requirement | State |
 | --- | --- | --- |
-| Feature graphic | 1024 × 500 PNG, no device frames | `store/assets/feature-graphic.png` — cropped from the head-unit photo |
-| App icon | 512 × 512 PNG, 32-bit | Export from `android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml` + `drawable/ic_launcher_foreground.xml` with Android Studio → Image Asset (launcher icon, 512 px), or any vector tool. Not generated here: the repository ships an adaptive icon, not a raster one. |
-| Phone screenshots | 2–8, min 320 px side, at most 2:1 ratio | Capture from a device running the release build (`bash tools/verify-device.sh` installs it); the existing full-page captures in `screenshots/` are website screenshots, not app screens, and most are taller than Play accepts. |
+| Feature graphic | 1024 × 500 PNG, no device frames | `store/assets/feature-graphic.png` — rendered from `store/assets/feature-graphic.html` (`chrome --headless --window-size=1024,500 --screenshot=…`) |
+| App icon | 512 × 512 PNG, 32-bit | `store/assets/icon-512.png` — rendered from `store/assets/icon-512.html`, the same droplet mark as the adaptive icon |
+| Phone screenshots | 2–8, min 320 px side, at most 2:1 ratio | **Still needs a device.** `bash tools/verify-device.sh` installs the release build; the Robolectric render (`android/app/build/reports/phone-screen.png`, 822 × 4614) is the real phone UI but 5.6:1, outside Play's ratio, and `screenshots/` holds website captures, not app screens. |
 | Tablet screenshots | Optional, 7"/10" | Not prepared |
 
 Replace screenshots when the UI changes; Play rejects devices frames, status bars with personal data

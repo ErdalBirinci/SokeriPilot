@@ -83,4 +83,15 @@ class CgmAppCatalogTest {
 
         assertEquals(listOf("xDrip+", "Juggluco"), apps.map { it.label })
     }
+
+    @Test
+    fun `hybrid closed loop apps are readable through their notifications`() {
+        val apps = CgmAppCatalog.detect(
+            setOf("uk.org.cambsdiabetes.camaps", "info.nightscout.androidaps")
+        )
+
+        assertEquals(listOf("CamAPS FX", "AndroidAPS"), apps.map { it.label })
+        assertTrue(apps.all { it.integration == CgmIntegration.NOTIFICATION })
+        assertTrue(CgmAppCatalog.broadcastSources(setOf("uk.org.cambsdiabetes.camaps")).isEmpty())
+    }
 }

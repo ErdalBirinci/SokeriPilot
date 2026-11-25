@@ -11,8 +11,12 @@ screen. It does not recommend doses and does not collect data.
 ```
 android/     Android app (Kotlin + Android for Cars App Library)
 landing/     Marketing site (dependency-free HTML/CSS/JS), release manifest and signed APK archive
-store/       Play listing copy, data-safety answers, IOT rationale and the feature graphic
-tools/       Security, release, smoke, live and scheduled checks; release and keystore tools
+store/       Play listing copy, data-safety answers, IOT rationale, icon and feature graphic
+metadata/    F-Droid build recipe (IzzyOnDroid reads the same file)
+docs/        CGM compatibility matrix and the notification-reliability checklist
+tools/       Security, release, smoke, live, a11y and scheduled checks; release and keystore tools
+promo/       LinkedIn card and caption
+CONTRIBUTING.md  Build, test and review rules for contributors
 RELEASE.md   The release sequence: build, manifest, preview gate, tag, rollback
 ```
 
@@ -437,6 +441,9 @@ value it found. Without a phone it exits with `No connected device`.
 - `:app:testDebugUnitTest` — **132 tests, 0 failures**.
 - `node tools/security-check.mjs` — **35/35 PASS** (adds the single header CSP, the
   install/privacy/404 pages, the JSON-LD block and the crawler files).
+- `node tools/a11y-check.mjs` — **6/6 PASS**: language, title, viewport, one `h1`, image alt
+  text, keyboard reachability and the WCAG AA contrast of the text/button palette (the primary
+  button ramp is darker than the accent mint for exactly this reason).
 - `node tools/release-check.mjs` — **13/13 PASS**: manifest, both APK files byte for byte, page,
   headers, archive, install guide, the stylesheet stamp across all five pages, the QR payload
   decoded and compared with `deploy/site.json`, and the APK's own versionName and certificate.

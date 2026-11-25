@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest a change for the app, the landing page or the tooling
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the driving situation, not only the feature.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+    validations:
+      required: true
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Constraints
+      options:
+        - label: It does not add a network request, account or analytics
+        - label: It does not give dosing advice
+        - label: It works with Android Auto's restrictions (no floating windows)
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered

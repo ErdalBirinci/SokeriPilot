@@ -8,9 +8,11 @@
   --surface: #ffffff;
   --ink: #081815;
   --ink-2: #33473f;
-  --muted: #667c74;
+  --muted: #5f746c;
 
   --mint: #0e9f7c;
+  /* Darker ramp for text-on-mint buttons: white labels stay above 4.5:1. */
+  --mint-strong: #0a805f;
   --mint-2: #16c79b;
   --mint-soft: #dff5ee;
   --mint-ink: #075b47;
@@ -311,7 +313,7 @@ h2 {
 
 .btn--primary {
   color: #fff;
-  background: linear-gradient(140deg, #0b8a6b, #0e9f7c 55%, #14b78f);
+  background: linear-gradient(140deg, #075f4b, var(--mint-strong) 55%, #0a805f);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.24) inset,
     0 18px 36px -20px rgba(14, 159, 124, 0.85);
 }

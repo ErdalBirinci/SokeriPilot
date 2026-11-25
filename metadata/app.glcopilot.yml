@@ -1,0 +1,37 @@
+Categories:
+  - Health and Fitness
+License: MIT
+AuthorName: Erdal Birinci
+SourceCode: https://github.com/ErdalBirinci/SokeriPilot
+IssueTracker: https://github.com/ErdalBirinci/SokeriPilot/issues
+AutoName: SokeriPilot
+Summary: CGM value and alerts beside Android Auto navigation
+Description: |
+  SokeriPilot shows your CGM data where you actually look while driving: a
+  silent, persistent Android Auto notification beside Maps or music, and a
+  one-tap cockpit with the value, trend, band and reading age.
+
+  It reads the value the CGM app already posts as a notification (Dexcom,
+  FreeStyle LibreLink, Libre 3, xDrip+, Juggluco, Diabox, CamAPS FX,
+  AndroidAPS) after one Android notification-access grant. Nothing is
+  configured inside the sensor app, and xDrip+ broadcasts or your own
+  Nightscout server stay optional.
+
+  No account, no analytics, no advertising SDK. Readings are not archived by
+  the app. It is not a medical device and does not recommend doses.
+RepoType: git
+Repo: https://github.com/ErdalBirinci/SokeriPilot
+
+Builds:
+  - versionName: 1.2.1
+    versionCode: 7
+    commit: v1.2.1
+    subdir: android
+    gradle:
+      - yes
+    prebuild: sed -i '/keystore.properties/d' app/build.gradle.kts || true
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 1.2.1
+CurrentVersionCode: 7

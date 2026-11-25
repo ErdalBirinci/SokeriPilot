@@ -52,7 +52,11 @@ object CgmAppCatalog {
         CgmApp("com.freestylelibre3.app.us", "FreeStyle Libre 3 (US)", CgmIntegration.NOTIFICATION),
 
         CgmApp("com.dexcom.g6", "Dexcom G6", CgmIntegration.NOTIFICATION),
-        CgmApp("com.dexcom.g7", "Dexcom G7", CgmIntegration.NOTIFICATION)
+        CgmApp("com.dexcom.g7", "Dexcom G7", CgmIntegration.NOTIFICATION),
+
+        // Hybrid closed-loop apps that also show the sensor value in a notification.
+        CgmApp("uk.org.cambsdiabetes.camaps", "CamAPS FX", CgmIntegration.NOTIFICATION),
+        CgmApp("info.nightscout.androidaps", "AndroidAPS", CgmIntegration.NOTIFICATION)
     )
 
     /** Returns known CGM apps from a set of installed packages, in catalog order. */

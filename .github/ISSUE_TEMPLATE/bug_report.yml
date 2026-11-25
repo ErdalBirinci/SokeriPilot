@@ -1,0 +1,61 @@
+name: Bug report
+description: Something in the app, the install or the landing page is wrong
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not paste medical data, Nightscout keys or screenshots with personal values.
+        A notification excerpt with the numbers replaced by `123` is enough.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Car notification / Android Auto
+        - Alerts (range, urgent low, stale data)
+        - CGM source (notification or broadcast)
+        - Phone setup screen
+        - Install / APK
+        - Landing page or repository
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: SokeriPilot version
+      description: From the download card or the repo's releases.json
+      placeholder: "1.2.1"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Phone, Android version and head unit
+      placeholder: "Pixel 7, Android 15, Android Auto with a Kenwood DMX"
+  - type: input
+    id: cgm
+    attributes:
+      label: CGM app and sensor
+      placeholder: "Dexcom G7 app, Dexcom G7"
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Connect to Android Auto
+        2. Open Maps
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened instead
+    validations:
+      required: true
+  - type: textarea
+    id: source-check
+    attributes:
+      label: Source check output (optional)
+      description: In the app, "Source check" lists the last notifications with accepted/rejected reasons. Replace any value with 123 before pasting.

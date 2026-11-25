@@ -45,6 +45,8 @@
 
         <package android:name="com.dexcom.g6" />
         <package android:name="com.dexcom.g7" />
+        <package android:name="uk.org.cambsdiabetes.camaps" />
+        <package android:name="info.nightscout.androidaps" />
 
         <!-- Health Connect provider, for the optional write-only export. -->
         <package android:name="com.google.android.apps.healthdata" />
