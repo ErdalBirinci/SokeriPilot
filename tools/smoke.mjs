@@ -13,7 +13,7 @@ const targets = [
   { path: "/app.js", type: "javascript", mustInclude: "prefers-reduced-motion" },
   { path: "/assets/favicon.svg", type: "image/svg+xml", mustInclude: "<svg" },
   {
-    path: "/download/GlucoPilot-1.1.3.apk",
+    path: "/download/GlucoPilot-1.2.0.apk",
     types: ["application/vnd.android.package-archive", "application/octet-stream"],
     method: "HEAD",
     minBytes: 500000

@@ -388,9 +388,9 @@ check("landing: local asset references exist", () => {
 });
 
 check("landing: release APK download is published", () => {
-  assert(html.includes('href="download/GlucoPilot-1.1.3.apk"'), "APK download link missing");
-  assert(exists("landing/download/GlucoPilot-1.1.3.apk"), "APK file missing from landing/download");
-  const size = statSync(join(ROOT, "landing/download/GlucoPilot-1.1.3.apk")).size;
+  assert(html.includes('href="download/GlucoPilot-1.2.0.apk"'), "APK download link missing");
+  assert(exists("landing/download/GlucoPilot-1.2.0.apk"), "APK file missing from landing/download");
+  const size = statSync(join(ROOT, "landing/download/GlucoPilot-1.2.0.apk")).size;
   assert(size > 500_000, `APK size is suspiciously small: ${size} bytes`);
   return `${(size / 1024 / 1024).toFixed(2)} MB signed APK`;
 });

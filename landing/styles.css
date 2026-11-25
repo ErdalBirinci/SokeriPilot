@@ -1978,3 +1978,40 @@ html.js .reveal.is-in {
     transform: none;
   }
 }
+
+/* Release announcement (shown above the header, scrolls away) */
+.announce {
+  background: linear-gradient(90deg, var(--mint-soft), var(--sky-soft));
+  border-bottom: 1px solid var(--line);
+}
+
+.announce__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 10px 0;
+  font-size: 14px;
+}
+
+.announce__tag {
+  background: var(--mint);
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.announce__inner p {
+  flex: 1 1 320px;
+  margin: 0;
+  color: var(--ink-2);
+}
+
+.announce__inner a {
+  color: var(--mint-ink);
+  font-weight: 600;
+  white-space: nowrap;
+}
