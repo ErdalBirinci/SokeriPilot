@@ -56,7 +56,6 @@ CARD_MARGIN_X = 20   # canvas visible around a card, in render pixels
 CARD_MARGIN_Y = 16
 FULL_WIDTH = 411     # README width for the whole-screen image
 MIN_CARD_HEIGHT = 100
-MIN_CARD_INK = 0.03  # a card must be more than 3% covered by its own rows to count
 
 
 def canvas_colour(image: Image.Image) -> tuple[int, int, int]:

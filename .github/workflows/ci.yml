@@ -52,3 +52,9 @@ jobs:
         run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
       - name: Unit tests
         run: gradle -p android :app:testDebugUnitTest
+      # The tests above write build/reports/phone-screen.png and trend-image.png;
+      # this fails when docs/images no longer matches that layout.
+      - name: README screenshots match the layout
+        run: |
+          python3 -m pip install --quiet --disable-pip-version-check pillow
+          python3 tools/doc-images.py --check
