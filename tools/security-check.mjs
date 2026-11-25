@@ -409,32 +409,6 @@ check("landing: local asset references exist", () => {
   return `${local.length} local references verified`;
 });
 
-check("landing: every published APK is present", () => {
-  const release = JSON.parse(read("landing/releases.json"));
-  assert(release.current === release.releases[0].version, "the manifest does not start with the current version");
-  for (const entry of release.releases) {
-    const path = `landing/download/${entry.file}`;
-    assert(exists(path), `missing ${entry.file}`);
-    const size = statSync(join(ROOT, path)).size;
-    assert(size === entry.size, `${entry.file} is ${size} bytes, the manifest says ${entry.size}`);
-  }
-  const current = release.releases[0];
-  assert(html.includes(`href="download/${current.file}"`), "the page does not link the current APK");
-  assert(html.includes(current.sha256), "the page does not show the current SHA-256");
-  return `${release.releases.length} APKs, ${(current.size / 1024 / 1024).toFixed(2)} MB current`;
-});
-
-check("landing: download headers name each APK", () => {
-  const release = JSON.parse(read("landing/releases.json"));
-  const headers = read("landing/_headers");
-  for (const entry of release.releases) {
-    assert(headers.includes(`/download/${entry.file}`), `no header block for ${entry.file}`);
-    assert(headers.includes(`filename="${entry.file}"`), `${entry.file} has no matching download filename`);
-  }
-  assert(!/^\/download\/\*\.apk/m.test(headers), "a wildcard APK block would rename archived builds");
-  return `${release.releases.length} per-file header blocks`;
-});
-
 check("landing: accessibility basics", () => {
   assert(html.includes('lang="en"'), "lang=en missing");
   assert(html.includes('class="skip"'), "skip link missing");

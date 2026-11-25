@@ -368,11 +368,12 @@ node tools/smoke.mjs
 enforcement, redirect rejection, secret storage, log leakage, dependency pins and the landing
 page's CSP: no inline code, no external subresource, and outbound links are HTTPS-only.
 
-The install QR code is generated locally (no dependencies, no network) and verified by reading the
-symbol back before it is written:
+The install QR code is read back from the page asset and compared with the production origin in
+`deploy/site.json`. The same decoder runs in `release-check` and `live-check`, so a stale or
+hand-edited symbol fails the release instead of shipping:
 
 ```bash
-node tools/make-qr.mjs
+node tools/qr.mjs
 ```
 
 **Published site check (single command):**
@@ -409,9 +410,10 @@ value it found. Without a phone it exits with `No connected device`.
 
 - `:app:assembleDebug` — **BUILD SUCCESSFUL**; APK: `android/app/build/outputs/apk/debug/app-debug.apk` (~4.5 MB, minSdk 26 / targetSdk 35; English resources only).
 - `:app:testDebugUnitTest` — **132 tests, 0 failures**.
-- `node tools/security-check.mjs` — **33/33 PASS**.
+- `node tools/security-check.mjs` — **31/31 PASS**.
 - `node tools/release-check.mjs` — **12/12 PASS**: manifest, both APK files byte for byte, page,
-  headers, archive, QR asset, and the APK's own versionName and certificate.
+  headers, archive, the QR payload decoded and compared with `deploy/site.json`, and the APK's own
+  versionName and certificate.
 - `python tools/check_xml.py` — 19 resource XML files are well formed.
 - `node tools/smoke.mjs` — landing page 11/11 HTTP 200: the three stylesheets at the current stamp,
   `releases.json`, the QR code, the archive page and both signed APKs.
@@ -419,8 +421,9 @@ value it found. Without a phone it exits with `No connected device`.
   all stylesheets fresh at `?v=`, hero JPEG 97.7 KB, APK
   `application/vnd.android.package-archive` 898.6 KB with SHA-256 `464a15e4…`, the archive page and
   `releases.json` served.
-- `node tools/make-qr.mjs` — symbol read back as the exact download URL, and decoded independently
-  with jsQR in Chromium.
+- `node tools/qr.mjs` — the install QR decodes to
+  `https://glucopilot-civgdk.freebuff.site/#download`; it was also decoded independently with jsQR
+  in Chromium.
 - `apksigner.bat verify --print-certs` (build-tools 35.0.0) — 1.2.0 and 1.1.3 both **Verifies**
   with the same signer certificate, SHA-256 `6d882da0…9f96` (details below).
 - Landing page measured at 1024 and 1200 px widths: no horizontal overflow, the notification

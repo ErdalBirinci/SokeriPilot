@@ -18,10 +18,12 @@
  *     local file and the hash printed on the page
  *   - the archive page lists every release, and every archived APK is served
  *   - releases.json is served and agrees with the page
+ *   - the served QR code still decodes to the production origin
  */
 import { readFileSync, statSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
+import { decodeQrSvg } from "./qr.mjs";
 
 const ROOT = process.cwd();
 const BASE = (process.env.BASE_URL ?? "https://glucopilot-civgdk.freebuff.site").replace(/\/+$/, "");
@@ -31,6 +33,9 @@ const APK_MIME = "application/vnd.android.package-archive";
 const manifest = JSON.parse(readFileSync(join(ROOT, "landing/releases.json"), "utf8"));
 const current = manifest.releases.find((release) => release.version === manifest.current);
 const stamp = manifest.assetStamp;
+// The QR always points at the published site, even when this runs against the preview.
+const origin = JSON.parse(readFileSync(join(ROOT, "deploy/site.json"), "utf8"))
+  .urls.production.replace(/\/+$/, "");
 
 const local = {
   hero: join(ROOT, "landing/assets/android-auto.jpg"),
@@ -224,11 +229,12 @@ try {
 
 try {
   const { response, body, type } = await request("/assets/install-qr.svg");
-  const svg = body.toString("utf8");
   if (response.status !== 200) throw new Error(`HTTP ${response.status}`);
   if (type !== "image/svg+xml") throw new Error(`content-type ${type || "(none)"}`);
-  if (!svg.includes("<svg") || !svg.includes("<path")) throw new Error("served QR file is not an SVG symbol");
-  pass("live: install QR code", `200 image/svg+xml · ${kb(body.length)}`);
+  const qr = decodeQrSvg(body.toString("utf8"));
+  if (!qr.structureOk || !qr.syndromesOk) throw new Error("the served symbol is damaged");
+  if (qr.text !== `${origin}/#download`) throw new Error(`the served QR resolves to "${qr.text}"`);
+  pass("live: install QR code", `200 image/svg+xml · ${kb(body.length)} · ${qr.text}`);
 } catch (error) {
   fail("live: install QR code", error.message);
 }

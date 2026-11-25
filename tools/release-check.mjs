@@ -15,6 +15,7 @@ import { readFileSync, statSync, existsSync, readdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { execFileSync, execSync } from "node:child_process";
 import { join } from "node:path";
+import { decodeQrSvg } from "./qr.mjs";
 
 const ROOT = process.cwd();
 const failures = [];
@@ -198,12 +199,17 @@ check("release: archive page assets resolve", () => {
   return `${references.length} local references verified`;
 });
 
-check("release: install QR code is present", () => {
-  const svg = read("landing/assets/install-qr.svg");
-  assert(svg.includes("<svg") && svg.includes("<path"), "install-qr.svg is not an SVG symbol");
+check("release: install QR code resolves to the live origin", () => {
+  const qr = decodeQrSvg(read("landing/assets/install-qr.svg"));
+  const expected = `${origin}/#download`;
+  assert(qr.structureOk, "the symbol is missing its finder or timing patterns");
+  assert(qr.formatOk, "the two format-information copies disagree");
+  assert(qr.syndromesOk, "the Reed-Solomon syndromes are not zero");
+  assert(qr.mode === 0b0100, `the symbol uses mode ${qr.mode}, not byte mode`);
+  assert(qr.text === expected, `the QR resolves to "${qr.text}", expected ${expected}`);
   assert(html.includes('src="assets/install-qr.svg"'), "the download card does not show the QR code");
   assert(html.includes('alt="QR code'), "the QR image has no alternative text");
-  return `${statSync(join(ROOT, "landing/assets/install-qr.svg")).size} bytes, referenced by the download card`;
+  return `${qr.text} · mask ${qr.mask} · decoded from the SVG`;
 });
 
 check("release: social preview points at the live site", () => {
