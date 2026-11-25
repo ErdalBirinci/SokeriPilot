@@ -23,8 +23,8 @@ android {
         applicationId = "app.glcopilot"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.1.2"
+        versionCode = 5
+        versionName = "1.1.3"
         // The app ships English UI text only; do not pull library translations into the APK.
         resourceConfigurations += listOf("en")
         vectorDrawables.useSupportLibrary = true

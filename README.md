@@ -367,7 +367,7 @@ value it found. Without a phone it exits with `No connected device`.
 - `python tools/check_xml.py` — 19 resource XML files are well formed.
 - `node tools/smoke.mjs` — landing page 5/5 HTTP 200, including the signed APK download.
 - `node tools/live-check.mjs` — **3/3 PASS** on the published site: hero JPEG 97.7 KB, APK
-  `application/vnd.android.package-archive` 800.7 KB (v1.1.2) with SHA-256 `d8709933…`.
+  `application/vnd.android.package-archive` 802.1 KB (v1.1.3) with SHA-256 `d496ef20…`.
 - Landing page measured at 1024 and 1200 px widths: no horizontal overflow, the notification
   stays inside the map, and the cockpit falls back to a single column on mobile (430 px).
 

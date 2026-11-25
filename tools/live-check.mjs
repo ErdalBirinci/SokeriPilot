@@ -19,12 +19,12 @@ import { join } from "node:path";
 const ROOT = process.cwd();
 const BASE = (process.env.BASE_URL ?? "https://glucopilot-civgdk.freebuff.site").replace(/\/+$/, "");
 const HERO_PATH = "/assets/android-auto.jpg";
-const APK_PATH = "/download/GlucoPilot-1.1.2.apk";
+const APK_PATH = "/download/GlucoPilot-1.1.3.apk";
 const APK_MIME = "application/vnd.android.package-archive";
 
 const local = {
   hero: join(ROOT, "landing/assets/android-auto.jpg"),
-  apk: join(ROOT, "landing/download/GlucoPilot-1.1.2.apk")
+  apk: join(ROOT, "landing/download/GlucoPilot-1.1.3.apk")
 };
 
 const failures = [];
@@ -74,7 +74,7 @@ try {
   if (response.status !== 200) throw new Error(`HTTP ${response.status}`);
   if (type !== "text/html") throw new Error(`content-type ${type || "(none)"}`);
   if (!html.includes('src="assets/android-auto.jpg"')) throw new Error("hero image reference missing");
-  if (!html.includes('href="download/GlucoPilot-1.1.2.apk"')) throw new Error("APK link missing");
+  if (!html.includes('href="download/GlucoPilot-1.1.3.apk"')) throw new Error("APK link missing");
   if (!html.includes('class="shot__img"')) throw new Error("hero figure markup missing");
   pass("live: landing page served", `200 text/html · ${body.length} bytes`);
 } catch (error) {
