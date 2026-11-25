@@ -91,6 +91,6 @@ dependencies {
     implementation("androidx.health.connect:connect-client:1.1.0-alpha12")
 
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("org.robolectric:robolectric:4.18.1")
     testImplementation("org.json:json:20240303")
 }
