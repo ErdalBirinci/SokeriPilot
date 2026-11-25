@@ -390,6 +390,10 @@ node tools/qr.mjs
 ```bash
 node tools/watch.mjs                                    # runs live-check, writes dist/watch.json
 WATCH_WEBHOOK=https://hooks.example/… node tools/watch.mjs   # posts a short message on failure
+
+# Daily 09:00 run on this machine (registered with Task Scheduler, user-level):
+schtasks /Query  /TN "SokeriPilot site watch"
+schtasks /Delete /TN "SokeriPilot site watch" /F      # to stop it
 ```
 
 **Signing-key restore drill:**
