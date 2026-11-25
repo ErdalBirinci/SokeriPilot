@@ -1,128 +1,202 @@
 # SokeriPilot
 
-A **bright, driver-focused Android Auto cockpit for people with type 1 diabetes**. It turns CGM
-data (xDrip+ local broadcasts or Nightscout) into a value that can be read at a glance on the car
-screen. It does not recommend doses and does not collect data.
+<img src="docs/images/app-icon.png" width="96" align="right" alt="SokeriPilot app icon: a white glucose droplet with an ECG line, on mint green">
 
-**Source:** <https://github.com/ErdalBirinci/SokeriPilot> · **GitHub Pages mirror:**
-<https://erdalbirinci.github.io/SokeriPilot/> · **Primary site:**
-<https://glucopilot-civgdk.freebuff.site>
+**A bright, driver-focused Android Auto cockpit for people with type 1 diabetes.** SokeriPilot reads
+the CGM app you already use — through its notification, an xDrip+ local broadcast, or your own
+Nightscout server — and puts one large, legible value on the car screen: number, trend arrow, band
+and reading age. No dosing advice, no account, no analytics, nothing uploaded.
 
-```
-android/     Android app (Kotlin + Android for Cars App Library)
-landing/     Marketing site (dependency-free HTML/CSS/JS), release manifest and signed APK archive
-store/       Play listing copy, data-safety answers, IOT rationale, icon and feature graphic
-metadata/    F-Droid build recipe (IzzyOnDroid reads the same file)
-docs/        CGM compatibility matrix and the notification-reliability checklist
-tools/       Security, release, smoke, live, a11y and scheduled checks; release and keystore tools
-promo/       LinkedIn card and caption
-CONTRIBUTING.md  Build, test and review rules for contributors
-RELEASE.md   The release sequence: build, manifest, preview gate, tag, rollback
-```
+[![License: MIT](https://img.shields.io/badge/license-MIT-0a7859.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.2.1-0a7859.svg)](landing/releases.json)
+[![Android](https://img.shields.io/badge/Android-8.0%2B%20%C2%B7%20API%2026-0a7859.svg)](#4-requirements-and-install)
+[![Car App Library](https://img.shields.io/badge/Android%20Auto-Car%20App%20Library-0a7859.svg)](#why-the-car-app-library)
+[![CI](https://github.com/ErdalBirinci/SokeriPilot/actions/workflows/ci.yml/badge.svg)](https://github.com/ErdalBirinci/SokeriPilot/actions/workflows/ci.yml)
+[![Pages](https://github.com/ErdalBirinci/SokeriPilot/actions/workflows/pages.yml/badge.svg)](https://github.com/ErdalBirinci/SokeriPilot/actions/workflows/pages.yml)
+
+**Source:** <https://github.com/ErdalBirinci/SokeriPilot> ·
+**Site:** <https://glucopilot-civgdk.freebuff.site> ·
+**GitHub Pages mirror:** <https://erdalbirinci.github.io/SokeriPilot/>
 
 > **Medical notice:** SokeriPilot is not a medical device. It does not recommend treatment or
-> insulin doses. Alerts are advisory; always rely on your sensor's official app and your
-> healthcare professional's guidance.
+> insulin doses. Alerts are advisory; always rely on your sensor's official app and your healthcare
+> professional's guidance.
 
 ---
 
-## 1. Open-source foundations
+## At a glance
 
-### Android Auto — Google's official Car App Library samples
+| | |
+| --- | --- |
+| **Version** | 1.2.1 (versionCode 7) — signed APK, 920,044 bytes |
+| **Package** | `app.glcopilot` (install id, kept for updates) · code namespace `app.sokeripilot` |
+| **Platform** | Android 8.0+ (API 26), targetSdk 35 · Android Auto via Car App Library 1.7.0 |
+| **Car category** | `androidx.car.app.category.IOT` (CGM as an IoT health device) |
+| **CGM sources** | Notification listener (default), xDrip+ broadcast, Nightscout REST |
+| **Data leaves the device?** | Only if *you* configure Nightscout or turn on Health Connect. Otherwise no. |
+| **Accounts, ads, analytics, tracking** | None |
+| **License** | MIT |
+| **Cost** | Free, no in-app purchases |
 
-The most solid, maintained and production-ready foundation is Google's own repository:
+### Contents
 
-- **[android/car-samples](https://github.com/android/car-samples)** — Car App Library
-  samples (`car_app_library/showcase`, `navigation`), Apache-2.0.
-- **[android/car-codelabs](https://github.com/android/car-codelabs)** — starter/finished
-  projects from the official "Car App Library fundamentals" codelab.
-
-SokeriPilot **borrows the architecture, not the code**: `CarAppService` + `Session` + `Screen`,
-template-based UI, `automotive_app_desc.xml`, the `com.google.android.gms.car.application`
-metadata and testing with the Desktop Head Unit (DHU). Version used:
-`androidx.car.app:app:1.7.0` (`app-projected` for Android Auto).
-
-Why this foundation: third-party "Android Auto template" repositories are often abandoned or use
-custom drawing that conflicts with Play's driver-safety rules. Car App Library leaves screen
-size and theme differences to the host and is the only official path that can pass Play review.
-
-### CGM — notification listener + xDrip+ broadcast contract + Nightscout REST API
-
-- **[NightscoutFoundation/xDrip](https://github.com/NightscoutFoundation/xDrip)** — an open-source
-  data hub for Dexcom, Libre, Medtronic and Eversense sensors. The inter-app local broadcast
-  (`com.eveningoutpost.dexdrip.BgEstimate`) is documented there.
-- **[nightscout/cgm-remote-monitor](https://github.com/nightscout/cgm-remote-monitor)** — the
-  Nightscout server; `/api/v1/entries/sgv.json` and the `api-secret` header.
-
-SokeriPilot **does not copy source code** from either project; it implements only the public,
-documented protocols. As a result:
-
-- It does not conflict with the sensor maker's official app (xDrip+/Nightscout own the data).
-- The user decides where their data lives.
-- New sensors are supported when the source app is updated.
-
-The alternatives we compared (Juggluco, AndroidAPS, strimma) use the same ecosystem; the xDrip
-broadcast + Nightscout pair offers the widest device coverage and the most mature API.
+1. [Screenshots](#1-screenshots)
+2. [What it does](#2-what-it-does)
+3. [How it works](#3-how-it-works)
+4. [Requirements and install](#4-requirements-and-install)
+5. [Setup in five minutes](#5-setup-in-five-minutes)
+6. [CGM compatibility](#6-cgm-compatibility)
+7. [Alert policy](#7-alert-policy)
+8. [Privacy and security](#8-privacy-and-security)
+9. [Tests and verification](#9-tests-and-verification)
+10. [Project layout](#10-project-layout)
+11. [Build, sign and release](#11-build-sign-and-release)
+12. [Troubleshooting](#12-troubleshooting)
+13. [Known limits](#13-known-limits)
+14. [Contributing](#14-contributing)
+15. [Ideas not yet built](#15-ideas-not-yet-built)
+16. [License and credits](#16-license-and-credits)
 
 ---
 
-## 2. Features
+## 1. Screenshots
 
-**Car screen (Android Auto)**
+These are **real renders of the shipped phone layout**, not mock-ups: an off-device Robolectric test
+draws the actual layout with the actual resources and writes `build/reports/phone-screen.png`
+(`PhoneScreenRenderTest`). The car screen cannot be captured the same way — Car App Library
+templates are drawn by the host — so the only honest car-side artefact is the trend bitmap the app
+itself produces, shown further down.
 
-- At a glance: value, trend arrow and band label ("In range", "Low", "Urgent low", …).
-- A second line with source, reading age, session-scoped time in range, sensor battery (when
-  the CGM app states it) and the CGM app's own warm-up / signal-loss / sensor-end state.
-- A trend line for the last 90 minutes over the target band, drawn into the cockpit image slot.
-- Clear warnings for stale data (15 min+) and connection errors.
-- "Low soon" / "High soon" when the measured rate of change would cross a threshold within
-  30–45 minutes; at most once per half hour and muteable like the range alerts.
-- "Got it" on an urgent low, which stops the five-minute repeat for half an hour.
-- "Refresh" and "Recent readings" (last 12 readings) actions.
-- `PaneTemplate` / `ListTemplate` — Car App Library's driver-safety templates.
-- While navigation or music is open, a silent, persistent car notification: current value, trend and age.
-- One tap on the notification returns to the cockpit; Back returns to the app you came from.
-- A short high-priority alert when out of range; a "Mute 30 min" action.
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/images/phone-live-glucose.png" alt="Live glucose card: 132 mg/dL, flat arrow, In range · mg/dL, 2 min ago · Dexcom G7, and the I'm changing my sensor button">
+<p><b>Live glucose.</b> Value in a size you can read at arm's length, band pill, source and age.
+The sensor-change button pauses the “No glucose data” reminder for two hours while a new sensor
+warms up.</p>
+</td>
+<td width="50%" valign="top">
+<img src="docs/images/phone-driving-mode.png" alt="Driving mode card with three switches: show glucose while navigation or music is open, start automatically when Android Auto connects, warn me before a low or high at this rate">
+<p><b>Driving mode.</b> Monitoring starts when the phone is projected and stops when the cable is
+pulled; nothing runs in the background otherwise and nothing starts at boot.</p>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="docs/images/phone-setup-check.png" alt="Setup check card: notification access ticked, notification permission not granted, live CGM value ticked, Android Auto connection missing">
+<p><b>Setup check.</b> Four rows that answer “why is nothing on the car screen?” without log
+files: notification access, notification permission, a live CGM value, the car connection.</p>
+</td>
+<td valign="top">
+<img src="docs/images/phone-source-check.png" alt="Source check card: last reading 132 mg/dL from Dexcom G7 two minutes ago, with accepted and rejected notification rows and the reason">
+<p><b>Source check.</b> The last ten CGM-looking notifications, each marked accepted or rejected
+with the reason. Kept in memory only — it disappears with the process.</p>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="docs/images/phone-cgm-source.png" alt="CGM source card: notification access status, Listen to xDrip+ broadcasts switch, Nightscout URL and API key fields, Save source button">
+<p><b>CGM source.</b> The notification path needs no configuration at all. xDrip+ broadcasts switch
+on automatically when xDrip+ is installed; Nightscout is optional and HTTPS-only.</p>
+</td>
+<td valign="top">
+<img src="docs/images/phone-target-range.png" alt="Target range card: low threshold 70 mg/dL, high threshold 180 mg/dL, mg/dL or mmol/L choice, Save range button">
+<p><b>Target range.</b> 55–120 low and 120–300 high are accepted; mg/dL or mmol/L for display.
+The same thresholds drive the cockpit bands and every alert.</p>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="docs/images/phone-health-data.png" alt="Health data card: write new readings to Health Connect switch, export settings and import settings buttons">
+<p><b>Health data.</b> Health Connect export is optional, write-only and off by default. Settings
+export contains the Nightscout URL, range and units — never the raw API key.</p>
+</td>
+<td valign="top">
+<img src="docs/images/trend-image.png" alt="A mint trend line over a pale band: a 90-minute glucose curve rising and falling, ending in a dot">
+<p><b>The car trend bitmap.</b> This file is the actual output of <code>TrendImage</code>, drawn for
+the cockpit's image slot: last 90 minutes, target band behind the line, newest point marked.
+Generated by <code>TrendImageTest</code>.</p>
+</td>
+</tr>
+</table>
 
-**Phone**
+<details>
+<summary><b>The whole phone screen in one image</b> (tall: 411 × 2307, the layout as rendered)</summary>
 
-- A bright, card-based setup screen with live value, trend and source age.
-- xDrip+ listening switch; Nightscout URL + API key.
-- Target range thresholds (low 55–120, high 120–300 mg/dL) and mg/dL ↔ mmol/L display.
-- Driving mode switch: background monitoring + car notification.
-- "I'm changing my sensor" pause: keeps the "No glucose data" reminder quiet for two hours
-  while a replacement sensor warms up.
-- Setup check: four rows that show whether notification access, notification permission, a
-  live CGM value and the car connection are actually working.
-- "Last drive" summary: minutes, time in range, lowest value and low count — four small
-  numbers kept on the phone, nothing uploaded.
-- Optional write-only Health Connect export and a settings export/import file.
-- Notification permission flow (Android 13+).
+<img src="docs/images/phone-full.png" alt="Full phone screen render: header, live glucose, driving mode, setup check, CGM source, source check, health data, target range, Try now, grant permission and the medical footer" width="320">
 
-**Alerts**
+</details>
 
-- Only outside the target bands; at most one notification per band every 10 minutes.
-- An urgent low (54 mg/dL or below) repeats every five minutes, at most three times;
-  "Got it" on the notification quiets the repeat for half an hour.
-- A projection alert when the current slope crosses the low or high threshold inside the
-  horizon, labelled "Low soon" / "High soon" and throttled to once per 30 minutes.
-- One quiet "Sensor battery low" notice at 15% or less, once per low-battery episode.
-- Car notification via `CarAppExtender`; high-priority channel, silent repeats.
-- If a reading that was flowing in this driving session stops for 15 minutes, one **"No glucose
-  data"** reminder is posted per stale episode and cleared when fresh data returns, so a silent
-  sensor never leaves a stale number looking current. `StaleGuard` keeps it to one alert until
-  data flows again. The CGM app's own warm-up or signal-loss notification explains the gap
-  instead of a generic warning.
-- Only readings that arrive after monitoring started count as flowing data. A sensor change or
-  warm-up leaves a value that was already on the phone, even a few minutes old; that is shown as
-  an age in the cockpit and notification instead of an alarm.
-- The phone's **"I'm changing my sensor"** button, and a **"Sensor change"** action on the
-  reminder itself, pause it for two hours. The alert returns on its own if the sensor is still
+Regenerate the images after a UI change:
+
+```bash
+cd android
+../.toolchain/gradle-8.9/bin/gradle :app:testDebugUnitTest   # writes build/reports/*.png
+```
+
+The crops in `docs/images/` are taken from that render (card bands are detected by colour, so the
+images always match the current layout), and `docs/images/trend-image.png` comes from
+`TrendImageTest`.
+
+---
+
+## 2. What it does
+
+### Car screen (Android Auto)
+
+- **At a glance:** value, trend arrow and band label (“In range”, “Low”, “Urgent low”, “High”, …).
+- **Second line:** source, reading age, session-scoped time in range, sensor battery (when the CGM
+  app states it) and the CGM app's own warm-up / signal-loss / sensor-end state.
+- **Trend line:** the last 90 minutes over the target band, drawn into the cockpit image slot.
+- **Stale data:** a clear 15-minute warning instead of an old number that looks current.
+- **“Low soon” / “High soon”:** when the measured rate of change would cross a threshold within
+  30–45 minutes, at most once per half hour and muteable like the range alerts.
+- **“Got it”** on an urgent low: stops the five-minute repeat for half an hour.
+- **Actions:** “Refresh” and “Recent readings” (last 12 readings).
+- **Templates only:** `PaneTemplate` / `ListTemplate`, the Car App Library's driver-safety
+  surface. No free drawing, no video, no keyboard.
+- **While Maps or music is open:** a silent, persistent car notification with value, trend and age.
+  One tap returns to the cockpit; Back returns to the app you came from.
+- **Out of range:** a short high-priority alert with a “Mute 30 min” action.
+
+### Phone
+
+| Card | What it does |
+| --- | --- |
+| **Live glucose** | Value, trend, band, source age; “I'm changing my sensor” pause |
+| **Driving mode** | Background monitoring, auto-start on projection, before-range warnings |
+| **Setup check** | Notification access, notification permission, live value, car connection |
+| **CGM source** | Notification path status, xDrip+ switch, Nightscout URL + API key |
+| **Source check** | Last reading and the last 10 accepted/rejected notifications with reasons |
+| **Health data** | Optional write-only Health Connect export; settings export/import |
+| **Target range** | Low/high thresholds (55–120 / 120–300 mg/dL) and mg/dL ↔ mmol/L |
+| **Last drive** | Minutes, time in range, lowest value, low count — on the phone, never uploaded |
+
+Plus the Android 13+ notification-permission flow, and a “Grant notification permission” button
+that only appears when it is actually needed.
+
+### Alerts
+
+- Only outside the target bands, at most one notification per band every 10 minutes.
+- An urgent low (54 mg/dL or below) repeats every five minutes, at most three times; “Got it”
+  quiets the repeat for half an hour.
+- A projection alert when the current slope crosses the low or high threshold inside the horizon,
+  labelled “Low soon” / “High soon”, throttled to once per 30 minutes.
+- One quiet “Sensor battery low” notice at 15% or less, once per low-battery episode.
+- A single **“No glucose data”** reminder when readings that were flowing in this session stop for
+  15 minutes, cleared the moment fresh data returns. `StaleGuard` keeps it to one alert per stale
+  episode, so a silent sensor never leaves a stale number looking current.
+- Only readings that arrive **after monitoring started** count as flowing data: a sensor change or
+  warm-up leaves a value that was already on the phone — shown as an age in the cockpit and
+  notification instead of an alarm.
+- The phone's **“I'm changing my sensor”** button, and a **“Sensor change”** action on the
+  reminder itself, pause the reminder for two hours. It returns on its own if the sensor is still
   silent when the pause ends.
+- Car notifications go through `CarAppExtender` on a high-priority channel; repeats are silent.
 
 ---
 
-## 3. Architecture
+## 3. How it works
 
 ```
 Android Auto host
@@ -141,57 +215,117 @@ SokeriPilotCarAppService ──► Session ──► GlucoseScreen / TrendScreen
                           CarAppExtender notification
 ```
 
-- `GlucoseRepository` is the single source of truth; the xDrip broadcast and Nightscout polling
-  write to the same `StateFlow<GlucoseState>`.
-- Screens are `LifecycleOwner`s; they collect the flow in `onStart`, call `invalidate()` on
-  changes and cancel in `onStop`.
-- Android 8.0+ (API 26). Networking runs off the main thread; the default polling interval is 5 minutes.
+### Modules
+
+| Path | Responsibility |
+| --- | --- |
+| `car/SokeriPilotCarAppService.kt` | `CarAppService` entry point; creates the session |
+| `car/GlucoseScreen.kt` | Cockpit `Screen`: value, arrow, band, meta line, actions, notifications |
+| `car/TrendScreen.kt` | “Recent readings” list and refresh |
+| `car/TrendImage.kt` | The 90-minute trend bitmap (600 × 220) drawn for the image slot |
+| `data/GlucoseRepository.kt` | Single source of truth: one `StateFlow<GlucoseState>` |
+| `data/CgmNotificationListener.kt` | Notification-access listener; feeds the diagnostics log |
+| `data/CgmNotificationParser.kt` | Recognises value/trend/unit from notification text |
+| `data/CgmAppCatalog.kt` | Pure-Kotlin catalog of known CGM packages and their paths |
+| `data/NightscoutClient.kt` · `NightscoutEntryParser.kt` | HTTPS polling and JSON parsing |
+| `data/XDripBroadcastReceiver.kt` · `XDripReadingMapper.kt` | xDrip+ `BgEstimate` broadcast |
+| `data/GlucoseProjection.kt` | “Low soon” / “High soon” rate-of-change projection |
+| `notify/AlertPolicy.kt` | Bands, 10-minute throttle, mute window, urgent repeats |
+| `notify/StaleGuard.kt` | One “No glucose data” reminder per stale episode |
+| `notify/GlucoseNotifier.kt` | Status and alert channels, `CarAppExtender` plumbing |
+| `monitor/GlucoseMonitorService.kt` | `specialUse` foreground service kept alive while projected |
+| `monitor/CarConnectionWatcher.kt` | Watches `androidx.car.app.connection` |
+| `phone/MainActivity.kt` | The bright setup screen in the screenshots above |
+| `data/SettingsRepository.kt` · `SettingsExport.kt` | Private preferences; export/import |
+| `data/HealthConnectBridge.kt` | Optional write-only Health Connect export |
+
+### How a reading travels
+
+1. The CGM app posts its own notification (or xDrip+ publishes a broadcast, or the 5-minute
+   Nightscout poll returns an entry).
+2. `CgmNotificationParser` / `XDripReadingMapper` / `NightscoutEntryParser` turn it into a
+   `GlucoseReading`.
+3. Validation: 20–600 mg/dL, at most 60 minutes old, at most 5 minutes in the future, 24-hour
+   history limit.
+4. `GlucoseRepository` publishes the new state; the cockpit collects it in `onStart` and calls
+   `invalidate()`.
+5. `GlucoseNotifier` asks `AlertPolicy` whether this reading deserves an alert.
+6. If the phone is projected, `GlucoseMonitorService` keeps the silent car notification current.
 
 ### Living alongside Android Auto's built-in features
 
-Android Auto does not allow third-party apps to open a persistent window (overlay) on top of
-navigation or media. SokeriPilot therefore does not take over the screen; it stays alongside the
-default experience through four mechanisms:
+Android Auto does not allow third-party apps to open a persistent overlay on top of navigation or
+media, so SokeriPilot stays alongside the default experience through four mechanisms:
 
-1. **Silent status notification** — while driving mode is on, a persistent, silent car
-   notification updates with every reading. When Maps or music is in front, the notification
-   area shows the value, trend, band and reading age.
-2. **Short alert** — when the value leaves the target range, a high-priority notification comes
-   forward briefly; it is limited to once every 10 minutes per band and can be silenced with the
-   "Mute 30 min" action.
-3. **Stale-data reminder** — if readings that were flowing in this session stop for 15
-   minutes, one high-priority "No glucose data" notification appears, so a dead sensor never
-   leaves an old value looking current. It is cleared as soon as fresh data returns. A gap that
-   predates the drive (sensor change, warm-up) stays visible as a reading age instead of an
-   alarm, and the phone can pause the reminder for two hours while a new sensor settles.
-4. **One-tap cockpit** — tapping the notification opens SokeriPilot's car screen via
-   `CarPendingIntent`; Back returns the user to Maps or music.
+1. **Silent status notification** — updates with every reading; the notification area shows value,
+   trend, band and age while Maps or music is in front.
+2. **Short alert** — a high-priority notification when the value leaves the target range, limited to
+   once every 10 minutes per band, silenceable with “Mute 30 min”.
+3. **Stale-data reminder** — one “No glucose data” notification when flowing data stops for 15
+   minutes; cleared as soon as fresh data returns.
+4. **One-tap cockpit** — the notification opens the car screen via `CarPendingIntent`; Back returns
+   to Maps or music.
 
-To keep notifications alive, `GlucoseMonitorService` runs as a `specialUse` foreground service;
-Android 14+ requires the subtype declaration in the manifest. The subtype declaration must be
-supplied when submitting to Play. Users enable or disable the same behavior from the "Driving mode" card
-on the phone.
+`GlucoseMonitorService` runs as a `specialUse` foreground service (Android 14+ requires the subtype
+declaration in the manifest; it is supplied when submitting to Play). `MonitorLauncher` starts it
+when the car screen opens, so the phone app does not need to be opened in the car. If notification
+permission is missing or driving mode is off, a “Warning” row in the cockpit explains what to do.
 
-When the car screen opens, `MonitorLauncher` starts the service automatically; the phone app
-does not need to be opened. If notification permission is missing or driving mode is off, a
-"Warning" row in the cockpit explains what to do.
+### Why the Car App Library
+
+The foundation is Google's own, not a template repository:
+
+- [android/car-samples](https://github.com/android/car-samples) — Car App Library samples
+  (`car_app_library/showcase`, `navigation`), Apache-2.0.
+- [android/car-codelabs](https://github.com/android/car-codelabs) — the official codelab projects.
+
+SokeriPilot **borrows the architecture, not the code**: `CarAppService` + `Session` + `Screen`,
+template UI, `automotive_app_desc.xml`, the `com.google.android.gms.car.application` metadata and
+DHU testing. Third-party “Android Auto template” repositories are often abandoned or use custom
+drawing that conflicts with Play's driver-safety rules; Car App Library leaves screen size and theme
+to the host and is the only official path that can pass Play review.
+
+### Why notifications, broadcasts and Nightscout
+
+- **[NightscoutFoundation/xDrip](https://github.com/NightscoutFoundation/xDrip)** documents the
+  inter-app broadcast (`com.eveningoutpost.dexdrip.BgEstimate`).
+- **[nightscout/cgm-remote-monitor](https://github.com/nightscout/cgm-remote-monitor)** provides
+  `/api/v1/entries/sgv.json` and the `api-secret` header.
+
+SokeriPilot **does not copy source code** from either project; it implements the public, documented
+protocols. Android has no public API for one app to read another app's database, so the default path
+is the notification the CGM app already posts — enabled once through the system notification-access
+grant.
 
 ---
 
-## 4. Setup
+## 4. Requirements and install
 
-### Requirements
+### On a phone
+
+- Android 8.0 (API 26) or newer.
+- For the car screen: Android Auto on the phone and a compatible head unit, or the Desktop Head Unit.
+- For CGM data: any CGM app already on the phone, an xDrip+ broadcast, or a reachable Nightscout.
+
+### Install
+
+- **Signed APK:** [SokeriPilot-1.2.1.apk](landing/download/SokeriPilot-1.2.1.apk) — or from the
+  [download page](landing/download/index.html) / the [site](https://glucopilot-civgdk.freebuff.site/#download).
+  SHA-256 `457a885fe146a9575eba9511fe38a8ccff3a1b83644500508f2f0c6d016f3434`.
+- **Older versions** stay downloadable from `landing/download/` and the archive page.
+- **Play:** the listing copy, data-safety answers, category rationale, icon and feature graphic are
+  ready in [`store/`](store/); the upload bundle is built with
+  `:app:bundleRelease`. Publishing is manual.
+- **F-Droid / IzzyOnDroid:** [`metadata/app.glcopilot.yml`](metadata/app.glcopilot.yml) is the build
+  recipe (MIT, `v1.2.1`, `subdir: android`). Both stores sign the unsigned release build with their
+  own key, so the applicationId stays `app.glcopilot` for update continuity.
+
+### Build from source
 
 - Android Studio (Ladybug or newer) **or** JDK 17 + Gradle 8.9 + Android SDK 35.
-- For Android Auto testing: a phone + car, or the **Desktop Head Unit (DHU)**.
-- For CGM data: any CGM app already on the phone (read once through notification access), an
-  xDrip+ broadcast, or a reachable Nightscout server.
-
-To build without a system-wide installation, the repository contains a portable toolchain under
-`.toolchain/` (git-ignored): Temurin JDK 17.0.21.1, Gradle 8.9 and Android SDK 35 (platform 35,
-build-tools 34/35, platform-tools). `sdk.dir` in `android/local.properties` points to this SDK.
-
-### Build
+- The repository carries a portable toolchain under `.toolchain/` (git-ignored): Temurin JDK
+  17.0.21.1, Gradle 8.9 and Android SDK 35 (platform 35, build-tools 34/35, platform-tools).
+  `sdk.dir` in `android/local.properties` points at it.
 
 ```bash
 cd android
@@ -201,199 +335,195 @@ export ANDROID_HOME="$(cygpath -m "$PWD/../.toolchain/android-sdk")"   # Windows
 ../.toolchain/gradle-8.9/bin/gradle :app:assembleDebug :app:testDebugUnitTest
 ```
 
-If you open the project in Android Studio, `local.properties` is ready; Studio uses its own
-Gradle, and `./gradlew` commands work as well. The repository intentionally does not include
-`gradle/wrapper/gradle-wrapper.jar`; generate it with `gradle wrapper --gradle-version 8.9` if needed.
+Opening the project in Android Studio works as-is; `./gradlew` commands work too. The repository
+intentionally omits `gradle/wrapper/gradle-wrapper.jar` — generate it with
+`gradle wrapper --gradle-version 8.9` if you want the wrapper committed locally.
 
-### Signed release APK
-
-The release signature is read from `android/keystore.properties` (outside git) and
-`android/keystore/sokeripilot-release.jks`:
+### Testing with the Desktop Head Unit
 
 ```bash
-cd android
-../.toolchain/gradle-8.9/bin/gradle :app:assembleRelease
-```
-
-Output: `android/app/build/outputs/apk/release/app-release.apk`. Back up both files somewhere
-safe: without the same key, you cannot publish an update on Play. The key and password are not
-committed; provide them as CI secrets.
-
-### Testing with the DHU
-
-```bash
-# Requires Android SDK platform-tools and cmdline-tools
 sdkmanager "extras;google;desktop_head_unit" "platforms;android-35"
 adb forward tcp:5277 tcp:5277
-# Start the DHU (desktop-head-unit inside the SDK)
+# then start desktop-head-unit from the SDK
 ```
 
-Enable Android Auto developer mode on the phone, allow "Unknown sources", start SokeriPilot and
-select the app in the `IOT` category in the DHU.
+Enable Android Auto developer mode on the phone, allow “Unknown sources”, start SokeriPilot and pick
+it in the `IOT` category in the DHU.
 
-### CGM connection
+---
 
-**Any CGM app — default, nothing to configure inside it:**
+## 5. Setup in five minutes
+
+### The default path: nothing to configure in the CGM app
 
 1. Open SokeriPilot once and tap **Allow notification access** (a single system toggle).
 2. Keep using the sensor app you already have (Dexcom, Libre 3, xDrip+, Juggluco, Diabox,
    Eversense…).
-3. Every new value that app posts is read from its notification and shown on the car screen.
+3. Every new value that app posts is read from its notification and shown on the car screen. The
+   **Setup check** card turns its rows green as each piece starts working.
 
-The value, unit (mg/dL or mmol/L), trend arrow and freshness are parsed and validated
-(20–600 mg/dL, at most 60 minutes old). Reading happens on the device only; no data is uploaded
-and no extra permission is requested.
+The value, unit (mg/dL or mmol/L), trend arrow and freshness are parsed and validated (20–600 mg/dL,
+at most 60 minutes old). Reading happens on the device only.
 
-**Source check on the phone:** when a value does not reach the car, the *Source check* card on
-the phone screen shows the last reading together with the app it came from, and the last ten
-CGM-looking notifications marked **accepted** or **rejected** with the reason (no text, no value,
-not recognised as a CGM app, outside 20–600 mg/dL, older than 60 minutes). The list is kept in
-memory only, disappears with the process and is never written to disk or logged, so no glucose
-history is created.
+### Car-bound monitoring
 
-**Car-bound monitoring:** SokeriPilot watches the official `androidx.car.app.connection` signal.
-The moment the phone is projected into a head unit, monitoring starts in the background and the
-current data is refreshed, so the cockpit and the car notification are ready without opening
-anything. When the connection ends, the foreground service and its notification are stopped —
-nothing runs in the background while the phone is not in a car, and nothing is started at boot.
-The "Start automatically when Android Auto connects" switch controls this behavior.
+SokeriPilot watches the official `androidx.car.app.connection` signal. The moment the phone is
+projected into a head unit, monitoring starts in the background and the current data is refreshed,
+so the cockpit and the car notification are ready without opening anything. When the connection
+ends, the foreground service and its notification stop — nothing runs while the phone is not in a
+car, and nothing is started at boot. The “Start automatically when Android Auto connects” switch
+controls this.
 
-**xDrip+ (optional, best quality):**
+### xDrip+ (optional, best quality)
 
 1. xDrip+ → Settings → Inter-app settings → enable **Local broadcast**.
-2. SokeriPilot → "Listen to xDrip+ broadcasts" is enabled automatically when xDrip+ is installed.
+2. In SokeriPilot, “Listen to xDrip+ broadcasts” is enabled automatically when xDrip+ is installed.
 3. When xDrip publishes a new reading, the car screen updates automatically.
 
-**Nightscout:**
+### Nightscout (optional)
 
 1. Define `API_SECRET` on your Nightscout site.
 2. In SokeriPilot, enter `https://your-site.example` and the API key.
-3. Save → "Try now".
+3. Save → “Try now”.
 
-> Only **HTTPS** is accepted. `http://` Nightscout installations on the LAN are rejected by
-> design; terminate TLS at a reverse proxy.
+> Only **HTTPS** is accepted. `http://` Nightscout installations on the LAN are rejected by design;
+> terminate TLS at a reverse proxy.
 
-**CGM app detection:** on launch, SokeriPilot queries only the known CGM apps declared in the
-manifest `<queries>` (no `QUERY_ALL_PACKAGES`):
+### When a value does not reach the car
 
-- **xDrip+ and Juggluco** — verified xDrip broadcast sources; listened to automatically, and their
-  notifications are read as a second path.
-- **FreeStyle LibreLink** (TR, GB, DE, FR, IT, ES, US, IN, BR, CH, BE, SA, NL, CA, AU, NZ)
-  and **Libre 3 (US)** — read automatically from the app's own notification.
-- **Diabox** — read automatically from its notification; sending an xDrip `BgEstimate` broadcast
-  has **not been verified**, so it is never treated as a broadcast source.
-- **Dexcom G6/G7** — read automatically from the app's own notification.
-
-When an xDrip-compatible source is found, the phone shows "Detected: …"; a choice the user made
-on the switch is never overridden. The catalog is pure Kotlin and is covered by unit tests
-(`CgmAppCatalogTest`).
-
-Android has no public API for one app to read another app's database, so SokeriPilot reads the
-notification the CGM app already posts (enabled once through the system notification-access
-grant) and keeps the xDrip+ broadcast path when a source publishes one. Values are validated and
-stay on the device; the CGM apps themselves need no setting at all.
+The **Source check** card shows the last reading together with the app it came from, plus the last
+ten CGM-looking notifications marked **accepted** or **rejected** with the reason (no text, no
+value, not recognised as a CGM app, outside 20–600 mg/dL, older than 60 minutes). The list lives in
+memory only and is never written to disk or logged, so no glucose history is created.
 
 ---
 
-## 5. Security model
+## 6. CGM compatibility
+
+| App | Package(s) | Path | Status |
+| --- | --- | --- | --- |
+| Dexcom G6 / G7 | `com.dexcom.g6`, `com.dexcom.g7` | Notification | Parsed |
+| FreeStyle LibreLink | `com.freestylelibre.app.{tr,gb,de,fr,it,es,us,in,br,ch,be,sa,nl,ca,au,nz}` | Notification | Parsed |
+| FreeStyle Libre 3 (US) | `com.freestylelibre3.app.us` | Notification | Parsed |
+| xDrip+ | `com.eveningoutpost.dexdrip` | Broadcast + notification | Parsed |
+| Juggluco | `tk.glucodata` | Broadcast + notification | Parsed |
+| Diabox | `com.bubblesoft.android.diabox` | Notification | Parsed |
+| CamAPS FX | `uk.org.cambsdiabetes.camaps` | Notification | **Detected only** |
+| AndroidAPS | `info.nightscout.androidaps` | Notification | **Detected only** |
+
+*Parsed* means a unit-test fixture covers that app's notification or broadcast. *Detected only*
+means the package is in the catalog so the app can be named and pointed at, but no fixture exists
+yet — if that app's notification text differs, no value is read. The full matrix, the reasoning and
+the steps for adding an app are in [`docs/cgm-compatibility.md`](docs/cgm-compatibility.md).
+
+**CGM app detection:** on launch SokeriPilot queries only the packages declared in the manifest
+`<queries>` (no `QUERY_ALL_PACKAGES`). When an xDrip-compatible source is found the phone shows
+“Detected: …”; a choice the user made on the switch is never overridden. The catalog is pure Kotlin
+and covered by `CgmAppCatalogTest`.
+
+---
+
+## 7. Alert policy
+
+| Rule | Default |
+| --- | --- |
+| Target range | low 70 mg/dL, high 180 mg/dL (accepted low 55–120, high 120–300) |
+| Band alert throttle | one notification per band per 10 minutes |
+| Mute | 30 minutes, from the notification action |
+| Urgent low | 54 mg/dL or below; repeats every 5 minutes, at most 3 times |
+| Acknowledge | “Got it” quiets an urgent low for 30 minutes |
+| Before-range warning | slope would cross a threshold within 30–45 minutes, once per 30 minutes |
+| Sensor battery | one quiet notice at 15% or less, once per episode |
+| Stale data | 15 minutes without a flowing reading; one reminder per episode |
+| Sensor-change pause | 2 hours, extendable by tapping again |
+| Accepted values | 20–600 mg/dL, at most 60 minutes old, at most 5 minutes in the future |
+
+Bands and labels come from `GlucoseRange`; policy is `AlertPolicy`, `PredictivePolicy` and
+`StaleGuard`, all covered by unit tests. The reminder behaviour users actually see on a phone and
+head unit is documented in [`docs/notification-reliability.md`](docs/notification-reliability.md).
+
+---
+
+## 8. Privacy and security
 
 | Topic | Implementation |
 | --- | --- |
 | Transport | `usesCleartextTraffic=false` + network security config; HTTPS only |
-| Host validation | All hosts in debug; only Google-signed Android Auto/AAOS allowlist in release |
+| Host validation | All hosts in debug; only the Google-signed Android Auto/AAOS allowlist in release |
 | URL validation | Rejects scheme, host, port, user info, query/fragment and `..` paths |
 | Redirects | `instanceFollowRedirects=false`; 3xx is an error |
-| Secret | The raw value is **never stored**; only the SHA-1 digest Nightscout expects |
+| Secret | The raw Nightscout key is **never stored**; only the SHA-1 digest the protocol needs |
 | Storage | Private SharedPreferences; excluded from cloud backup and device transfer |
 | Incoming data | 20–600 mg/dL range, +5 min future tolerance, 24-hour history limit |
 | Network response | 512 KB cap; only known fields are parsed |
-| Logging | No logging in the data layer; URLs/keys are never leaked |
-| Permissions | INTERNET, POST_NOTIFICATIONS, FOREGROUND_SERVICE (+ SPECIAL_USE), the xDrip broadcast permission, the system notification-access binding, and write-only Health Connect blood glucose (no QUERY_ALL_PACKAGES, no boot start) |
-| Health Connect | Optional and off by default; grants are checked on every write, nothing is read back, and revoking the permission stops the export |
-| Settings export | User-initiated file with the Nightscout URL, target range and units; it carries the SHA-1 digest Nightscout requires, never the raw key |
-| Notifications | Two channels: silent status and high-priority alert; 10 min throttle + 30 min mute |
+| Logging | No logging in the data layer; URLs and keys are never printed |
+| Permissions | INTERNET, POST_NOTIFICATIONS, FOREGROUND_SERVICE (+ SPECIAL_USE), the xDrip broadcast permission, the notification-access binding, write-only Health Connect (no `QUERY_ALL_PACKAGES`, no boot start) |
+| Health Connect | Optional, off by default; grants checked on every write, nothing read back |
+| Settings export | User-initiated file with Nightscout URL, range and units; carries the SHA-1 digest, never the raw key |
+| Notifications | Two channels: silent status and high-priority alert; 10-minute throttle + 30-minute mute |
 | Background | `specialUse` foreground service, `exported=false`; no overlay permission |
 
-**Limits:** an xDrip broadcast can be spoofed by a malicious app that holds the same permission.
-SokeriPilot validates the value and timestamp, but there is no cryptographic proof of the source
-(the xDrip protocol does not provide one). For critical decisions, rely on the sensor's official
-app. The Nightscout API key travels as a SHA-1 digest; that is the protocol's design, not a strong
-password-storage method — choose a long, random key.
+**Limits:** an xDrip broadcast can be spoofed by a malicious app holding the same permission.
+SokeriPilot validates the value and timestamp, but the xDrip protocol provides no cryptographic proof
+of the source. For critical decisions rely on the sensor's official app. The Nightscout key travels
+as a SHA-1 digest — that is the protocol's design, not a password-storage method, so choose a long,
+random key.
 
 ---
 
-## 6. Tests
+## 9. Tests and verification
 
-**Unit tests** (JVM, pure logic — no network or Android emulator):
+**Unit tests** (JVM, pure logic — no network, no emulator):
 
 ```bash
 cd android && ./gradlew :app:testDebugUnitTest
 ```
 
-Coverage: notification parsing (mg/dL and mmol/L, both trend notations, unit-less values from
+134 tests cover notification parsing (mg/dL and mmol/L, both trend notations, unit-less values from
 known apps, unrelated apps rejected, stale/future timestamps), Nightscout URL security and the
-SHA-1 vector, band boundaries, trend thresholds, Nightscout JSON parsing
-(malformed/missing/future-dated records), xDrip broadcast validation and slope-unit conversion,
-unit conversion, relative time and alert policy (throttle, band change, mute window, urgent
-repeats and acknowledgement), stale session gating and the sensor-change pause, rate-of-change
-projection, drive summaries, sensor status text, sensor battery parsing, settings export/import
-and Health Connect record mapping.
+SHA-1 vector, band boundaries, trend thresholds, Nightscout JSON parsing, xDrip broadcast validation
+and slope-unit conversion, unit conversion, relative time, alert policy (throttle, band change, mute
+window, urgent repeats and acknowledgement), stale-session gating and the sensor-change pause,
+rate-of-change projection, drive summaries, sensor status text, sensor battery parsing, settings
+export/import and Health Connect record mapping. Two tests also write real PNGs: the phone screen
+and the car trend bitmap used in [the screenshots](#1-screenshots).
 
-**Static security and code checks** (run on this machine):
-
-```bash
-node tools/security-check.mjs
-python tools/check_xml.py
-```
-
-**Real-device verification (single command):**
+**Static security and code checks:**
 
 ```bash
-bash tools/verify-device.sh
+node tools/security-check.mjs     # 35 checks: manifest, exported components, HTTPS, CSP, secrets
+python tools/check_xml.py         # 19 resource XML files are well formed
+node tools/release-check.mjs      # 13 checks: manifest, APK bytes, page, headers, QR, signing
 ```
 
-It finds a connected device, installs the debug APK, grants notification permission, opens the
-phone app and uses `dumpsys` to check the status notification and the foreground
-`GlucoseMonitorService`. Customize with the `ADB`, `PACKAGE` and `APK` environment variables.
-
-**Release consistency** — `landing/releases.json` describes a release once:
-
-```bash
-node tools/release-check.mjs
-```
-
-It fails when the page, `landing/_headers`, the archive page or the stylesheet stamp disagree with
-the manifest, when an APK's bytes differ from its recorded size or SHA-256, or when the APK's own
-versionName and signing certificate are not the ones the page tells users to expect.
-
-**Landing page smoke test:**
+**Landing page and site:**
 
 ```bash
 python -m http.server 4173 --bind 127.0.0.1 --directory landing
-node tools/smoke.mjs
+node tools/smoke.mjs              # 17 URLs answer 200
+node tools/live-check.mjs         # 10 checks against the published site
+BASE_URL=https://glucopilot-civgdk-preview.freebuff.site node tools/live-check.mjs
+node tools/a11y-check.mjs         # 7 checks: structure, alt text, focus, WCAG AA contrast
+node tools/qr.mjs                 # the install QR decodes to the production origin
 ```
 
-`security-check.mjs` covers manifest hardening, exported components, permissions, HTTPS
-enforcement, redirect rejection, secret storage, log leakage, dependency pins and the landing
-page's CSP: no inline code, no external subresource, and outbound links are HTTPS-only.
+`live-check` verifies the page pins the current version, hash, QR code and archive, that every
+stylesheet at the current `?v=` stamp is served fresh, that the hero image is a real JPEG of the
+expected size, that the APK arrives as `application/vnd.android.package-archive` with the exact
+size and a SHA-256 matching both the local file and the page, and that the archive page,
+`releases.json`, the security headers, the install/privacy pages, `robots.txt`, `sitemap.xml` and
+the branded 404 all agree. `release-check` fails when the page, `landing/_headers`, the archive page
+or the stylesheet stamp disagree with the manifest, or when an APK's bytes, versionName or signing
+certificate are not the ones users are told to expect.
 
-The install QR code is read back from the page asset and compared with the production origin in
-`deploy/site.json`. The same decoder runs in `release-check` and `live-check`, so a stale or
-hand-edited symbol fails the release instead of shipping:
-
-```bash
-node tools/qr.mjs
-```
-
-**Scheduled watch (for cron or Task Scheduler):**
+**Scheduled watch** (cron or Task Scheduler):
 
 ```bash
-node tools/watch.mjs                                    # runs live-check, writes dist/watch.json
-WATCH_WEBHOOK=https://hooks.example/… node tools/watch.mjs   # posts a short message on failure
+node tools/watch.mjs                                          # runs live-check, writes dist/watch.json
+WATCH_WEBHOOK=https://hooks.example/… node tools/watch.mjs     # posts a short message on failure
 
-# Daily 09:00 run on this machine (registered with Task Scheduler, user-level):
-schtasks /Query  /TN "SokeriPilot site watch"
-schtasks /Delete /TN "SokeriPilot site watch" /F      # to stop it
+schtasks /Query  /TN "SokeriPilot site watch"                 # the daily 09:00 run on Windows
+schtasks /Delete /TN "SokeriPilot site watch" /F
 ```
 
 **Signing-key restore drill:**
@@ -403,93 +533,53 @@ KEYSTORE_PASSPHRASE='…' bash tools/keystore-drill.sh
 ```
 
 It decrypts `backups/*.tar.gz.enc`, proves the keystore is byte-identical to the live one and that
-its certificate SHA-256 equals the one in `releases.json`, without touching the live key or
-building anything. Run it after any key or backup change.
+its certificate SHA-256 equals the one in `releases.json`, without touching the live key or building
+anything.
 
-**Continuous integration:** `.github/workflows/ci.yml` runs the web checks, the smoke test, the
-release tool's idempotency check and the Android unit tests on every push and pull request.
-
-**Published site check (single command):**
-
-```bash
-node tools/live-check.mjs
-```
-
-It checks the deployed landing (`https://glucopilot-civgdk.freebuff.site`, override with
-`BASE_URL`): the page pins the current version, hash, QR code and archive; the hero image is a real
-JPEG of the expected size; every stylesheet at the current `?v=` stamp is served fresh and not from
-a stale cache; the APK arrives as `application/vnd.android.package-archive`, with the versioned
-filename, the exact release size and a SHA-256 that matches both the local file and the hash on the
-page; and the archive page and `releases.json` agree with the manifest. The same command verifies a
-preview deploy before production:
-
-```bash
-BASE_URL=https://glucopilot-civgdk-preview.freebuff.site node tools/live-check.mjs
-```
-
-**Car-bound device check (needs a phone):**
+**Real-device checks** (need a phone):
 
 ```bash
 bash tools/verify-device.sh
 ```
 
-Installs the debug APK, grants notification permission and notification access, then checks that
-the driving service is **not** running while unplugged, is running in the foreground with its
-status notification once the phone is projected (car mode on), the notification listener is bound,
-and a live CGM value is visible in the notification stream. It also prints the connected CGM app
-value it found. Without a phone it exits with `No connected device`.
+Installs the debug APK, grants notification permission and notification access, then checks that the
+driving service is **not** running while unplugged, is running in the foreground with its status
+notification once the phone is projected, the notification listener is bound, and a live CGM value is
+visible in the notification stream.
 
-### Verifications run on this machine
+**Continuous integration:** [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs the web
+checks, the smoke test, the release tool's idempotency check and the Android unit tests on every push
+and pull request. [`.github/workflows/pages.yml`](.github/workflows/pages.yml) publishes the static
+mirror with `tools/pages-build.mjs`.
 
-- `:app:assembleDebug` — **BUILD SUCCESSFUL**; APK: `android/app/build/outputs/apk/debug/app-debug.apk` (~4.5 MB, minSdk 26 / targetSdk 35; English resources only).
-- `:app:testDebugUnitTest` — **132 tests, 0 failures**.
-- `node tools/security-check.mjs` — **35/35 PASS** (adds the single header CSP, the
-  install/privacy/404 pages, the JSON-LD block and the crawler files).
-- `node tools/a11y-check.mjs` — **6/6 PASS**: language, title, viewport, one `h1`, image alt
-  text, keyboard reachability and the WCAG AA contrast of the text/button palette (the primary
-  button ramp is darker than the accent mint for exactly this reason).
-- `node tools/release-check.mjs` — **13/13 PASS**: manifest, both APK files byte for byte, page,
-  headers, archive, install guide, the stylesheet stamp across all five pages, the QR payload
-  decoded and compared with `deploy/site.json`, and the APK's own versionName and certificate.
-- `python tools/check_xml.py` — 19 resource XML files are well formed.
-- `node tools/smoke.mjs` — landing page 17/17 HTTP 200: the three stylesheets at the current stamp,
-  `releases.json`, the QR code, the archive page, the install guide, the privacy page, the 404
-  page, `robots.txt`, `sitemap.xml` and all three signed APKs.
-- `node tools/live-check.mjs` — **10/10 PASS** on the published site: page pins 1.2.1 and its
-  hashes, all stylesheets fresh at `?v=`, hero JPEG 97.7 KB, APK
-  `application/vnd.android.package-archive` 898.5 KB with SHA-256 `457a885f…`, the archive page,
-  `releases.json`, the security headers, the install/privacy pages with `robots.txt` and
-  `sitemap.xml`, and the branded 404 for an unknown path.
-- `node tools/qr.mjs` — the install QR decodes to
-  `https://glucopilot-civgdk.freebuff.site/#download`; it was also decoded independently with jsQR
-  in Chromium.
-- `apksigner.bat verify --print-certs` (build-tools 35.0.0) — 1.2.1, 1.2.0 and 1.1.3 all **Verify**
-  with the same signer certificate, SHA-256 `6d882da0…9f96` (details below).
-- Landing page measured at 1024 and 1200 px widths: no horizontal overflow, the notification
-  stays inside the map, and the cockpit falls back to a single column on mobile (430 px). The
-  download card, the install QR code and the archive page were measured at 430 px: no horizontal
-  overflow.
+### Results on this machine
+
+- `:app:assembleDebug` — **BUILD SUCCESSFUL**; `app-debug.apk` ≈ 4.5 MB, minSdk 26 / targetSdk 35,
+  English resources only.
+- `:app:testDebugUnitTest` — **134 tests, 0 failures**.
+- `:app:bundleRelease` — **BUILD SUCCESSFUL**; `app-release.aab` 1,705,031 bytes.
+- `node tools/security-check.mjs` — **35/35**.
+- `node tools/a11y-check.mjs` — **7/7**, including every gradient stop of the primary button.
+- `node tools/release-check.mjs` — **13/13**.
+- `python tools/check_xml.py` — 19 files well formed.
+- `node tools/smoke.mjs` — **17/17** HTTP 200.
+- `node tools/live-check.mjs` — **10/10** on preview and on production.
+- `node tools/qr.mjs` — decodes to `https://glucopilot-civgdk.freebuff.site/#download`.
 
 ### APK signing continuity (1.1.3 → 1.2.1)
 
-Android only installs an update when the signing certificate matches the installed app, so the
-published APKs were checked with the SDK's `apksigner.bat` (build-tools 35.0.0, local JDK). All
-versions stay in `landing/download/` and on the archive page, so this can be repeated on the files
-the site actually serves.
+Android only installs an update when the signing certificate matches, so the published APKs were
+checked with the SDK's `apksigner` (build-tools 35.0.0, local JDK):
 
 ```powershell
 & "$env:ANDROID_HOME\build-tools\35.0.0\apksigner.bat" verify --verbose --print-certs `
   .\landing\download\SokeriPilot-1.2.1.apk
-& "$env:ANDROID_HOME\build-tools\35.0.0\apksigner.bat" verify --verbose --print-certs `
-  .\landing\download\SokeriPilot-1.2.0.apk
-& "$env:ANDROID_HOME\build-tools\35.0.0\apksigner.bat" verify --verbose --print-certs `
-  .\landing\download\SokeriPilot-1.1.3.apk
 ```
 
 | Check | 1.1.3 | 1.2.0 | 1.2.1 |
 |---|---|---|---|
 | APK SHA-256 | `d496ef20…7629` | `464a15e4…52cb` | `457a885f…3434` |
-| Signer certificate SHA-256 | `6d882da012221b76648e69d22bb951e43ca108b54fe920912b5d43299c929f96` | same | same |
+| Signer certificate SHA-256 | `6d882da0…9f96` | same | same |
 | Certificate DN | `CN=SokeriPilot, OU=Mobile, O=SokeriPilot, L=Istanbul, C=TR` | same | same |
 | Key | RSA 4096 | RSA 4096 | RSA 4096 |
 | Public key SHA-256 | `6f4d1fa6…3056` | `6f4d1fa6…3056` | `6f4d1fa6…3056` |
@@ -497,69 +587,191 @@ the site actually serves.
 | `apksigner` result | Verifies, 1 signer | Verifies, 1 signer | Verifies, 1 signer |
 
 All three carry the same certificate and public key, so 1.2.1 installs as an ordinary update over
-either earlier version; there is nothing to re-sign. v2-only is expected here: minSdk is 26, so
-JAR/v1 signing is not needed, and AGP signs with the v2 scheme.
+either earlier version. v2-only is expected: minSdk is 26, so v1 signing is not needed.
 
 ### Install identity (applicationId)
 
 `android/app/build.gradle.kts` keeps `applicationId = "app.glcopilot"` while the code namespace is
 `app.sokeripilot`. Android matches an update on applicationId plus signing key, so the applicationId
 is what keeps existing installations on the update path; the namespace only names the code and the
-R class, and users never see either string — the launcher label comes from `app_name`
-("SokeriPilot"). This is deliberate, not a leftover: renaming the applicationId would install the
-app as a *second* copy and leave the old one, with its settings, behind.
+R class. The launcher label comes from `app_name` (“SokeriPilot”). This is deliberate, not a
+leftover: renaming the applicationId would install the app as a *second* copy and leave the old one,
+with its settings, behind.
 
 That is why the 1.2.1 build reports `package: name='app.glcopilot'` together with
-`launchable-activity: name='app.sokeripilot.phone.MainActivity'`: the component lives in the code
-package, the install id stays where updates can find it. A future applicationId change would need
-its own migration release (export settings, uninstall the old id, import) — a product decision, not
-a rename detail.
+`launchable-activity: name='app.sokeripilot.phone.MainActivity'`. A future applicationId change would
+need its own migration release (export settings, uninstall the old id, import) — a product decision,
+not a rename detail.
 
-If the fingerprints ever differ, the update was signed with another key — a debug keystore, a
-regenerated keystore, or a build on a machine without `android/keystore.properties` (that release
+If the fingerprints ever differ, the update was signed with another key (a debug keystore, a
+regenerated keystore, or a build on a machine without `android/keystore.properties` — that release
 build is left unsigned). Android then rejects the update with
-`INSTALL_FAILED_UPDATE_INCOMPATIBLE`. The fix is to restore the original release key (encrypted
-backup in `backups/`) and rebuild/re-sign with it; deliberately changing keys requires
-uninstalling the old app, which deletes its local settings, or Play App Signing key rotation.
-
-**Not verified:** a real car or DHU connection, Play pre-review, a physical CGM source and an
-end-to-end Health Connect write (no Health Connect app on this machine) are not available in
-this environment. In particular, where and for how long car notifications appear
-depends on the host/car software; a "persistent window over the foreground app" is not supported
-by Android Auto. If battery optimization kills the foreground service, notification updates stop;
-the user can exclude the app from battery optimization.
+`INSTALL_FAILED_UPDATE_INCOMPATIBLE`; restore the original release key from `backups/` and rebuild.
 
 ---
 
-### Releasing an update
+## 10. Project layout
 
-`landing/releases.json` describes a release once, and `RELEASE.md` is the ordered checklist. In
-short: build and sign, copy the APK into `landing/download/`, then let
-`node tools/release.mjs --apk landing/download/SokeriPilot-<version>.apk --write` update the manifest,
-the page version/size/hash/links, the `_headers` block, the archive row, the install guide and the
-`assetStamp` on every page. Update the announcement copy, then run `release-check`, `security-check`
-and `smoke`. Deploy to **preview** first and run `live-check`
-against the preview URL; only then deploy production and run it again. Tag the commit with the
-version so the published hash stays tied to its source. Old versions stay downloadable from
-`/download/`; a bad release is rolled back by checking out the tag and deploying again.
+```
+android/                     Android app (Kotlin, Car App Library)
+  app/src/main/java/app/sokeripilot/
+    car/                     CarAppService, cockpit screen, trend list, trend bitmap
+    data/                    repository, parsers, catalog, Nightscout, settings, Health Connect
+    monitor/                 projection watcher, foreground service, launcher
+    notify/                  alert policy, stale guard, notifier, receivers
+    phone/                   the setup activity in the screenshots
+  app/src/test/              134 JVM tests, including the two PNG render tests
+landing/                     Marketing site (dependency-free HTML/CSS/JS), release manifest, APKs
+store/                       Play listing copy, data-safety answers, category rationale, assets
+  assets/                    icon and feature graphic, plus the HTML sources they are rendered from
+metadata/app.glcopilot.yml   F-Droid build recipe (IzzyOnDroid reads the same file)
+docs/                        CGM compatibility matrix, notification-reliability checklist, images
+promo/                       LinkedIn card and caption
+tools/                       security, release, smoke, live, a11y, QR, watch, device and keystore tools
+.github/                     CI, Pages, Dependabot and issue templates
+deploy/                      Sites manifest and the page/origin description
+```
 
-## 7. Play / distribution notes
+The site is deliberately dependency-free: no framework, no build step, no third-party script. Its
+CSP is `default-src 'self'` with `connect-src 'none'`, so the download page cannot phone home even
+if someone edits the HTML carelessly.
 
-- Car App Library apps must declare a **supported category** on Play; this project uses
+---
+
+## 11. Build, sign and release
+
+### Signed release APK
+
+The release signature is read from `android/keystore.properties` (outside git) and
+`android/keystore/sokeripilot-release.jks`:
+
+```bash
+cd android
+../.toolchain/gradle-8.9/bin/gradle :app:assembleRelease   # APK
+../.toolchain/gradle-8.9/bin/gradle :app:bundleRelease     # AAB for Play
+```
+
+Outputs: `android/app/build/outputs/apk/release/app-release.apk` and
+`android/app/build/outputs/bundle/release/app-release.aab`. Back up both keystore files somewhere
+safe: without the same key you cannot publish an update on Play. The key and password are not
+committed; provide them as CI secrets, never in the repository.
+
+### Cutting a release
+
+`landing/releases.json` describes a release once, and [`RELEASE.md`](RELEASE.md) is the ordered
+checklist. In short:
+
+1. Build and sign; copy the APK into `landing/download/`.
+2. `node tools/release.mjs --apk landing/download/SokeriPilot-<version>.apk --write` updates the
+   manifest, the page version/size/hash/links, the `_headers` block, the archive row, the install
+   guide and the `assetStamp` on every page.
+3. Update the announcement copy, then run `release-check`, `security-check` and `smoke`.
+4. Deploy to **preview**, run `live-check` against the preview URL; only then deploy production and
+   run it again.
+5. Tag the commit with the version, so the published hash stays tied to its source.
+
+Old versions stay downloadable from `/download/`; a bad release is rolled back by checking out the
+tag and deploying again.
+
+### Play / distribution notes
+
+- Car App Library apps must declare a **supported category**; this project uses
   `androidx.car.app.category.IOT` (a CGM is an IoT health device). Play review may ask for the
-  rationale for the category.
-- Driver safety: no free drawing, video or keyboard on the car screen; templates only. This is a
-  deliberate design constraint.
-- The car screen's light/dark theme is controlled by the host; the app's "bright theme" idea is
-  carried by the phone UI, icon and notification copy.
+  rationale — it is written down in [`store/category-rationale.md`](store/category-rationale.md).
+- Driver safety: templates only, no free drawing, video or keyboard on the car screen.
+- The car screen's light/dark theme is controlled by the host; the bright theme lives in the phone
+  UI, the icon and the notification copy.
 - There is no medical-device claim; declare accordingly under Play health policies.
 
-## 8. License and attribution
+---
 
-- **SokeriPilot is MIT-licensed** — see [LICENSE](LICENSE). That covers the Android app, the
-  tools and the landing page, so the project can be described and reused as open source.
-- Android for Cars App Library and Google samples: Apache-2.0.
-- xDrip+ and Nightscout are distributed under their own licenses; their source code is not in
-  this repository, only the documented protocols are used.
-- SokeriPilot's app code and marketing site were written for this project.
+## 12. Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| Nothing appears on the car screen | **Setup check**: is notification access granted? Is the notification permission granted? Is a live CGM value arriving? Is the phone projected? |
+| A value reaches the phone but not the car | Open the cockpit once (Android Auto → `IOT` category); `MonitorLauncher` starts the service. Check that driving mode is on. |
+| The notification says “No glucose data” | Readings that were flowing stopped for 15 minutes. Check the sensor app; use **I'm changing my sensor** for a warm-up. |
+| “Low soon” never appears | Before-range warnings are a driving-mode switch; the slope also has to cross the threshold inside 30–45 minutes. |
+| Alerts are silent | Android may have put the channels in “Silent”. Check Settings → Apps → SokeriPilot → Notifications, and the per-channel settings. |
+| Alerts stop while driving | Battery optimisation killed the foreground service. Exclude SokeriPilot from battery optimisation (`docs/notification-reliability.md` has the OEM matrix). |
+| Nightscout will not save | Only `https://` URLs with no path, port, user info or query are accepted. A LAN `http://` server must sit behind a TLS reverse proxy. |
+| Nightscout saves but “Try now” fails | The key must match the site's `API_SECRET`; the app sends the SHA-1 digest the protocol expects. |
+| Update refuses to install | The signing key differs (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`) — see [signing continuity](#apk-signing-continuity-113--121). |
+| Wrong language or units | Units are switchable (mg/dL ↔ mmol/L) in **Target range**. The UI is English-only in 1.2.1. |
+
+---
+
+## 13. Known limits
+
+- **Not verified in this environment:** a real car or DHU connection, Play pre-review, a physical CGM
+  source, and an end-to-end Health Connect write (no Health Connect app here). Where and for how long
+  a car notification appears depends on the host/car software; a “persistent window over the
+  foreground app” is not supported by Android Auto and is not attempted.
+- **Two catalog entries are unproven:** CamAPS FX and AndroidAPS are recognised by package name but
+  their notification text has no fixture yet.
+- **The xDrip broadcast is spoofable** by any app holding the same permission; values are validated
+  but not authenticated.
+- **English only** in 1.2.1 — no Turkish or other localisation yet.
+- **No in-app update check.** The app has no network permission for anything except the Nightscout
+  host you configure, and the site deliberately forbids outbound connections, so updates are found
+  the old way: the site, the archive page, or your store.
+- **No screenshots of the car screen** are published, because capturing them requires a DHU or a
+  head unit. The phone renders in [section 1](#1-screenshots) are the real app UI; the trend bitmap is
+  the real car-side output.
+
+---
+
+## 14. Contributing
+
+Read [`CONTRIBUTING.md`](CONTRIBUTING.md) first. The short version:
+
+- Build and run `:app:testDebugUnitTest` before opening a pull request; new logic needs a test.
+- Keep the data layer free of logging and of any new permission; the security model in
+  [section 8](#8-privacy-and-security) is part of the product.
+- Run `node tools/security-check.mjs` and `node tools/release-check.mjs` if you touched the landing
+  page, and `node tools/a11y-check.mjs` if you touched its CSS.
+- Bug reports and feature requests have templates in
+  [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/). For a CGM app that is not recognised, include
+  the app name, package and a notification sample with the glucose number — the checklist is in
+  [`docs/cgm-compatibility.md`](docs/cgm-compatibility.md).
+- Dependabot keeps Gradle, Actions and the site's npm-free tooling current
+  ([`.github/dependabot.yml`](.github/dependabot.yml)).
+
+### Adding a CGM app
+
+1. Add the package and its path to `data/CgmAppCatalog.kt`.
+2. Declare the package in the manifest `<queries>` block.
+3. Add a parser fixture for its notification text and a `CgmAppCatalogTest` case.
+4. Update [`docs/cgm-compatibility.md`](docs/cgm-compatibility.md): *Parsed* only when the fixture
+   exists, otherwise *Detected only*.
+
+---
+
+## 15. Ideas not yet built
+
+Not promises, just the honest backlog:
+
+- Turkish (and other) UI localisation, including notification strings.
+- Fixtures for CamAPS FX and AndroidAPS notification text.
+- A DHU capture script so the README can show a real car screen.
+- Optional home-screen widget with the same value and age.
+- A Play internal-testing track run with the signed AAB.
+
+---
+
+## 16. License and credits
+
+- **SokeriPilot is MIT-licensed** — see [LICENSE](LICENSE). That covers the Android app, the tools
+  and the landing page, so the project can be described and reused as open source.
+- Android for Cars App Library and the Google samples: Apache-2.0.
+- xDrip+ and Nightscout are distributed under their own licenses; their source code is not in this
+  repository — only the documented protocols are implemented.
+- SokeriPilot's app code, marketing site and the images in `docs/images/` were produced for this
+  project.
 - Android Auto is a trademark of Google LLC.
+
+> **Not a medical device.** SokeriPilot displays data produced by another app and by your sensor. It
+> does not diagnose, treat or recommend doses, and its alerts can be delayed or suppressed by the
+> phone, the car or the sensor. Always keep using your sensor's official app and your healthcare
+> professional's guidance.

@@ -46,6 +46,35 @@ class TrendImageTest {
         assertTrue("no pixel was drawn", hasInk(bitmap))
     }
 
+    /**
+     * Writes the real bitmap to build/reports/trend-image.png so the README can show the
+     * image the car screen actually gets, not a mock-up.
+     */
+    @Test
+    fun `trend image is exported for the docs`() {
+        val app = RuntimeEnvironment.getApplication() as SokeriPilotApp
+        val bitmap = TrendImage.bitmap(
+            app,
+            listOf(
+                reading(88, 118),
+                reading(72, 132),
+                reading(58, 148),
+                reading(44, 161),
+                reading(30, 152),
+                reading(16, 138),
+                reading(4, 126),
+                reading(0, 121)
+            ),
+            GlucoseRange(),
+            now
+        )!!
+
+        val out = java.io.File("build/reports/trend-image.png")
+        out.parentFile?.mkdirs()
+        out.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        assertTrue("trend image was not written", out.length() > 1_000)
+    }
+
     @Test
     fun `one reading is not a trend`() {
         val app = RuntimeEnvironment.getApplication() as SokeriPilotApp
