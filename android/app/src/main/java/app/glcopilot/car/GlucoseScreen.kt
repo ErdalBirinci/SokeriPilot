@@ -98,11 +98,23 @@ class GlucoseScreen(
             )
             val notes = buildList {
                 add("${latest.source} · ${TimeAgo.format(now, latest.timestampMillis)}")
-                add("${range.low}–${range.high} mg/dL · %${state.inRangePercent(range)} in range")
+                add(
+                    "${range.low}–${range.high} mg/dL · %${state.inRangePercent(range)} in range" +
+                        " · this session"
+                )
+                latest.sensorBatteryPercent?.let {
+                    add(carContext.getString(R.string.car_sensor_battery, it))
+                }
                 if (TimeAgo.isStale(now, latest.timestampMillis)) {
-                    add(carContext.getString(R.string.car_stale))
+                    add(
+                        state.sensorStatus?.label
+                            ?: carContext.getString(R.string.car_stale)
+                    )
                 }
                 state.lastError?.let { add(it) }
+            }
+            TrendImage.bitmap(carContext, state.readings, range, now)?.let { trend ->
+                pane.setImage(CarIcon.Builder(IconCompat.createWithBitmap(trend)).build())
             }
             if (warning != null) {
                 pane.addRow(warningRow(warning))

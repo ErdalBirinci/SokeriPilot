@@ -3,6 +3,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.health.WRITE_BLOOD_GLUCOSE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.REQUEST_REBIND_NOTIFICATION_LISTENER_SERVICE" />
@@ -44,6 +45,9 @@
 
         <package android:name="com.dexcom.g6" />
         <package android:name="com.dexcom.g7" />
+
+        <!-- Health Connect provider, for the optional write-only export. -->
+        <package android:name="com.google.android.apps.healthdata" />
     </queries>
 
     <application
@@ -71,6 +75,10 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Health Connect shows this app's permission rationale. -->
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
             </intent-filter>
         </activity>
 
@@ -118,6 +126,24 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="app.glcopilot.action.MUTE_ALERTS" />
+            </intent-filter>
+        </receiver>
+
+        <!-- "Got it" on an urgent-low alert. -->
+        <receiver
+            android:name=".notify.AcknowledgeAlertsReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="app.glcopilot.action.ACKNOWLEDGE_ALERT" />
+            </intent-filter>
+        </receiver>
+
+        <!-- "Sensor change" on the stale-data reminder. -->
+        <receiver
+            android:name=".notify.SensorChangeReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="app.glcopilot.action.SENSOR_CHANGE" />
             </intent-filter>
         </receiver>
 

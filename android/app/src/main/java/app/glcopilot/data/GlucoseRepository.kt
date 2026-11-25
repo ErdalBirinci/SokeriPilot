@@ -16,7 +16,9 @@ class GlucoseRepository(
     private val settings: SettingsRepository,
     private val notifier: GlucoseNotifier,
     private val client: NightscoutClient = NightscoutClient(),
-    private val clock: () -> Long = { System.currentTimeMillis() }
+    private val clock: () -> Long = { System.currentTimeMillis() },
+    /** Best-effort sink for enabled Health Connect export; null when unavailable. */
+    private val healthWriter: ((GlucoseReading) -> Unit)? = null
 ) {
 
     private val _state = MutableStateFlow(GlucoseState())
@@ -64,6 +66,26 @@ class GlucoseRepository(
         }
     }
 
+    /** Marks the start of a driving session so the cockpit percentage is honest. */
+    fun startSession(nowMillis: Long = clock()) {
+        _state.update { it.copy(sessionStartedAtMillis = nowMillis) }
+    }
+
+    /** Ends the session, saves a compact summary for the phone and clears the marker. */
+    fun finishSession(range: GlucoseRange, nowMillis: Long = clock()): DriveSummary? {
+        val start = _state.value.sessionStartedAtMillis ?: return null
+        val summary = DriveSummary.from(_state.value.readings, range, start, nowMillis)
+        summary?.let(settings::saveLastDrive)
+        _state.update { it.copy(sessionStartedAtMillis = null) }
+        return summary
+    }
+
+    /** The CGM app announced a warm-up, signal loss or sensor end. */
+    fun onSensorStatus(kind: SensorStatus) {
+        _state.update { it.copy(sensorStatus = kind) }
+        publishStatus()
+    }
+
     private fun merge(incoming: List<GlucoseReading>, source: String) {
         if (incoming.isEmpty()) return
         val cutoff = clock() - MAX_AGE_MILLIS
@@ -76,9 +98,11 @@ class GlucoseRepository(
             _state.value = _state.value.copy(
                 readings = merged,
                 configuredSource = source,
-                lastError = null
+                lastError = null,
+                sensorStatus = null
             )
         }
+        _state.value.readings.firstOrNull()?.let { latest -> healthWriter?.invoke(latest) }
         publishStatus()
     }
 

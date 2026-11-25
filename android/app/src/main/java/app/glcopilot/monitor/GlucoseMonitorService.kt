@@ -44,9 +44,28 @@ class GlucoseMonitorService : Service() {
             container.notifier.statusNotification(container.repository.state.value),
             type
         )
+
+        // The cockpit percentage and the end-of-drive summary both belong to this
+        // session, not to whatever happened to be in memory before plugging in.
+        container.repository.startSession()
+
         scope.launch {
             container.repository.state.collect { state ->
                 container.notifier.postStatus(state)
+            }
+        }
+
+        // Projections and the sensor battery notice are car-only: they are evaluated
+        // when state changes while the driving monitor runs.
+        scope.launch {
+            container.repository.state.collect { state ->
+                val now = System.currentTimeMillis()
+                container.notifier.maybeNotifyPrediction(
+                    state.readings,
+                    container.settings.glucoseRange(),
+                    now
+                )
+                state.latest?.let(container.notifier::maybeNotifySensorBattery)
             }
         }
 
@@ -83,6 +102,11 @@ class GlucoseMonitorService : Service() {
     }
 
     override fun onDestroy() {
+        if (AppGraph.isInitialized) {
+            AppGraph.container.repository.finishSession(
+                AppGraph.container.settings.glucoseRange()
+            )
+        }
         scope.cancel()
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         super.onDestroy()

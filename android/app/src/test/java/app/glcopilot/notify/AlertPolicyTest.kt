@@ -38,4 +38,46 @@ class AlertPolicyTest {
         assertFalse(policy.shouldAlert(GlucoseBand.HIGH, now, mutedUntil = now + 30 * 60 * 1000L))
         assertTrue(policy.shouldAlert(GlucoseBand.HIGH, now + 31 * 60 * 1000L, mutedUntil = now + 30 * 60 * 1000L))
     }
+
+    @Test
+    fun `an urgent low repeats three times every five minutes`() {
+        assertTrue(policy.shouldAlert(GlucoseBand.URGENT_LOW, now, mutedUntil = 0L))
+        policy.markNotified(GlucoseBand.URGENT_LOW, now)
+
+        assertFalse(policy.shouldAlert(GlucoseBand.URGENT_LOW, now + 4 * 60_000L, 0L))
+        assertTrue(policy.shouldAlert(GlucoseBand.URGENT_LOW, now + 5 * 60_000L, 0L))
+        policy.markNotified(GlucoseBand.URGENT_LOW, now + 5 * 60_000L)
+        assertTrue(policy.shouldAlert(GlucoseBand.URGENT_LOW, now + 10 * 60_000L, 0L))
+        policy.markNotified(GlucoseBand.URGENT_LOW, now + 10 * 60_000L)
+        assertTrue(policy.shouldAlert(GlucoseBand.URGENT_LOW, now + 15 * 60_000L, 0L))
+        policy.markNotified(GlucoseBand.URGENT_LOW, now + 15 * 60_000L)
+
+        assertFalse(policy.shouldAlert(GlucoseBand.URGENT_LOW, now + 20 * 60_000L, 0L))
+        assertFalse(policy.shouldAlert(GlucoseBand.URGENT_LOW, now + 60 * 60_000L, 0L))
+    }
+
+    @Test
+    fun `acknowledging an urgent low quiets the repeat`() {
+        assertTrue(policy.shouldAlert(GlucoseBand.URGENT_LOW, now, mutedUntil = 0L))
+        policy.markNotified(GlucoseBand.URGENT_LOW, now)
+
+        val acknowledged = now + 30 * 60_000L
+        assertFalse(policy.shouldAlert(GlucoseBand.URGENT_LOW, now + 5 * 60_000L, 0L, acknowledged))
+        assertTrue(
+            "the alert stands again after the acknowledgement window",
+            policy.shouldAlert(GlucoseBand.URGENT_LOW, acknowledged + 60_000L, 0L, acknowledged)
+        )
+    }
+
+    @Test
+    fun `returning in range clears the urgent repeat count`() {
+        policy.markNotified(GlucoseBand.URGENT_LOW, now)
+        policy.markNotified(GlucoseBand.URGENT_LOW, now + 5 * 60_000L)
+        policy.markNotified(GlucoseBand.URGENT_LOW, now + 10 * 60_000L)
+        policy.markNotified(GlucoseBand.URGENT_LOW, now + 15 * 60_000L)
+        assertFalse(policy.shouldAlert(GlucoseBand.URGENT_LOW, now + 20 * 60_000L, 0L))
+
+        policy.reset()
+        assertTrue(policy.shouldAlert(GlucoseBand.URGENT_LOW, now + 25 * 60_000L, 0L))
+    }
 }

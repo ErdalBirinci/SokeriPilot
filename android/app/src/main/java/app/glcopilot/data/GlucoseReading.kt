@@ -87,14 +87,23 @@ data class GlucoseState(
     val readings: List<GlucoseReading> = emptyList(),
     val isRefreshing: Boolean = false,
     val lastError: String? = null,
-    val configuredSource: String? = null
+    val configuredSource: String? = null,
+    val sensorStatus: SensorStatus? = null,
+    val sessionStartedAtMillis: Long? = null
 ) {
     val latest: GlucoseReading?
         get() = readings.firstOrNull()
 
+    /** Readings seen during the current drive, or all of them while monitoring is off. */
+    private fun sessionReadings(): List<GlucoseReading> =
+        sessionStartedAtMillis
+            ?.let { start -> readings.filter { it.timestampMillis >= start } }
+            ?: readings
+
     fun inRangePercent(range: GlucoseRange): Int {
-        if (readings.isEmpty()) return 0
-        val inRange = readings.count { range.band(it.mgdl) == GlucoseBand.IN_RANGE }
-        return inRange * 100 / readings.size
+        val session = sessionReadings()
+        if (session.isEmpty()) return 0
+        val inRange = session.count { range.band(it.mgdl) == GlucoseBand.IN_RANGE }
+        return inRange * 100 / session.size
     }
 }

@@ -55,6 +55,14 @@ class CgmNotificationListener : NotificationListenerService() {
         val label = appLabel(sbn.packageName)
         val container = AppGraph.container
 
+        // The sensor app's own warm-up / signal-loss / sensor-end notification carries
+        // no value, but explains a gap so the cockpit and stale alert can be honest.
+        if (CgmNotificationParser.isCgmApp(sbn.packageName, label)) {
+            SensorStatusParser.detect(texts)?.let { kind ->
+                container.repository.onSensorStatus(kind)
+            }
+        }
+
         when (val outcome = CgmNotificationParser.evaluate(
             packageName = sbn.packageName,
             appLabel = label,

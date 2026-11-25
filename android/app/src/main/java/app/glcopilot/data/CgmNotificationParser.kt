@@ -96,6 +96,10 @@ object CgmNotificationParser {
         "aaps"
     )
 
+    /** "battery 82%" or "82% battery" in a sensor notification. */
+    private val BATTERY_PREFIX = Regex("""(?i)(?:battery|batt|pil)[^0-9%]{0,12}(\d{1,3})\s*%""")
+    private val BATTERY_SUFFIX = Regex("""(?i)(\d{1,3})\s*%\s*(?:battery|remaining)""")
+
     private const val FUTURE_TOLERANCE_MILLIS = 5 * 60 * 1000L
     private const val MAX_AGE_MILLIS = 60 * 60 * 1000L
     private const val MIN_MMOL = 1.1
@@ -136,7 +140,7 @@ object CgmNotificationParser {
             .replace('\n', ' ')
             .trim()
         if (text.isEmpty()) {
-            return if (looksLikeCgmApp(packageName, appLabel)) {
+            return if (isCgmApp(packageName, appLabel)) {
                 ParseOutcome.Rejected(Rejection.NO_TEXT)
             } else {
                 ParseOutcome.Ignored
@@ -159,7 +163,8 @@ object CgmNotificationParser {
                 mgdl = mgdl,
                 timestampMillis = timestamp,
                 trend = trendFrom(text),
-                source = sourceLabel(packageName, appLabel)
+                source = sourceLabel(packageName, appLabel),
+                sensorBatteryPercent = batteryPercent(text)
             )
         )
     }
@@ -174,7 +179,7 @@ object CgmNotificationParser {
             // A bare "128 mg/dL" is not enough: accept it only from a CGM-looking app
             // or as an ongoing (sensor-style) notification, so a chat message never
             // becomes a reading.
-            if (!ongoing && !looksLikeCgmApp(packageName, appLabel)) {
+            if (!ongoing && !isCgmApp(packageName, appLabel)) {
                 return ValueResult.Failed(Rejection.NOT_CGM_APP)
             }
 
@@ -194,7 +199,7 @@ object CgmNotificationParser {
             }
         }
 
-        if (!looksLikeCgmApp(packageName, appLabel)) return ValueResult.Failed(null)
+        if (!isCgmApp(packageName, appLabel)) return ValueResult.Failed(null)
         val bare = BARE_VALUE.find(text)?.value?.toIntOrNull()
             ?: return ValueResult.Failed(Rejection.NO_VALUE)
         return if (bare in GlucoseReading.MIN_MGDL..GlucoseReading.MAX_MGDL) {
@@ -204,7 +209,14 @@ object CgmNotificationParser {
         }
     }
 
-    private fun looksLikeCgmApp(packageName: String, appLabel: String?): Boolean {
+    /** Battery percentage from the sensor app's own wording; null when it is not stated. */
+    fun batteryPercent(text: String): Int? {
+        val match = BATTERY_PREFIX.find(text) ?: BATTERY_SUFFIX.find(text) ?: return null
+        return match.groupValues[1].toIntOrNull()?.takeIf { it in 0..100 }
+    }
+
+    /** True when the notification comes from a known or clearly CGM-branded app. */
+    fun isCgmApp(packageName: String, appLabel: String?): Boolean {
         if (CgmAppCatalog.labelFor(packageName) != null) return true
         val haystack = "$packageName ${appLabel.orEmpty()}".lowercase()
         return CGM_HINTS.any { haystack.contains(it) }

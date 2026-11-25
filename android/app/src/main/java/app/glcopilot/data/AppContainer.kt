@@ -14,7 +14,12 @@ class AppContainer(context: Context) {
 
     val settings = SettingsRepository(appContext)
     val notifier = GlucoseNotifier(appContext, settings)
-    val repository = GlucoseRepository(settings = settings, notifier = notifier)
+    val health = HealthConnectBridge(appContext, settings)
+    val repository = GlucoseRepository(
+        settings = settings,
+        notifier = notifier,
+        healthWriter = health::maybeWrite
+    )
 
     /** Last ten CGM-looking notifications, for the source-check screen. */
     val diagnostics = DiagnosticsLog()

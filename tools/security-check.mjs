@@ -100,9 +100,11 @@ check("manifest: least-privilege permissions", () => {
     "android.permission.FOREGROUND_SERVICE",
     "android.permission.FOREGROUND_SERVICE_SPECIAL_USE",
     "android.permission.REQUEST_REBIND_NOTIFICATION_LISTENER_SERVICE",
-    "com.eveningoutpost.dexdrip.permissions.RECEIVE_BG_ESTIMATE"
+    "com.eveningoutpost.dexdrip.permissions.RECEIVE_BG_ESTIMATE",
+    // Optional, user-granted Health Connect export; the app never reads health data back.
+    "android.permission.health.WRITE_BLOOD_GLUCOSE"
   ];
-  assert(permissions.length === 6, `permission count is not 6: ${permissions.length}`);
+  assert(permissions.length === 7, `permission count is not 7: ${permissions.length}`);
   for (const permission of permissions) {
     assert(allowed.includes(permission), `unexpected permission: ${permission}`);
   }

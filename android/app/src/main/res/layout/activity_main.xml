@@ -122,6 +122,17 @@
                 android:textAllCaps="false"
                 android:textColor="@color/ink"
                 android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvLastDrive"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:lineSpacingExtra="2dp"
+                android:text="@string/last_drive_none"
+                android:textColor="@color/ink_muted"
+                android:textSize="12sp"
+                android:visibility="gone" />
         </LinearLayout>
 
         <!-- Driving mode -->
@@ -161,6 +172,15 @@
                 android:textColor="@color/ink"
                 android:textSize="15sp" />
 
+            <Switch
+                android:id="@+id/switchPredictive"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/predictive_switch"
+                android:textColor="@color/ink"
+                android:textSize="15sp" />
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -178,6 +198,33 @@
                 android:text="@string/monitor_note"
                 android:textColor="@color/ink_muted"
                 android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Setup check -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.12"
+                android:text="@string/section_setup_check"
+                android:textAllCaps="true"
+                android:textColor="@color/ink_muted"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/setupCheckList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:orientation="vertical" />
         </LinearLayout>
 
         <!-- Source -->
@@ -352,6 +399,76 @@
                 android:textAllCaps="false"
                 android:textColor="@color/ink"
                 android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Health data -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.12"
+                android:text="@string/section_health"
+                android:textAllCaps="true"
+                android:textColor="@color/ink_muted"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <Switch
+                android:id="@+id/switchHealthConnect"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/health_switch"
+                android:textColor="@color/ink"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/tvHealthConnect"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:lineSpacingExtra="2dp"
+                android:text="@string/health_permission_off"
+                android:textColor="@color/ink_muted"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btnExportSettings"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="@color/canvas_alt"
+                android:text="@string/action_export_settings"
+                android:textAllCaps="false"
+                android:textColor="@color/ink"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btnImportSettings"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="6dp"
+                android:backgroundTint="@color/canvas_alt"
+                android:text="@string/action_import_settings"
+                android:textAllCaps="false"
+                android:textColor="@color/ink"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:lineSpacingExtra="2dp"
+                android:text="@string/export_note"
+                android:textColor="@color/ink_muted"
+                android:textSize="12sp" />
         </LinearLayout>
 
         <!-- Target range -->

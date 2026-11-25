@@ -61,8 +61,13 @@ broadcast + Nightscout pair offers the widest device coverage and the most matur
 **Car screen (Android Auto)**
 
 - At a glance: value, trend arrow and band label ("In range", "Low", "Urgent low", …).
-- A second line with source, reading age, target range and time-in-range percentage.
+- A second line with source, reading age, session-scoped time in range, sensor battery (when
+  the CGM app states it) and the CGM app's own warm-up / signal-loss / sensor-end state.
+- A trend line for the last 90 minutes over the target band, drawn into the cockpit image slot.
 - Clear warnings for stale data (15 min+) and connection errors.
+- "Low soon" / "High soon" when the measured rate of change would cross a threshold within
+  30–45 minutes; at most once per half hour and muteable like the range alerts.
+- "Got it" on an urgent low, which stops the five-minute repeat for half an hour.
 - "Refresh" and "Recent readings" (last 12 readings) actions.
 - `PaneTemplate` / `ListTemplate` — Car App Library's driver-safety templates.
 - While navigation or music is open, a silent, persistent car notification: current value, trend and age.
@@ -77,21 +82,33 @@ broadcast + Nightscout pair offers the widest device coverage and the most matur
 - Driving mode switch: background monitoring + car notification.
 - "I'm changing my sensor" pause: keeps the "No glucose data" reminder quiet for two hours
   while a replacement sensor warms up.
+- Setup check: four rows that show whether notification access, notification permission, a
+  live CGM value and the car connection are actually working.
+- "Last drive" summary: minutes, time in range, lowest value and low count — four small
+  numbers kept on the phone, nothing uploaded.
+- Optional write-only Health Connect export and a settings export/import file.
 - Notification permission flow (Android 13+).
 
 **Alerts**
 
 - Only outside the target bands; at most one notification per band every 10 minutes.
+- An urgent low (54 mg/dL or below) repeats every five minutes, at most three times;
+  "Got it" on the notification quiets the repeat for half an hour.
+- A projection alert when the current slope crosses the low or high threshold inside the
+  horizon, labelled "Low soon" / "High soon" and throttled to once per 30 minutes.
+- One quiet "Sensor battery low" notice at 15% or less, once per low-battery episode.
 - Car notification via `CarAppExtender`; high-priority channel, silent repeats.
 - If a reading that was flowing in this driving session stops for 15 minutes, one **"No glucose
   data"** reminder is posted per stale episode and cleared when fresh data returns, so a silent
   sensor never leaves a stale number looking current. `StaleGuard` keeps it to one alert until
-  data flows again.
+  data flows again. The CGM app's own warm-up or signal-loss notification explains the gap
+  instead of a generic warning.
 - Only readings that arrive after monitoring started count as flowing data. A sensor change or
   warm-up leaves a value that was already on the phone, even a few minutes old; that is shown as
-  an age in the cockpit and notification instead of an alarm. The phone's **"I'm changing my
-  sensor"** button also pauses the reminder for two hours, and the alert returns on its own if
-  the sensor is still silent when the pause ends.
+  an age in the cockpit and notification instead of an alarm.
+- The phone's **"I'm changing my sensor"** button, and a **"Sensor change"** action on the
+  reminder itself, pause it for two hours. The alert returns on its own if the sensor is still
+  silent when the pause ends.
 
 ---
 
@@ -281,7 +298,9 @@ stay on the device; the CGM apps themselves need no setting at all.
 | Incoming data | 20–600 mg/dL range, +5 min future tolerance, 24-hour history limit |
 | Network response | 512 KB cap; only known fields are parsed |
 | Logging | No logging in the data layer; URLs/keys are never leaked |
-| Permissions | INTERNET, POST_NOTIFICATIONS, FOREGROUND_SERVICE (+ SPECIAL_USE), the xDrip broadcast permission, and the system notification-access binding (no QUERY_ALL_PACKAGES, no boot start) |
+| Permissions | INTERNET, POST_NOTIFICATIONS, FOREGROUND_SERVICE (+ SPECIAL_USE), the xDrip broadcast permission, the system notification-access binding, and write-only Health Connect blood glucose (no QUERY_ALL_PACKAGES, no boot start) |
+| Health Connect | Optional and off by default; grants are checked on every write, nothing is read back, and revoking the permission stops the export |
+| Settings export | User-initiated file with the Nightscout URL, target range and units; it carries the SHA-1 digest Nightscout requires, never the raw key |
 | Notifications | Two channels: silent status and high-priority alert; 10 min throttle + 30 min mute |
 | Background | `specialUse` foreground service, `exported=false`; no overlay permission |
 
@@ -305,8 +324,10 @@ Coverage: notification parsing (mg/dL and mmol/L, both trend notations, unit-les
 known apps, unrelated apps rejected, stale/future timestamps), Nightscout URL security and the
 SHA-1 vector, band boundaries, trend thresholds, Nightscout JSON parsing
 (malformed/missing/future-dated records), xDrip broadcast validation and slope-unit conversion,
-unit conversion, relative time and alert policy (throttle, band change, mute window, stale
-session gating and the sensor-change pause).
+unit conversion, relative time and alert policy (throttle, band change, mute window, urgent
+repeats and acknowledgement), stale session gating and the sensor-change pause, rate-of-change
+projection, drive summaries, sensor status text, sensor battery parsing, settings export/import
+and Health Connect record mapping.
 
 **Static security and code checks** (run on this machine):
 
@@ -362,7 +383,7 @@ value it found. Without a phone it exits with `No connected device`.
 ### Verifications run on this machine
 
 - `:app:assembleDebug` — **BUILD SUCCESSFUL**; APK: `android/app/build/outputs/apk/debug/app-debug.apk` (~4.5 MB, minSdk 26 / targetSdk 35; English resources only).
-- `:app:testDebugUnitTest` — **96 tests, 0 failures**.
+- `:app:testDebugUnitTest` — **132 tests, 0 failures**.
 - `node tools/security-check.mjs` — **32/32 PASS**.
 - `python tools/check_xml.py` — 19 resource XML files are well formed.
 - `node tools/smoke.mjs` — landing page 5/5 HTTP 200, including the signed APK download.
@@ -371,8 +392,9 @@ value it found. Without a phone it exits with `No connected device`.
 - Landing page measured at 1024 and 1200 px widths: no horizontal overflow, the notification
   stays inside the map, and the cockpit falls back to a single column on mobile (430 px).
 
-**Not verified:** a real car or DHU connection, Play pre-review and a physical CGM source are not
-available in this environment. In particular, where and for how long car notifications appear
+**Not verified:** a real car or DHU connection, Play pre-review, a physical CGM source and an
+end-to-end Health Connect write (no Health Connect app on this machine) are not available in
+this environment. In particular, where and for how long car notifications appear
 depends on the host/car software; a "persistent window over the foreground app" is not supported
 by Android Auto. If battery optimization kills the foreground service, notification updates stop;
 the user can exclude the app from battery optimization.

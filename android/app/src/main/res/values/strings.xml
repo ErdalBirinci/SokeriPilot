@@ -98,4 +98,40 @@
     <string name="error_range">Thresholds are invalid. Low must be between 55 and 120, high between 120 and 300 mg/dL, and low must be below high.</string>
     <string name="saved">Saved.</string>
     <string name="notifications_granted">Notification permission granted.</string>
+
+    <!-- Projection, acknowledgement, battery and sensor-change notifications -->
+    <string name="notif_prediction_low_title">Low soon</string>
+    <string name="notif_prediction_high_title">High soon</string>
+    <string name="notif_prediction_body">%1$s %2$s in about %3$d min · now %4$s %2$s</string>
+    <string name="notif_action_ack">Got it</string>
+    <string name="notif_action_sensor_change">Sensor change</string>
+    <string name="notif_battery_title">Sensor battery low</string>
+    <string name="notif_battery_body">%1$d%% left on the sensor. It may stop sending soon.</string>
+    <string name="car_sensor_battery">Sensor %1$d%%</string>
+
+    <!-- Phone: projection switch, setup check, last drive, health data -->
+    <string name="predictive_switch">Warn me before a low or high at this rate</string>
+    <string name="section_setup_check">Setup check</string>
+    <string name="setup_ready">✓ %1$s</string>
+    <string name="setup_pending">— %1$s</string>
+    <string name="setup_notification_access">Notification access</string>
+    <string name="setup_notification_permission">Notification permission</string>
+    <string name="setup_cgm_value">Live CGM value</string>
+    <string name="setup_car_connection">Android Auto connection</string>
+    <string name="last_drive">Last drive · %1$s · %2$d min · %3$d%% in range · lowest %4$s %5$s</string>
+    <string name="last_drive_none">No drive recorded yet.</string>
+    <string name="section_health">Health data</string>
+    <string name="health_switch">Write new readings to Health Connect</string>
+    <string name="health_unavailable">Health Connect is not installed. Readings stay in GlucoPilot.</string>
+    <string name="health_permission_off">Permission is off, so nothing is written.</string>
+    <string name="health_permission_on">Each new reading is written once, on this phone.</string>
+    <string name="health_permission_granted">Health Connect permission granted.</string>
+    <string name="health_permission_denied">Health Connect permission was not granted.</string>
+    <string name="action_export_settings">Export settings</string>
+    <string name="action_import_settings">Import settings</string>
+    <string name="export_note">The file holds your Nightscout address, target range and units. The Nightscout API key is only the SHA-1 digest the protocol needs.</string>
+    <string name="settings_exported">Settings exported.</string>
+    <string name="settings_export_failed">The settings file could not be written.</string>
+    <string name="settings_imported">Settings imported.</string>
+    <string name="settings_import_failed">That file is not a GlucoPilot settings export.</string>
 </resources>

@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat
 import app.glcopilot.R
 import app.glcopilot.car.GlucoPilotCarAppService
 import app.glcopilot.data.GlucoseBand
+import app.glcopilot.data.GlucoseProjection
 import app.glcopilot.data.GlucoseRange
 import app.glcopilot.data.GlucoseReading
 import app.glcopilot.data.GlucoseState
@@ -35,7 +36,11 @@ import app.glcopilot.phone.MainActivity
  *    offers one-tap access to the cockpit.
  *  - **alert** notification: only out of range, high priority (briefly comes
  *    forward on the car screen), once every 10 minutes, and can be muted for 30 minutes.
+ *    An urgent low repeats every 5 minutes at most three times and carries "Got it".
+ *  - **projection** notification: "low/high soon" from the current rate of change,
+ *    at most once per 30 minutes.
  *  - **stale** reminder: once per dead-sensor episode, when no reading arrived for 15 minutes.
+ *  - **battery** notice: once, when the sensor app reports 15% or less.
  */
 class GlucoseNotifier(
     private val context: Context,
@@ -43,6 +48,8 @@ class GlucoseNotifier(
 ) {
 
     private val alertPolicy = AlertPolicy()
+    private val predictivePolicy = PredictivePolicy()
+    private var lowBatteryNotified = false
 
     fun ensureChannels() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -94,14 +101,18 @@ class GlucoseNotifier(
         }
 
         val text = if (latest == null) {
-            state.lastError ?: context.getString(R.string.car_waiting_body)
+            state.sensorStatus?.label
+                ?: state.lastError
+                ?: context.getString(R.string.car_waiting_body)
         } else {
             val stale = TimeAgo.isStale(now, latest.timestampMillis)
             buildList {
                 add(range.band(latest.mgdl).label)
                 add(TimeAgo.format(now, latest.timestampMillis))
                 add(latest.source)
-                if (stale) add(context.getString(R.string.notif_stale))
+                if (stale) {
+                    add(state.sensorStatus?.label ?: context.getString(R.string.notif_stale))
+                }
                 state.lastError?.let(::add)
             }.joinToString(separator = " · ")
         }
@@ -149,7 +160,7 @@ class GlucoseNotifier(
 
     /**
      * Alerts only outside the target range. When the value returns to range, the
-     * pending alert notification is removed.
+     * pending alert notification is removed and the repeat counters restart.
      */
     @Synchronized
     fun maybeNotify(reading: GlucoseReading, range: GlucoseRange, nowMillis: Long) {
@@ -157,12 +168,21 @@ class GlucoseNotifier(
 
         val band = range.band(reading.mgdl)
         if (band == GlucoseBand.IN_RANGE) {
-            // Returning to range resets the throttle; the next excursion alerts immediately.
             alertPolicy.reset()
             cancelAlert()
+            // A "low soon" that already arrived is no longer useful.
+            cancelPrediction()
             return
         }
-        if (!alertPolicy.shouldAlert(band, nowMillis, settings.mutedUntil())) return
+        if (!alertPolicy.shouldAlert(
+                band,
+                nowMillis,
+                settings.mutedUntil(),
+                settings.urgentAcknowledgedUntil()
+            )
+        ) {
+            return
+        }
         if (!hasPermission()) return
 
         alertPolicy.markNotified(band, nowMillis)
@@ -171,6 +191,70 @@ class GlucoseNotifier(
                 .notify(ALERT_ID, alertNotification(reading, band))
         } catch (_: SecurityException) {
             // Skip the alert when permission is missing.
+        }
+    }
+
+    /**
+     * "Low soon" / "High soon" when the measured rate of change crosses a threshold
+     * inside the projection window. Only the newest readings are used, and the same
+     * throttle as the other car alerts applies.
+     */
+    @Synchronized
+    fun maybeNotifyPrediction(readings: List<GlucoseReading>, range: GlucoseRange, nowMillis: Long) {
+        if (!settings.predictiveAlerts()) return
+        if (!settings.notificationsEnabled()) return
+        if (!hasPermission()) return
+
+        val latest = readings.firstOrNull() ?: return
+        val low = GlucoseProjection.lowWarning(readings, range.low, nowMillis)
+        val high = if (low == null) GlucoseProjection.highWarning(readings, range.high, nowMillis) else null
+        val warning = low ?: high ?: return
+        if (!predictivePolicy.shouldAlert(nowMillis, settings.mutedUntil())) return
+        predictivePolicy.markAlerted(nowMillis)
+
+        val units = settings.units()
+        val threshold = if (low != null) range.low else range.high
+        val title = context.getString(
+            if (low != null) R.string.notif_prediction_low_title else R.string.notif_prediction_high_title
+        )
+        val text = context.getString(
+            R.string.notif_prediction_body,
+            units.format(threshold),
+            units.label,
+            warning.minutes,
+            units.format(latest.mgdl)
+        )
+        try {
+            NotificationManagerCompat.from(context)
+                .notify(PREDICTION_ID, highPriorityNotification(title, text, mute = mutePending()))
+        } catch (_: SecurityException) {
+            // Skip silently when permission was revoked.
+        }
+    }
+
+    /** One quiet notice when the sensor app reports a low battery. */
+    @Synchronized
+    fun maybeNotifySensorBattery(reading: GlucoseReading) {
+        val percent = reading.sensorBatteryPercent ?: return
+        if (percent > BATTERY_CLEAR_PERCENT) {
+            lowBatteryNotified = false
+            return
+        }
+        if (percent > LOW_BATTERY_PERCENT || lowBatteryNotified) return
+        if (!settings.notificationsEnabled()) return
+        if (!hasPermission()) return
+
+        lowBatteryNotified = true
+        try {
+            NotificationManagerCompat.from(context).notify(
+                BATTERY_ID,
+                lowPriorityNotification(
+                    context.getString(R.string.notif_battery_title),
+                    context.getString(R.string.notif_battery_body, percent)
+                )
+            )
+        } catch (_: SecurityException) {
+            // Skip silently when permission was revoked.
         }
     }
 
@@ -189,7 +273,8 @@ class GlucoseNotifier(
                 STALE_ID,
                 highPriorityNotification(
                     context.getString(R.string.notif_stale_alert_title),
-                    context.getString(R.string.notif_stale_alert_body)
+                    context.getString(R.string.notif_stale_alert_body),
+                    pauseSensor = sensorChangePending()
                 )
             )
         } catch (_: SecurityException) {
@@ -198,6 +283,8 @@ class GlucoseNotifier(
     }
 
     fun cancelAlert() = NotificationManagerCompat.from(context).cancel(ALERT_ID)
+
+    fun cancelPrediction() = NotificationManagerCompat.from(context).cancel(PREDICTION_ID)
 
     fun cancelStale() = NotificationManagerCompat.from(context).cancel(STALE_ID)
 
@@ -215,17 +302,29 @@ class GlucoseNotifier(
             append(" · ").append(settings.glucoseRange().let { "${it.low}–${it.high} ${units.label}" })
             append(" · ").append(TimeAgo.format(System.currentTimeMillis(), reading.timestampMillis))
         }
-        return highPriorityNotification(title, text, mutePending())
+        val urgent = band == GlucoseBand.URGENT_LOW
+        return highPriorityNotification(
+            title,
+            text,
+            mute = if (urgent) null else mutePending(),
+            acknowledge = if (urgent) acknowledgePending() else null,
+            // Repeats of an urgent low must alert again, not just update silently.
+            onlyAlertOnce = !urgent
+        )
     }
 
     /**
-     * High-priority notification that briefly comes forward on the car screen.
-     * [mute] adds the 30-minute mute action; the stale reminder has nothing to mute.
+     * Notification that briefly comes forward on the car screen. Each optional action is
+     * only added when it makes sense: mute for range alerts, "Got it" for an urgent low,
+     * and the sensor-change pause on the stale reminder.
      */
     private fun highPriorityNotification(
         title: String,
         text: String,
-        mute: PendingIntent? = null
+        mute: PendingIntent? = null,
+        acknowledge: PendingIntent? = null,
+        pauseSensor: PendingIntent? = null,
+        onlyAlertOnce: Boolean = true
     ): Notification {
         val cockpit = carAppPending(REQUEST_CAR_ALERT) ?: phonePending()
 
@@ -236,7 +335,15 @@ class GlucoseNotifier(
             .setContentIntent(cockpit)
             .addAction(R.drawable.ic_open_car, context.getString(R.string.notif_action_cockpit), cockpit)
             .apply {
-                mute?.let { addAction(R.drawable.ic_mute, context.getString(R.string.notif_action_mute), it) }
+                acknowledge?.let {
+                    addAction(R.drawable.ic_list, context.getString(R.string.notif_action_ack), it)
+                }
+                pauseSensor?.let {
+                    addAction(R.drawable.ic_mute, context.getString(R.string.notif_action_sensor_change), it)
+                }
+                mute?.let {
+                    addAction(R.drawable.ic_mute, context.getString(R.string.notif_action_mute), it)
+                }
             }
             .build()
 
@@ -246,15 +353,47 @@ class GlucoseNotifier(
             .setContentText(text)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setOnlyAlertOnce(true)
+            .setOnlyAlertOnce(onlyAlertOnce)
             .setAutoCancel(true)
             .setContentIntent(phonePending())
             .apply {
+                if (acknowledge != null) {
+                    addAction(R.drawable.ic_list, context.getString(R.string.notif_action_ack), acknowledge)
+                }
                 if (mute != null) {
                     addAction(R.drawable.ic_open_car, context.getString(R.string.notif_action_open), phonePending())
                     addAction(R.drawable.ic_mute, context.getString(R.string.notif_action_mute), mute)
                 }
+                pauseSensor?.let {
+                    addAction(
+                        R.drawable.ic_mute,
+                        context.getString(R.string.notif_action_sensor_change),
+                        it
+                    )
+                }
             }
+            .extend(carExtender)
+            .build()
+    }
+
+    /** Silent, auto-cancelling notice on the low-importance channel. */
+    private fun lowPriorityNotification(title: String, text: String): Notification {
+        ensureChannels()
+        val carExtender = CarAppExtender.Builder()
+            .setImportance(NotificationManager.IMPORTANCE_LOW)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setContentIntent(phonePending())
+            .build()
+
+        return NotificationCompat.Builder(context, CHANNEL_STATUS)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setAutoCancel(true)
+            .setContentIntent(phonePending())
             .extend(carExtender)
             .build()
     }
@@ -302,6 +441,22 @@ class GlucoseNotifier(
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
+    private fun acknowledgePending(): PendingIntent = PendingIntent.getBroadcast(
+        context,
+        REQUEST_ACK,
+        Intent(context, AcknowledgeAlertsReceiver::class.java)
+            .setAction(AcknowledgeAlertsReceiver.ACTION_ACKNOWLEDGE),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    private fun sensorChangePending(): PendingIntent = PendingIntent.getBroadcast(
+        context,
+        REQUEST_SENSOR_CHANGE,
+        Intent(context, SensorChangeReceiver::class.java)
+            .setAction(SensorChangeReceiver.ACTION_SENSOR_CHANGE),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
     companion object {
         private const val CHANNEL_STATUS = "glucose_status"
         private const val CHANNEL_ALERTS = "glucose_alerts"
@@ -311,10 +466,17 @@ class GlucoseNotifier(
 
         private const val ALERT_ID = 4101
         private const val STALE_ID = 4102
+        private const val PREDICTION_ID = 4103
+        private const val BATTERY_ID = 4104
         private const val REQUEST_PHONE = 10
         private const val REQUEST_CAR_STATUS = 11
         private const val REQUEST_CAR_ACTION = 12
         private const val REQUEST_CAR_ALERT = 13
         private const val REQUEST_MUTE = 14
+        private const val REQUEST_ACK = 15
+        private const val REQUEST_SENSOR_CHANGE = 16
+
+        private const val LOW_BATTERY_PERCENT = 15
+        private const val BATTERY_CLEAR_PERCENT = 25
     }
 }

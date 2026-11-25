@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -20,6 +21,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -32,9 +34,12 @@ import app.glcopilot.data.DiagnosticsLog
 import app.glcopilot.data.CgmIntegration
 import app.glcopilot.data.GlucoseBand
 import app.glcopilot.data.GlucoseState
+import app.glcopilot.data.HealthConnectBridge
+import app.glcopilot.data.SettingsExport
 import app.glcopilot.data.NotificationAccess
 import app.glcopilot.data.TimeAgo
 import app.glcopilot.data.Units
+import app.glcopilot.monitor.CarConnectionWatcher
 import app.glcopilot.monitor.GlucoseMonitorService
 import app.glcopilot.monitor.MonitorLauncher
 import kotlinx.coroutines.delay
@@ -68,6 +73,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvDiagAccess: TextView
     private lateinit var diagList: LinearLayout
     private lateinit var btnDiagClear: Button
+    private lateinit var switchPredictive: Switch
+    private lateinit var tvLastDrive: TextView
+    private lateinit var setupCheckList: LinearLayout
+    private lateinit var switchHealthConnect: Switch
+    private lateinit var tvHealthConnect: TextView
+    private lateinit var btnExportSettings: Button
+    private lateinit var btnImportSettings: Button
+
+    /** True while the Health Connect switch is set from code, so it does not ask again. */
+    private var settingHealthSwitch = false
 
     private val notificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -78,6 +93,28 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+    private val healthPermission = registerForActivityResult(
+        PermissionController.createRequestPermissionResultContract()
+    ) { granted ->
+        val ok = granted.contains(HealthConnectBridge.WRITE_PERMISSION)
+        container.settings.setHealthConnectEnabled(ok)
+        showHealthEnabled(ok)
+        toast(
+            getString(
+                if (ok) R.string.health_permission_granted else R.string.health_permission_denied
+            )
+        )
+        renderHealthConnect()
+    }
+
+    private val exportSettingsFile = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri -> if (uri != null) exportSettings(uri) }
+
+    private val importSettingsFile = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri -> if (uri != null) importSettings(uri) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -86,6 +123,7 @@ class MainActivity : AppCompatActivity() {
         bindViews()
         loadSettings()
         bindActions()
+        renderPeripheral()
 
         render(container.repository.state.value)
         lifecycleScope.launch {
@@ -123,6 +161,13 @@ class MainActivity : AppCompatActivity() {
         btnAccess = findViewById(R.id.btnNotificationAccess)
         btnSensorPause = findViewById(R.id.btnSensorPause)
         tvSensorPause = findViewById(R.id.tvSensorPause)
+        switchPredictive = findViewById(R.id.switchPredictive)
+        tvLastDrive = findViewById(R.id.tvLastDrive)
+        setupCheckList = findViewById(R.id.setupCheckList)
+        switchHealthConnect = findViewById(R.id.switchHealthConnect)
+        tvHealthConnect = findViewById(R.id.tvHealthConnect)
+        btnExportSettings = findViewById(R.id.btnExportSettings)
+        btnImportSettings = findViewById(R.id.btnImportSettings)
         etUrl = findViewById(R.id.etUrl)
         etSecret = findViewById(R.id.etSecret)
         etLow = findViewById(R.id.etLow)
@@ -145,6 +190,7 @@ class MainActivity : AppCompatActivity() {
         switchXdrip.isChecked = container.settings.xDripEnabled()
         switchMonitor.isChecked = container.settings.monitorWhileDriving()
         switchAutoCar.isChecked = container.settings.autoStartOnCar()
+        switchPredictive.isChecked = container.settings.predictiveAlerts()
         renderCgmDetection()
         etUrl.setText(container.settings.nightscoutConfig()?.baseUrl.orEmpty())
         etSecret.setText("")
@@ -175,6 +221,22 @@ class MainActivity : AppCompatActivity() {
                 if (checkedId == R.id.rbMmol) Units.MMOL_L else Units.MG_DL
             )
             render(container.repository.state.value)
+        }
+        switchPredictive.setOnCheckedChangeListener { _, checked ->
+            container.settings.setPredictiveAlerts(checked)
+        }
+        switchHealthConnect.setOnCheckedChangeListener { _, checked ->
+            if (settingHealthSwitch) return@setOnCheckedChangeListener
+            if (checked) {
+                requestHealthConnect()
+            } else {
+                container.settings.setHealthConnectEnabled(false)
+                renderHealthConnect()
+            }
+        }
+        btnExportSettings.setOnClickListener { exportSettingsFile.launch(EXPORT_FILE_NAME) }
+        btnImportSettings.setOnClickListener {
+            importSettingsFile.launch(arrayOf("application/json"))
         }
     }
 
@@ -220,6 +282,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         renderCgmDetection()
         renderDiagnostics(container.diagnostics.events.value)
+        renderPeripheral()
         switchXdrip.isChecked = container.settings.xDripEnabled()
         // Returning from the notification-access screen: start right away.
         if (NotificationAccess.isGranted(this) && container.settings.monitorWhileDriving()) {
@@ -359,6 +422,130 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /** Last drive, setup rows and Health Connect; refreshed whenever the screen resumes. */
+    private fun renderPeripheral() {
+        renderLastDrive()
+        renderSetupCheck()
+        renderHealthConnect()
+    }
+
+    /** Four rows that show whether the pieces needed for the car are actually working. */
+    private fun renderSetupCheck() {
+        val latest = container.repository.state.value.latest
+        val fresh = latest != null &&
+            !TimeAgo.isStale(System.currentTimeMillis(), latest.timestampMillis)
+        val items = listOf(
+            NotificationAccess.isGranted(this) to getString(R.string.setup_notification_access),
+            notificationAllowed() to getString(R.string.setup_notification_permission),
+            fresh to getString(R.string.setup_cgm_value),
+            CarConnectionWatcher.currentState(this).isConnected to
+                getString(R.string.setup_car_connection)
+        )
+        setupCheckList.removeAllViews()
+        items.forEach { (ok, label) ->
+            setupCheckList.addView(
+                setupLine(getString(if (ok) R.string.setup_ready else R.string.setup_pending, label), ok)
+            )
+        }
+    }
+
+    private fun setupLine(text: String, ok: Boolean): TextView = TextView(this).apply {
+        this.text = text
+        textSize = 13f
+        setTextColor(
+            ContextCompat.getColor(
+                this@MainActivity,
+                if (ok) R.color.mint_600 else R.color.ink_muted
+            )
+        )
+        setPadding(0, dp(6), 0, 0)
+    }
+
+    private fun renderLastDrive() {
+        val summary = container.settings.lastDrive() ?: run {
+            tvLastDrive.visibility = View.GONE
+            return
+        }
+        val units = container.settings.units()
+        tvLastDrive.visibility = View.VISIBLE
+        tvLastDrive.text = getString(
+            R.string.last_drive,
+            DateFormat.getTimeFormat(this).format(Date(summary.endedAtMillis)),
+            summary.minutes,
+            summary.inRangePercent,
+            units.format(summary.lowestMgdl),
+            units.label
+        )
+    }
+
+    private fun renderHealthConnect() {
+        val available = container.health.isAvailable()
+        switchHealthConnect.isEnabled = available
+        if (!available) {
+            showHealthEnabled(false)
+            tvHealthConnect.setText(R.string.health_unavailable)
+            return
+        }
+        val enabled = container.settings.healthConnectEnabled()
+        showHealthEnabled(enabled)
+        if (!enabled) {
+            tvHealthConnect.setText(R.string.health_permission_off)
+            return
+        }
+        tvHealthConnect.setText(R.string.health_permission_on)
+        lifecycleScope.launch {
+            if (!container.health.hasPermission()) {
+                container.settings.setHealthConnectEnabled(false)
+                showHealthEnabled(false)
+                tvHealthConnect.setText(R.string.health_permission_off)
+            }
+        }
+    }
+
+    private fun showHealthEnabled(enabled: Boolean) {
+        settingHealthSwitch = true
+        switchHealthConnect.isChecked = enabled
+        settingHealthSwitch = false
+    }
+
+    private fun requestHealthConnect() {
+        if (!container.health.isAvailable()) {
+            showHealthEnabled(false)
+            toast(getString(R.string.health_unavailable))
+            renderHealthConnect()
+            return
+        }
+        healthPermission.launch(setOf(HealthConnectBridge.WRITE_PERMISSION))
+    }
+
+    private fun exportSettings(uri: Uri) {
+        val json = SettingsExport.toJson(container.settings.snapshot())
+        try {
+            contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) }
+            toast(getString(R.string.settings_exported))
+        } catch (_: Exception) {
+            toast(getString(R.string.settings_export_failed))
+        }
+    }
+
+    private fun importSettings(uri: Uri) {
+        val raw = try {
+            contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+        } catch (_: Exception) {
+            null
+        }
+        val snapshot = raw?.let(SettingsExport::fromJson)
+        if (snapshot == null) {
+            toast(getString(R.string.settings_import_failed))
+            return
+        }
+        container.settings.restore(snapshot)
+        loadSettings()
+        render(container.repository.state.value)
+        renderPeripheral()
+        toast(getString(R.string.settings_imported))
+    }
+
     private fun render(state: GlucoseState) {
         val units = container.settings.units()
         val range = container.settings.glucoseRange()
@@ -390,6 +577,7 @@ class MainActivity : AppCompatActivity() {
             append(TimeAgo.format(now, latest.timestampMillis))
             append(" · ").append(latest.source)
             latest.sensorBatteryPercent?.let { append(" · sensor %").append(it) }
+            state.sensorStatus?.let { append(" · ").append(it.label) }
             if (TimeAgo.isStale(now, latest.timestampMillis)) append(" · stale data")
             state.lastError?.let { append(" · ").append(it) }
         }
@@ -491,5 +679,6 @@ class MainActivity : AppCompatActivity() {
     private companion object {
         /** The countdown is shown in whole minutes; half a minute keeps it accurate. */
         const val SENSOR_PAUSE_TICK_MILLIS = 30_000L
+        const val EXPORT_FILE_NAME = "glucopilot-settings.json"
     }
 }
