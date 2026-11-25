@@ -91,20 +91,27 @@
 }
 
 /*
- * The card hangs over the stage edge, but never further than 16px. The page
- * container keeps at least a 20px gutter, so the card cannot reach the viewport
- * edge: at 6% it overflowed by 0.6px around 1243px and opened a horizontal
- * scrollbar. A fixed 16px cap also covers the 1101-1220px range, where the
- * gutter is exactly 20px.
+ * The card hangs over the stage edge by 6% of the stage. The page keeps at
+ * least a 20px gutter, so while the container is still growing that overhang
+ * must be capped, otherwise the card reaches the viewport edge: at 1243px the
+ * gutter is 31.5px and 6% is 32.1px, which was the 1px horizontal scroll. From
+ * 1280px up the container has stopped growing and the gutter is wide enough
+ * (42.5px even with a classic scrollbar), so the designed 6% is used unchanged.
  */
 .float-card--tir {
   top: 10%;
-  right: max(-6%, -16px);
+  right: max(-6%, -18px);
   display: flex;
   align-items: center;
   gap: 11px;
   width: auto;
   animation-delay: -2.2s;
+}
+
+@media (min-width: 1280px) {
+  .float-card--tir {
+    right: -6%;
+  }
 }
 
 .float-card--tir div {
