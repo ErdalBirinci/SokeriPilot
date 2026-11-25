@@ -84,11 +84,17 @@ android {
 // A CI runner starts without ~/.m2, so one network blip fails the whole suite and the PNG
 // renders the README depends on are never written. Resolve it through Gradle (cached with the
 // other dependencies) and point Robolectric at that directory in offline mode.
-val robolectricJars: Configuration by configurations.creating
+// One configuration per jar: a single configuration holds one version of a module, so asking
+// for 14 and 15 together would silently resolve to 15 and leave SDK 34 without its file.
+val robolectricJars34: Configuration by configurations.creating
+val robolectricJars35: Configuration by configurations.creating
 val robolectricJarDir = layout.buildDirectory.dir("robolectric-deps")
 
 val copyRobolectricJars by tasks.registering(Copy::class) {
-    from(robolectricJars)
+    // Clear the directory first, so a jar removed here cannot linger from an older build.
+    doFirst { robolectricJarDir.get().asFile.deleteRecursively() }
+    from(robolectricJars34)
+    from(robolectricJars35)
     into(robolectricJarDir)
 }
 
@@ -102,8 +108,8 @@ tasks.withType<Test>().configureEach {
 dependencies {
     // SDK 34 is what the tests ask for; 35 is loaded as well because the app manifest targets
     // it, and Robolectric needs that jar to read the package.
-    robolectricJars("org.robolectric:android-all-instrumented:14-robolectric-10818077-i7")
-    robolectricJars("org.robolectric:android-all-instrumented:15-robolectric-12650502-i7")
+    robolectricJars34("org.robolectric:android-all-instrumented:14-robolectric-10818077-i7")
+    robolectricJars35("org.robolectric:android-all-instrumented:15-robolectric-12650502-i7")
 
     implementation("androidx.car.app:app:1.7.0")
     implementation("androidx.car.app:app-projected:1.7.0")

@@ -54,11 +54,6 @@ jobs:
       # execute, so the PNG renders these steps depend on would never be written.
       - name: Unit tests
         run: gradle -p android :app:testDebugUnitTest --rerun
-      - name: Diagnose test failures
-        if: failure()
-        run: |
-          ls -la android/app/build/robolectric-deps || true
-          grep -ho 'message="[^"]*"' android/app/build/test-results/testDebugUnitTest/*.xml 2>/dev/null | sort -u | head -5 || true
       # The tests above write build/reports/phone-screen.png and trend-image.png;
       # this fails when docs/images no longer matches that layout.
       # Compares card count, sizes and rough content: the images carry reading ages and clock
