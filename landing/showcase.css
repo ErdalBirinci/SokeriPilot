@@ -90,9 +90,16 @@
   animation-delay: -3.2s;
 }
 
+/*
+ * The card hangs over the stage edge, but never further than 16px. The page
+ * container keeps at least a 20px gutter, so the card cannot reach the viewport
+ * edge: at 6% it overflowed by 0.6px around 1243px and opened a horizontal
+ * scrollbar. A fixed 16px cap also covers the 1101-1220px range, where the
+ * gutter is exactly 20px.
+ */
 .float-card--tir {
   top: 10%;
-  right: -6%;
+  right: max(-6%, -16px);
   display: flex;
   align-items: center;
   gap: 11px;
