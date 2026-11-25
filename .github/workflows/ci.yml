@@ -50,8 +50,10 @@ jobs:
           gradle-version: "8.9"
       - name: Point Gradle at the CI SDK
         run: echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+      # --rerun: setup-gradle restores the build cache, and a FROM-CACHE test task does not
+      # execute, so the PNG renders these steps depend on would never be written.
       - name: Unit tests
-        run: gradle -p android :app:testDebugUnitTest
+        run: gradle -p android :app:testDebugUnitTest --rerun
       # The tests above write build/reports/phone-screen.png and trend-image.png;
       # this fails when docs/images no longer matches that layout.
       - name: README screenshots match the layout
