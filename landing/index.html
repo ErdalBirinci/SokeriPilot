@@ -5,13 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>GlucoPilot — CGM monitor alongside Android Auto navigation</title>
   <meta name="description" content="GlucoPilot shows your CGM data as a car notification and a full-screen cockpit while Android Auto navigation and music stay unchanged. Reads the CGM app already on your phone automatically, with xDrip+ and Nightscout optional; no dosing advice, no data selling.">
+  <link rel="canonical" href="https://glucopilot-civgdk.freebuff.site/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="GlucoPilot">
+  <meta property="og:title" content="GlucoPilot — your glucose in sight, your eyes on the road">
+  <meta property="og:description" content="Your CGM value, trend and band beside Android Auto navigation, as a silent car notification and a one-tap cockpit. Reads the CGM app already on your phone.">
+  <meta property="og:url" content="https://glucopilot-civgdk.freebuff.site/">
+  <meta property="og:image" content="https://glucopilot-civgdk.freebuff.site/assets/android-auto.jpg">
+  <meta property="og:image:alt" content="A car head unit running Android Auto: Maps on the left, the GlucoPilot cockpit on the right showing 128 mg/dL and an in-range band.">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="color-scheme" content="light">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=1.2.0-2">
-  <link rel="stylesheet" href="showcase.css?v=1.2.0-2">
-  <link rel="stylesheet" href="signals.css?v=1.2.0-2">
+  <link rel="stylesheet" href="styles.css?v=1.2.0-3">
+  <link rel="stylesheet" href="showcase.css?v=1.2.0-3">
+  <link rel="stylesheet" href="signals.css?v=1.2.0-3">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -615,6 +624,14 @@
             <p>Yes, but not as a persistent window: Android Auto does not allow third-party apps to keep a window on top of Maps or media. GlucoPilot uses a silent, persistent car notification instead; the value updates with every reading, a short alert appears out of range, and tapping the notification opens the cockpit.</p>
           </details>
           <details class="reveal">
+            <summary>Why doesn't GlucoPilot appear in my car?</summary>
+            <p>Android Auto lists apps installed from Play by default, and GlucoPilot is installed from this page. Open the Android Auto app, tap its version number ten times to enable developer mode, then turn on <strong>Unknown sources</strong> in the developer settings; the IOT app then appears in the car launcher. If it is still missing, open GlucoPilot once on the phone, grant notification access and check that the phone is projected.</p>
+          </details>
+          <details class="reveal">
+            <summary>What if the car notification stops updating?</summary>
+            <p>Android may freeze background apps to save power, and a frozen app cannot refresh its car notification. Set GlucoPilot to <strong>Unrestricted</strong> under Settings → Apps → GlucoPilot → Battery, and keep the phone plugged in on longer drives. The cockpit shows the reading age, so a stale value never looks current.</p>
+          </details>
+          <details class="reveal">
             <summary>Does it warn me before I go low or high?</summary>
             <p>Yes, when the trend is clear enough. GlucoPilot fits the last 15 minutes of readings (at least three) and only speaks when the slope is at least 0.5 mg/dL per minute and would reach your low within 30 minutes or your high within 45. It is a straight-line projection of what already happened, not a prediction model and not dosing advice, and it is limited to once per half hour.</p>
           </details>
@@ -703,6 +720,11 @@
               <li><span>Requires</span><strong>Android 8.0+</strong></li>
               <li><span>Package</span><strong>app.glcopilot</strong></li>
             </ul>
+            <ul class="download__facts">
+              <li><strong>Android Auto:</strong> apps installed outside Play only appear after developer mode and <em>Unknown sources</em> are enabled in the Android Auto app.</li>
+              <li><strong>Battery:</strong> if your phone freezes background apps, set GlucoPilot to <em>Unrestricted</em> or the car notification stops updating.</li>
+            </ul>
+            <p class="download__archive"><a href="download/">All releases, sizes and hashes →</a></p>
           </div>
 
           <div class="download__action">
@@ -712,7 +734,12 @@
               <span class="btn__arrow" aria-hidden="true">↓</span>
             </a>
             <p class="download__note">Signed release build · no account, no ads</p>
+            <figure class="download__qr">
+              <img src="assets/install-qr.svg" alt="QR code that opens this download page on a phone" width="132" height="132" decoding="async">
+              <figcaption>Scan to open this page on your phone</figcaption>
+            </figure>
             <p class="download__hash"><span>SHA-256</span><code>464a15e45d0ab8397a1ebdd416255323ba651e96e72867d693684bbaef7e52cb</code></p>
+            <p class="download__hash download__hash--cert"><span>Signing certificate · SHA-256</span><code>6d882da012221b76648e69d22bb951e43ca108b54fe920912b5d43299c929f96</code></p>
           </div>
         </div>
       </div>
@@ -760,6 +787,7 @@
         <h3>Resources</h3>
         <a href="#setup">Setup</a>
         <a href="#faq">FAQ</a>
+        <a href="download/">All releases</a>
         <a href="#top">Back to top</a>
       </div>
       <div class="footer__col">

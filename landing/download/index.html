@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GlucoPilot APK archive — every signed release</title>
+  <meta name="description" content="Every signed GlucoPilot release APK with its size, SHA-256 and signing certificate, so any version can be verified or reinstalled.">
+  <meta name="color-scheme" content="light">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'none'; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles.css?v=1.2.0-3">
+</head>
+<body>
+  <main class="container archive">
+    <a class="brand" href="../" aria-label="GlucoPilot home">
+      <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="9" fill="#EAF6F1" />
+        <path d="M16 5C16 5 8.5 13.5 8.5 18.5a7.5 7.5 0 0 0 15 0C23.5 13.5 16 5 16 5Z" fill="#0E9F7C" />
+        <path d="M12 18h2.6l1.2-2.6 1.9 5.2 1.4-2.6H22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <span class="brand__name">GlucoPilot</span>
+    </a>
+
+    <p class="eyebrow"><span class="eyebrow__dot"></span> APK archive</p>
+    <h1>Every signed release.</h1>
+    <p class="section__lede">
+      Each file below was built from this repository and signed with the same release key, so it
+      can be re-downloaded, checked, or used to roll back. Sizes and hashes are what the server
+      actually serves.
+    </p>
+
+    <ol class="releases">
+      <li class="release">
+        <span class="release__ver">1.2.0</span>
+        <div>
+          <h3>
+            <a href="GlucoPilot-1.2.0.apk" download>GlucoPilot-1.2.0.apk</a>
+            <span class="archive__flag">Latest</span>
+          </h3>
+          <p>920,144 bytes · 25 November 2026 · versionCode 6</p>
+          <p class="archive__hash">
+            <span>SHA-256</span>
+            <code>464a15e45d0ab8397a1ebdd416255323ba651e96e72867d693684bbaef7e52cb</code>
+          </p>
+        </div>
+      </li>
+      <li class="release">
+        <span class="release__ver">1.1.3</span>
+        <div>
+          <h3><a href="GlucoPilot-1.1.3.apk" download>GlucoPilot-1.1.3.apk</a></h3>
+          <p>821,366 bytes · 25 November 2026 · versionCode 5</p>
+          <p class="archive__hash">
+            <span>SHA-256</span>
+            <code>d496ef20aeb7b372f3c34092b964880d0e54638d414e28d1a393ebcb2d877629</code>
+          </p>
+        </div>
+      </li>
+    </ol>
+
+    <div class="archive__note">
+      <h2>One signing key</h2>
+      <p>
+        Both files carry the release certificate
+        <code>6d882da012221b76648e69d22bb951e43ca108b54fe920912b5d43299c929f96</code>, so an
+        update installs over the previous version without uninstalling it or losing its settings.
+        If a download's SHA-256 differs from the value above, it is not the file published here;
+        install the copy from this page instead.
+      </p>
+    </div>
+
+    <p class="archive__actions">
+      <a class="btn btn--ghost" href="../#download">Back to the download page</a>
+    </p>
+  </main>
+</body>
+</html>

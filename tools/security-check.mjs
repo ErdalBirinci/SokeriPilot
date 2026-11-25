@@ -59,6 +59,7 @@ const manifest = read(manifestPath);
 const mainSources = walk("android/app/src/main/java").filter((file) => file.endsWith(".kt"));
 const landingFiles = [
   "landing/index.html",
+  "landing/download/index.html",
   "landing/styles.css",
   "landing/showcase.css",
   "landing/signals.css",
@@ -368,14 +369,22 @@ check("landing: no inline script/style", () => {
   return "all assets external";
 });
 
-check("landing: no external resources", () => {
+check("landing: no external subresources", () => {
   for (const file of landingFiles) {
     const content = read(file);
-    assert(!/(src|href)="https?:/i.test(content), `external reference in ${file}`);
+    assert(!/(src|poster|action)="https?:/i.test(content), `external subresource in ${file}`);
+    assert(
+      !/<link[^>]+rel="(?:stylesheet|icon|preload|prefetch|manifest)"[^>]*href="https?:/i.test(content),
+      `external <link> in ${file}`
+    );
     assert(!/url\(\s*['"]?https?:/i.test(content), `external URL in ${file}`);
   }
+  // An outbound <a> loads nothing, so it may point off-site — over HTTPS only.
+  const anchors = [...html.matchAll(/<a\b[^>]*href="([^"]+)"/g)].map((match) => match[1]);
+  const remote = anchors.filter((href) => /^https?:/i.test(href));
+  for (const href of remote) assert(href.startsWith("https://"), `insecure outbound link: ${href}`);
   assert(!/\b(fetch|XMLHttpRequest|WebSocket|sendBeacon)\b/.test(js), "network call present");
-  return `zero third-party requests across ${landingFiles.length} files`;
+  return `zero third-party requests; ${remote.length} outbound links, all https`;
 });
 
 check("landing: no dangerous DOM APIs", () => {
@@ -390,7 +399,9 @@ check("landing: local asset references exist", () => {
   const refs = [...html.matchAll(/(?:src|href)="([^"#][^"]*)"/g)].map((m) =>
     m[1].split(/[?#]/)[0]
   );
-  const local = refs.filter((ref) => !ref.startsWith("#") && !ref.startsWith("mailto:"));
+  const local = refs.filter(
+    (ref) => !ref.startsWith("#") && !ref.startsWith("mailto:") && !/^https?:/i.test(ref)
+  );
   for (const ref of local) {
     assert(exists("landing/" + ref), `missing file: ${ref}`);
   }
@@ -398,14 +409,30 @@ check("landing: local asset references exist", () => {
   return `${local.length} local references verified`;
 });
 
-check("landing: release APK download is published", () => {
-  const apk = "GlucoPilot-1.2.0.apk";
-  const path = `landing/download/${apk}`;
-  assert(html.includes(`href="download/${apk}"`), "APK download link missing");
-  assert(exists(path), "APK file missing from landing/download");
-  const size = statSync(join(ROOT, path)).size;
-  assert(size > 500_000, `APK size is suspiciously small: ${size} bytes`);
-  return `${(size / 1024 / 1024).toFixed(2)} MB signed APK`;
+check("landing: every published APK is present", () => {
+  const release = JSON.parse(read("landing/releases.json"));
+  assert(release.current === release.releases[0].version, "the manifest does not start with the current version");
+  for (const entry of release.releases) {
+    const path = `landing/download/${entry.file}`;
+    assert(exists(path), `missing ${entry.file}`);
+    const size = statSync(join(ROOT, path)).size;
+    assert(size === entry.size, `${entry.file} is ${size} bytes, the manifest says ${entry.size}`);
+  }
+  const current = release.releases[0];
+  assert(html.includes(`href="download/${current.file}"`), "the page does not link the current APK");
+  assert(html.includes(current.sha256), "the page does not show the current SHA-256");
+  return `${release.releases.length} APKs, ${(current.size / 1024 / 1024).toFixed(2)} MB current`;
+});
+
+check("landing: download headers name each APK", () => {
+  const release = JSON.parse(read("landing/releases.json"));
+  const headers = read("landing/_headers");
+  for (const entry of release.releases) {
+    assert(headers.includes(`/download/${entry.file}`), `no header block for ${entry.file}`);
+    assert(headers.includes(`filename="${entry.file}"`), `${entry.file} has no matching download filename`);
+  }
+  assert(!/^\/download\/\*\.apk/m.test(headers), "a wildcard APK block would rename archived builds");
+  return `${release.releases.length} per-file header blocks`;
 });
 
 check("landing: accessibility basics", () => {

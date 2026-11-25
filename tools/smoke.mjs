@@ -4,22 +4,37 @@
  *
  *   python -m http.server 4173 --bind 127.0.0.1 --directory landing
  *   node tools/smoke.mjs
+ *
+ * Every release-specific target is read from landing/releases.json, so a new
+ * version is covered without editing this file.
  */
+import { readFileSync } from "node:fs";
+
 const base = process.env.BASE_URL ?? "http://127.0.0.1:4173";
+const release = JSON.parse(readFileSync("landing/releases.json", "utf8"));
+const current = release.releases.find((item) => item.version === release.current);
+const stamp = release.assetStamp;
 
 const targets = [
   { path: "/", type: "text/html", mustInclude: "GlucoPilot" },
-  { path: "/styles.css", type: "text/css", mustInclude: "--mint" },
-  { path: "/showcase.css", type: "text/css", mustInclude: "float-card" },
-  { path: "/signals.css", type: "text/css", mustInclude: "dash__panel" },
+  { path: `/styles.css?v=${stamp}`, type: "text/css", mustInclude: "--mint" },
+  { path: `/showcase.css?v=${stamp}`, type: "text/css", mustInclude: "float-card" },
+  { path: `/signals.css?v=${stamp}`, type: "text/css", mustInclude: "dash__panel" },
   { path: "/app.js", type: "javascript", mustInclude: "prefers-reduced-motion" },
   { path: "/assets/favicon.svg", type: "image/svg+xml", mustInclude: "<svg" },
+  { path: "/assets/install-qr.svg", type: "image/svg+xml", mustInclude: "<svg" },
   {
-    path: "/download/GlucoPilot-1.2.0.apk",
+    path: "/releases.json",
+    types: ["application/json", "text/plain"],
+    mustInclude: `"current": "${release.current}"`
+  },
+  { path: "/download/", type: "text/html", mustInclude: "Every signed release" },
+  ...release.releases.map((item) => ({
+    path: `/download/${item.file}`,
     types: ["application/vnd.android.package-archive", "application/octet-stream"],
     method: "HEAD",
     minBytes: 500000
-  }
+  }))
 ];
 
 let failures = 0;

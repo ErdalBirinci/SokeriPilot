@@ -4,13 +4,20 @@
  * No dependencies; runs on Node 18+.
  *
  *   node tools/live-check.mjs
- *   BASE_URL=https://glucopilot-civgdk.freebuff.site node tools/live-check.mjs
+ *   BASE_URL=https://glucopilot-civgdk-preview.freebuff.site node tools/live-check.mjs
  *
- * Verifies, against the deployed site:
- *   - the landing page is served and references the hero image and the APK
+ * Everything release-specific comes from landing/releases.json, so the same
+ * command verifies the preview and production. Verifies, against the deployed
+ * site:
+ *   - the page is served and pins the current version, hash, QR code and archive
+ *   - each stylesheet at the current ?v= stamp is fresh (200, right type, no
+ *     stale caching), which is the failure a cached document used to hide
  *   - the hero image is a decodable JPEG of the expected size
- *   - the APK arrives with the Android package MIME type, download
- *     disposition, the exact release size and a matching SHA-256
+ *   - the current APK arrives with the package MIME type, the versioned
+ *     filename, the exact release size and a SHA-256 that matches both the
+ *     local file and the hash printed on the page
+ *   - the archive page lists every release, and every archived APK is served
+ *   - releases.json is served and agrees with the page
  */
 import { readFileSync, statSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -19,13 +26,23 @@ import { join } from "node:path";
 const ROOT = process.cwd();
 const BASE = (process.env.BASE_URL ?? "https://glucopilot-civgdk.freebuff.site").replace(/\/+$/, "");
 const HERO_PATH = "/assets/android-auto.jpg";
-const APK_PATH = "/download/GlucoPilot-1.2.0.apk";
 const APK_MIME = "application/vnd.android.package-archive";
+
+const manifest = JSON.parse(readFileSync(join(ROOT, "landing/releases.json"), "utf8"));
+const current = manifest.releases.find((release) => release.version === manifest.current);
+const stamp = manifest.assetStamp;
 
 const local = {
   hero: join(ROOT, "landing/assets/android-auto.jpg"),
-  apk: join(ROOT, "landing/download/GlucoPilot-1.2.0.apk")
+  apk: join(ROOT, "landing/download", current.file)
 };
+
+const stylesheets = [
+  { path: `/styles.css?v=${stamp}`, marker: "--mint" },
+  { path: `/showcase.css?v=${stamp}`, marker: "float-card" },
+  { path: `/signals.css?v=${stamp}`, marker: "dash__panel" },
+  { path: "/app.js", marker: "prefers-reduced-motion" }
+];
 
 const failures = [];
 let passed = 0;
@@ -62,7 +79,7 @@ async function request(path, method = "GET") {
   };
 }
 
-console.log(`Live check: ${BASE}\n`);
+console.log(`Live check: ${BASE} · ${manifest.current} (?v=${stamp})\n`);
 
 /* ------------------------------------------------------------------ */
 /* 1. Landing page                                                     */
@@ -74,15 +91,47 @@ try {
   if (response.status !== 200) throw new Error(`HTTP ${response.status}`);
   if (type !== "text/html") throw new Error(`content-type ${type || "(none)"}`);
   if (!html.includes('src="assets/android-auto.jpg"')) throw new Error("hero image reference missing");
-  if (!html.includes('href="download/GlucoPilot-1.2.0.apk"')) throw new Error("APK link missing");
+  if (!html.includes(`href="download/${current.file}"`)) throw new Error("APK link missing");
   if (!html.includes('class="shot__img"')) throw new Error("hero figure markup missing");
-  pass("live: landing page served", `200 text/html · ${body.length} bytes`);
+  if (!html.includes('src="assets/install-qr.svg"')) throw new Error("install QR code missing");
+  if (!html.includes('href="download/"')) throw new Error("archive link missing");
+  if (!html.includes(current.sha256)) throw new Error("displayed SHA-256 does not match releases.json");
+
+  const stamps = [...html.matchAll(/\?v=([^"]+)"/g)].map((match) => match[1]);
+  if (stamps.length !== 3) throw new Error(`${stamps.length} stamped stylesheets, expected 3`);
+  const stale = stamps.filter((value) => value !== stamp);
+  if (stale.length > 0) throw new Error(`stale stylesheet stamp ?v=${stale[0]}`);
+
+  pass("live: landing page served", `200 text/html · ${body.length} bytes · ${manifest.current}`);
 } catch (error) {
   fail("live: landing page served", error.message);
 }
 
 /* ------------------------------------------------------------------ */
-/* 2. Hero image                                                       */
+/* 2. Stylesheets and script                                           */
+/* ------------------------------------------------------------------ */
+
+try {
+  const details = [];
+  for (const asset of stylesheets) {
+    const { response, body, type } = await request(asset.path);
+    if (response.status !== 200) throw new Error(`${asset.path} HTTP ${response.status}`);
+    if (type !== "text/css" && type !== "javascript" && type !== "text/javascript") {
+      throw new Error(`${asset.path} content-type ${type || "(none)"}`);
+    }
+    const text = body.toString("utf8");
+    if (!text.includes(asset.marker)) throw new Error(`${asset.path} is not the expected file`);
+    const cache = response.headers.get("cache-control") ?? "";
+    if (!cache.includes("must-revalidate")) throw new Error(`${asset.path} cache-control "${cache}"`);
+    details.push(`${asset.path.split("?")[0]} ${kb(body.length)}`);
+  }
+  pass("live: stylesheets and script are current", details.join(" · "));
+} catch (error) {
+  fail("live: stylesheets and script are current", error.message);
+}
+
+/* ------------------------------------------------------------------ */
+/* 3. Hero image                                                       */
 /* ------------------------------------------------------------------ */
 
 try {
@@ -103,12 +152,12 @@ try {
 }
 
 /* ------------------------------------------------------------------ */
-/* 3. APK download                                                     */
+/* 4. Current APK                                                      */
 /* ------------------------------------------------------------------ */
 
 try {
   const expected = statSync(local.apk).size;
-  const { response, body, type } = await request(APK_PATH);
+  const { response, body, type } = await request(`/download/${current.file}`);
   const disposition = response.headers.get("content-disposition") ?? "";
 
   if (response.status !== 200) throw new Error(`HTTP ${response.status}`);
@@ -116,14 +165,72 @@ try {
   if (body.length !== expected) throw new Error(`downloaded ${body.length} bytes, expected ${expected}`);
   if (!body.subarray(0, 2).equals(Buffer.from([0x50, 0x4b]))) throw new Error("body is not a ZIP/APK");
   if (!/^attachment/i.test(disposition)) throw new Error(`content-disposition ${disposition || "(none)"}`);
+  if (!disposition.includes(`filename="${current.file}"`)) {
+    throw new Error(`content-disposition renames the file: ${disposition}`);
+  }
 
   const liveHash = sha256(body);
-  const localHash = sha256(readFileSync(local.apk));
-  if (liveHash !== localHash) throw new Error(`sha256 ${liveHash.slice(0, 12)}… != ${localHash.slice(0, 12)}…`);
+  if (liveHash !== current.sha256) throw new Error(`sha256 ${liveHash.slice(0, 12)}… does not match releases.json`);
+  if (liveHash !== sha256(readFileSync(local.apk))) throw new Error("live bytes differ from the local APK");
 
-  pass("live: APK download", `200 ${APK_MIME} · ${kb(expected)} · sha256 ${liveHash.slice(0, 12)}…`);
+  pass("live: current APK download", `200 ${APK_MIME} · ${kb(expected)} · sha256 ${liveHash.slice(0, 12)}…`);
 } catch (error) {
-  fail("live: APK download", error.message);
+  fail("live: current APK download", error.message);
+}
+
+/* ------------------------------------------------------------------ */
+/* 5. Archive                                                          */
+/* ------------------------------------------------------------------ */
+
+try {
+  const { response, body, type } = await request("/download/");
+  const html = body.toString("utf8");
+  if (response.status !== 200) throw new Error(`HTTP ${response.status}`);
+  if (type !== "text/html") throw new Error(`content-type ${type || "(none)"}`);
+  for (const release of manifest.releases) {
+    if (!html.includes(`href="${release.file}"`)) throw new Error(`${release.file} is not listed`);
+    if (!html.includes(release.sha256)) throw new Error(`${release.file} hash is not listed`);
+  }
+  for (const release of manifest.releases) {
+    const head = await request(`/download/${release.file}`, "HEAD");
+    if (head.response.status !== 200) throw new Error(`${release.file} HTTP ${head.response.status}`);
+    if (head.type !== APK_MIME) throw new Error(`${release.file} content-type ${head.type || "(none)"}`);
+  }
+  pass("live: release archive", `200 text/html · ${manifest.releases.length} APKs listed and served`);
+} catch (error) {
+  fail("live: release archive", error.message);
+}
+
+/* ------------------------------------------------------------------ */
+/* 6. Release manifest                                                 */
+/* ------------------------------------------------------------------ */
+
+try {
+  const { response, body, type } = await request("/releases.json");
+  if (response.status !== 200) throw new Error(`HTTP ${response.status}`);
+  if (type !== "application/json") throw new Error(`content-type ${type || "(none)"}`);
+  const served = JSON.parse(body.toString("utf8"));
+  if (served.current !== manifest.current) throw new Error(`served current ${served.current}`);
+  const entry = served.releases?.find((release) => release.version === served.current);
+  if (!entry || entry.sha256 !== current.sha256) throw new Error("served APK hash differs from the local manifest");
+  pass("live: release manifest", `200 application/json · current ${served.current}`);
+} catch (error) {
+  fail("live: release manifest", error.message);
+}
+
+/* ------------------------------------------------------------------ */
+/* 7. Install QR code                                                  */
+/* ------------------------------------------------------------------ */
+
+try {
+  const { response, body, type } = await request("/assets/install-qr.svg");
+  const svg = body.toString("utf8");
+  if (response.status !== 200) throw new Error(`HTTP ${response.status}`);
+  if (type !== "image/svg+xml") throw new Error(`content-type ${type || "(none)"}`);
+  if (!svg.includes("<svg") || !svg.includes("<path")) throw new Error("served QR file is not an SVG symbol");
+  pass("live: install QR code", `200 image/svg+xml · ${kb(body.length)}`);
+} catch (error) {
+  fail("live: install QR code", error.message);
 }
 
 /* ------------------------------------------------------------------ */

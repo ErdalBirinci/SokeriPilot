@@ -5,9 +5,10 @@ data (xDrip+ local broadcasts or Nightscout) into a value that can be read at a 
 screen. It does not recommend doses and does not collect data.
 
 ```
-android/    Android app (Kotlin + Android for Cars App Library)
-landing/    Marketing site (dependency-free HTML/CSS/JS, Android Auto hero shot, signed APK download)
-tools/      Executable security and smoke checks
+android/     Android app (Kotlin + Android for Cars App Library)
+landing/     Marketing site (dependency-free HTML/CSS/JS), release manifest and signed APK archive
+tools/       Executable security, release and smoke checks
+RELEASE.md   The release sequence: build, manifest, preview gate, tag, rollback
 ```
 
 > **Medical notice:** GlucoPilot is not a medical device. It does not recommend treatment or
@@ -346,6 +347,16 @@ It finds a connected device, installs the debug APK, grants notification permiss
 phone app and uses `dumpsys` to check the status notification and the foreground
 `GlucoseMonitorService`. Customize with the `ADB`, `PACKAGE` and `APK` environment variables.
 
+**Release consistency** — `landing/releases.json` describes a release once:
+
+```bash
+node tools/release-check.mjs
+```
+
+It fails when the page, `landing/_headers`, the archive page or the stylesheet stamp disagree with
+the manifest, when an APK's bytes differ from its recorded size or SHA-256, or when the APK's own
+versionName and signing certificate are not the ones the page tells users to expect.
+
 **Landing page smoke test:**
 
 ```bash
@@ -355,7 +366,14 @@ node tools/smoke.mjs
 
 `security-check.mjs` covers manifest hardening, exported components, permissions, HTTPS
 enforcement, redirect rejection, secret storage, log leakage, dependency pins and the landing
-page's CSP/inline-script/external-resource status.
+page's CSP: no inline code, no external subresource, and outbound links are HTTPS-only.
+
+The install QR code is generated locally (no dependencies, no network) and verified by reading the
+symbol back before it is written:
+
+```bash
+node tools/make-qr.mjs
+```
 
 **Published site check (single command):**
 
@@ -364,9 +382,16 @@ node tools/live-check.mjs
 ```
 
 It checks the deployed landing (`https://glucopilot-civgdk.freebuff.site`, override with
-`BASE_URL`): the page references the hero image and the APK, the hero image is a real JPEG of the
-expected size, and the APK arrives as `application/vnd.android.package-archive` with the exact
-release size, a download disposition and a matching SHA-256.
+`BASE_URL`): the page pins the current version, hash, QR code and archive; the hero image is a real
+JPEG of the expected size; every stylesheet at the current `?v=` stamp is served fresh and not from
+a stale cache; the APK arrives as `application/vnd.android.package-archive`, with the versioned
+filename, the exact release size and a SHA-256 that matches both the local file and the hash on the
+page; and the archive page and `releases.json` agree with the manifest. The same command verifies a
+preview deploy before production:
+
+```bash
+BASE_URL=https://glucopilot-civgdk-preview.freebuff.site node tools/live-check.mjs
+```
 
 **Car-bound device check (needs a phone):**
 
@@ -384,29 +409,37 @@ value it found. Without a phone it exits with `No connected device`.
 
 - `:app:assembleDebug` — **BUILD SUCCESSFUL**; APK: `android/app/build/outputs/apk/debug/app-debug.apk` (~4.5 MB, minSdk 26 / targetSdk 35; English resources only).
 - `:app:testDebugUnitTest` — **132 tests, 0 failures**.
-- `node tools/security-check.mjs` — **32/32 PASS**.
+- `node tools/security-check.mjs` — **33/33 PASS**.
+- `node tools/release-check.mjs` — **12/12 PASS**: manifest, both APK files byte for byte, page,
+  headers, archive, QR asset, and the APK's own versionName and certificate.
 - `python tools/check_xml.py` — 19 resource XML files are well formed.
-- `node tools/smoke.mjs` — landing page 7/7 HTTP 200, including both extra stylesheets and the signed APK download.
-- `node tools/live-check.mjs` — **3/3 PASS** on the published site: hero JPEG 97.7 KB, APK
-  `application/vnd.android.package-archive` 898.6 KB (v1.2.0) with SHA-256 `464a15e4…`.
+- `node tools/smoke.mjs` — landing page 11/11 HTTP 200: the three stylesheets at the current stamp,
+  `releases.json`, the QR code, the archive page and both signed APKs.
+- `node tools/live-check.mjs` — **7/7 PASS** on the published site: page pins 1.2.0 and its hashes,
+  all stylesheets fresh at `?v=`, hero JPEG 97.7 KB, APK
+  `application/vnd.android.package-archive` 898.6 KB with SHA-256 `464a15e4…`, the archive page and
+  `releases.json` served.
+- `node tools/make-qr.mjs` — symbol read back as the exact download URL, and decoded independently
+  with jsQR in Chromium.
 - `apksigner.bat verify --print-certs` (build-tools 35.0.0) — 1.2.0 and 1.1.3 both **Verifies**
   with the same signer certificate, SHA-256 `6d882da0…9f96` (details below).
 - Landing page measured at 1024 and 1200 px widths: no horizontal overflow, the notification
-  stays inside the map, and the cockpit falls back to a single column on mobile (430 px).
+  stays inside the map, and the cockpit falls back to a single column on mobile (430 px). The
+  download card, the install QR code and the archive page were measured at 430 px: no horizontal
+  overflow.
 
 ### APK signing continuity (1.1.3 → 1.2.0)
 
 Android only installs an update when the signing certificate matches the installed app, so the
-published APK was checked with the SDK's `apksigner.bat` (build-tools 35.0.0, local JDK). 1.1.3 is
-no longer on the site; recover it from git first.
+published APKs were checked with the SDK's `apksigner.bat` (build-tools 35.0.0, local JDK). Both
+versions stay in `landing/download/` and on the archive page, so this can be repeated on the files
+the site actually serves.
 
 ```powershell
-git show 609a124:landing/download/GlucoPilot-1.1.3.apk > "$env:TEMP\GlucoPilot-1.1.3.apk"
-
 & "$env:ANDROID_HOME\build-tools\35.0.0\apksigner.bat" verify --verbose --print-certs `
   .\landing\download\GlucoPilot-1.2.0.apk
 & "$env:ANDROID_HOME\build-tools\35.0.0\apksigner.bat" verify --verbose --print-certs `
-  "$env:TEMP\GlucoPilot-1.1.3.apk"
+  .\landing\download\GlucoPilot-1.1.3.apk
 ```
 
 | Check | 1.1.3 | 1.2.0 |
@@ -438,6 +471,16 @@ by Android Auto. If battery optimization kills the foreground service, notificat
 the user can exclude the app from battery optimization.
 
 ---
+
+### Releasing an update
+
+`landing/releases.json` describes a release once, and `RELEASE.md` is the ordered checklist. In
+short: build and sign, copy the APK into `landing/download/`, add the manifest entry, update the page
+version, size, hash and links, add the `_headers` block and the archive row, bump `assetStamp`, then
+run `release-check`, `security-check` and `smoke`. Deploy to **preview** first and run `live-check`
+against the preview URL; only then deploy production and run it again. Tag the commit with the
+version so the published hash stays tied to its source. Old versions stay downloadable from
+`/download/`; a bad release is rolled back by checking out the tag and deploying again.
 
 ## 7. Play / distribution notes
 
