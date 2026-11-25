@@ -15,7 +15,10 @@ export ANDROID_HOME="$(cygpath -m "$PWD/../.toolchain/android-sdk")"
 ```
 
 `android/app/build.gradle.kts` reads `android/keystore.properties`; without it the release build is
-unsigned and cannot be installed over the previous version.
+unsigned and cannot be installed over the previous version. The file also holds the two identities
+the update path depends on: keep `applicationId` (`app.glcopilot`) and the signing key unchanged, and
+raise `versionCode` together with `versionName`. The namespace (`app.sokeripilot`) only names the
+code.
 
 ## 2. Read the APK's own facts
 
@@ -30,7 +33,7 @@ JAVA_HOME="$PWD/.toolchain/jdk" "$BT/apksigner.bat" verify --print-certs landing
 
 The `versionName` must equal the new version, and the certificate SHA-256 must equal the one already
 recorded in `releases.json`. A different certificate means the update cannot install over 1.1.3 or
-1.2.0 — restore the release key from `backups/` instead of shipping it.
+1.2.0 or 1.2.1 — restore the release key from `backups/` instead of shipping it.
 
 ## 3. Update the manifest, then the things it feeds
 
@@ -110,8 +113,8 @@ KEYSTORE_PASSPHRASE='…' bash tools/keystore-drill.sh
 For unattended monitoring, schedule `node tools/watch.mjs` (it writes `dist/watch.json` and posts to
 `WATCH_WEBHOOK` when set, so cron exits non-zero on a failing site).
 
-The tag is what ties the published APK hash to the source that produced it. `v1.2.0` is the commit
-that was live with 1.2.0.
+The tag is what ties the published APK hash to the source that produced it. `v1.2.0` and `v1.2.1`
+are the commits that were live with those releases.
 
 ## Rollback
 

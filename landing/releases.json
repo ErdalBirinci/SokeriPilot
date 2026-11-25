@@ -1,14 +1,23 @@
 {
-  "current": "1.2.0",
-  "assetStamp": "1.2.0-10",
+  "current": "1.2.1",
+  "assetStamp": "1.2.1-1",
   "releases": [
+    {
+      "version": "1.2.1",
+      "versionCode": 7,
+      "date": "2026-11-25",
+      "file": "SokeriPilot-1.2.1.apk",
+      "size": 920044,
+      "sha256": "457a885fe146a9575eba9511fe38a8ccff3a1b83644500508f2f0c6d016f3434",
+      "certSha256": "6d882da012221b76648e69d22bb951e43ca108b54fe920912b5d43299c929f96"
+    },
     {
       "version": "1.2.0",
       "versionCode": 6,
       "date": "2026-11-25",
       "file": "SokeriPilot-1.2.0.apk",
-      "size": 920040,
-      "sha256": "5ec9fbf02d42ce06bf7e1152465751c20025a3a50ab208b88b03df3fa659ac7e",
+      "size": 920144,
+      "sha256": "464a15e45d0ab8397a1ebdd416255323ba651e96e72867d693684bbaef7e52cb",
       "certSha256": "6d882da012221b76648e69d22bb951e43ca108b54fe920912b5d43299c929f96"
     },
     {

@@ -441,51 +441,68 @@ value it found. Without a phone it exits with `No connected device`.
   headers, archive, install guide, the stylesheet stamp across all five pages, the QR payload
   decoded and compared with `deploy/site.json`, and the APK's own versionName and certificate.
 - `python tools/check_xml.py` — 19 resource XML files are well formed.
-- `node tools/smoke.mjs` — landing page 16/16 HTTP 200: the three stylesheets at the current stamp,
+- `node tools/smoke.mjs` — landing page 17/17 HTTP 200: the three stylesheets at the current stamp,
   `releases.json`, the QR code, the archive page, the install guide, the privacy page, the 404
-  page, `robots.txt`, `sitemap.xml` and both signed APKs.
-- `node tools/live-check.mjs` — **10/10 PASS** on the published site: page pins 1.2.0 and its
+  page, `robots.txt`, `sitemap.xml` and all three signed APKs.
+- `node tools/live-check.mjs` — **10/10 PASS** on the published site: page pins 1.2.1 and its
   hashes, all stylesheets fresh at `?v=`, hero JPEG 97.7 KB, APK
-  `application/vnd.android.package-archive` 898.6 KB with SHA-256 `464a15e4…`, the archive page,
+  `application/vnd.android.package-archive` 898.5 KB with SHA-256 `457a885f…`, the archive page,
   `releases.json`, the security headers, the install/privacy pages with `robots.txt` and
   `sitemap.xml`, and the branded 404 for an unknown path.
 - `node tools/qr.mjs` — the install QR decodes to
   `https://glucopilot-civgdk.freebuff.site/#download`; it was also decoded independently with jsQR
   in Chromium.
-- `apksigner.bat verify --print-certs` (build-tools 35.0.0) — 1.2.0 and 1.1.3 both **Verifies**
+- `apksigner.bat verify --print-certs` (build-tools 35.0.0) — 1.2.1, 1.2.0 and 1.1.3 all **Verify**
   with the same signer certificate, SHA-256 `6d882da0…9f96` (details below).
 - Landing page measured at 1024 and 1200 px widths: no horizontal overflow, the notification
   stays inside the map, and the cockpit falls back to a single column on mobile (430 px). The
   download card, the install QR code and the archive page were measured at 430 px: no horizontal
   overflow.
 
-### APK signing continuity (1.1.3 → 1.2.0)
+### APK signing continuity (1.1.3 → 1.2.1)
 
 Android only installs an update when the signing certificate matches the installed app, so the
-published APKs were checked with the SDK's `apksigner.bat` (build-tools 35.0.0, local JDK). Both
+published APKs were checked with the SDK's `apksigner.bat` (build-tools 35.0.0, local JDK). All
 versions stay in `landing/download/` and on the archive page, so this can be repeated on the files
 the site actually serves.
 
 ```powershell
+& "$env:ANDROID_HOME\build-tools\35.0.0\apksigner.bat" verify --verbose --print-certs `
+  .\landing\download\SokeriPilot-1.2.1.apk
 & "$env:ANDROID_HOME\build-tools\35.0.0\apksigner.bat" verify --verbose --print-certs `
   .\landing\download\SokeriPilot-1.2.0.apk
 & "$env:ANDROID_HOME\build-tools\35.0.0\apksigner.bat" verify --verbose --print-certs `
   .\landing\download\SokeriPilot-1.1.3.apk
 ```
 
-| Check | 1.1.3 | 1.2.0 |
-|---|---|---|
-| APK SHA-256 | `d496ef20…7629` | `464a15e4…52cb` |
-| Signer certificate SHA-256 | `6d882da012221b76648e69d22bb951e43ca108b54fe920912b5d43299c929f96` | same |
-| Certificate DN | `CN=SokeriPilot, OU=Mobile, O=SokeriPilot, L=Istanbul, C=TR` | same |
-| Key | RSA 4096 | RSA 4096 |
-| Public key SHA-256 | `6f4d1fa6…3056` | `6f4d1fa6…3056` |
-| Signature schemes | v2 only | v2 only |
-| `apksigner` result | Verifies, 1 signer | Verifies, 1 signer |
+| Check | 1.1.3 | 1.2.0 | 1.2.1 |
+|---|---|---|---|
+| APK SHA-256 | `d496ef20…7629` | `464a15e4…52cb` | `457a885f…3434` |
+| Signer certificate SHA-256 | `6d882da012221b76648e69d22bb951e43ca108b54fe920912b5d43299c929f96` | same | same |
+| Certificate DN | `CN=SokeriPilot, OU=Mobile, O=SokeriPilot, L=Istanbul, C=TR` | same | same |
+| Key | RSA 4096 | RSA 4096 | RSA 4096 |
+| Public key SHA-256 | `6f4d1fa6…3056` | `6f4d1fa6…3056` | `6f4d1fa6…3056` |
+| Signature schemes | v2 only | v2 only | v2 only |
+| `apksigner` result | Verifies, 1 signer | Verifies, 1 signer | Verifies, 1 signer |
 
-Both APKs carry the same certificate and public key, so 1.2.0 installs as an ordinary update over
-1.1.3; there is nothing to re-sign. v2-only is expected here: minSdk is 26, so JAR/v1 signing is
-not needed, and AGP signs with the v2 scheme.
+All three carry the same certificate and public key, so 1.2.1 installs as an ordinary update over
+either earlier version; there is nothing to re-sign. v2-only is expected here: minSdk is 26, so
+JAR/v1 signing is not needed, and AGP signs with the v2 scheme.
+
+### Install identity (applicationId)
+
+`android/app/build.gradle.kts` keeps `applicationId = "app.glcopilot"` while the code namespace is
+`app.sokeripilot`. Android matches an update on applicationId plus signing key, so the applicationId
+is what keeps existing installations on the update path; the namespace only names the code and the
+R class, and users never see either string — the launcher label comes from `app_name`
+("SokeriPilot"). This is deliberate, not a leftover: renaming the applicationId would install the
+app as a *second* copy and leave the old one, with its settings, behind.
+
+That is why the 1.2.1 build reports `package: name='app.glcopilot'` together with
+`launchable-activity: name='app.sokeripilot.phone.MainActivity'`: the component lives in the code
+package, the install id stays where updates can find it. A future applicationId change would need
+its own migration release (export settings, uninstall the old id, import) — a product decision, not
+a rename detail.
 
 If the fingerprints ever differ, the update was signed with another key — a debug keystore, a
 regenerated keystore, or a build on a machine without `android/keystore.properties` (that release

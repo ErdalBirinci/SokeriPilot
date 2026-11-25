@@ -1,4 +1,4 @@
-# Data safety answers — SokeriPilot 1.2.0
+# Data safety answers — SokeriPilot 1.2.1
 
 Play asks these per app, not per SDK. Answer from what the app actually does; the sources are
 `README.md` (§5), `landing/privacy/` and the Android code.

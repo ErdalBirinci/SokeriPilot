@@ -20,11 +20,15 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "app.sokeripilot"
+        // The install identity stays app.glcopilot on purpose: Android only updates
+        // an app in place when the applicationId and signing key match, so changing
+        // it would leave every existing install behind. The code package (namespace
+        // above) carries the SokeriPilot name; users never see this string.
+        applicationId = "app.glcopilot"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.2.0"
+        versionCode = 7
+        versionName = "1.2.1"
         // The app ships English UI text only; do not pull library translations into the APK.
         resourceConfigurations += listOf("en")
         vectorDrawables.useSupportLibrary = true
