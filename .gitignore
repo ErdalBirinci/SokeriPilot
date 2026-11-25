@@ -15,6 +15,9 @@ android/.idea/
 *.keystore
 keystore.properties
 
+# Encrypted signing-key backups
+/backups/
+
 # Distribution packages (APK/AAB) — build output, not source
 dist/
 
