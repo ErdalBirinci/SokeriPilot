@@ -65,6 +65,8 @@
     <string name="notif_action_cockpit">Cockpit</string>
     <string name="notif_action_open">Open app</string>
     <string name="notif_action_mute">Mute 30 min</string>
+    <string name="notif_stale_alert_title">No glucose data</string>
+    <string name="notif_stale_alert_body">No new reading for 15 minutes. Check the sensor and the CGM app on your phone.</string>
 
     <string name="monitor_title">Driving mode</string>
     <string name="monitor_switch">Show glucose while navigation or music is open</string>

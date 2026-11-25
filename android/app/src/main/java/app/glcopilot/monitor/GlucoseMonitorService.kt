@@ -8,10 +8,14 @@ import android.os.IBinder
 import androidx.core.app.ServiceCompat
 import app.glcopilot.data.AppGraph
 import app.glcopilot.notify.GlucoseNotifier
+import app.glcopilot.notify.StaleAction
+import app.glcopilot.notify.StaleGuard
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
@@ -46,6 +50,22 @@ class GlucoseMonitorService : Service() {
             }
         }
 
+        // A silent sensor must not leave a stale number looking current: tell the
+        // driver once per stale episode, then stay quiet until fresh data returns.
+        scope.launch {
+            val staleGuard = StaleGuard()
+            while (isActive) {
+                container.repository.state.value.latest?.let { latest ->
+                    when (staleGuard.onCheck(System.currentTimeMillis(), latest.timestampMillis)) {
+                        StaleAction.ALERT -> container.notifier.notifyStale()
+                        StaleAction.CLEARED -> container.notifier.cancelStale()
+                        StaleAction.NONE -> Unit
+                    }
+                }
+                delay(STALE_CHECK_MILLIS)
+            }
+        }
+
         // Monitoring is tied to the car: stop as soon as Android Auto disconnects.
         CarConnectionWatcher.observe(this)
     }
@@ -64,4 +84,8 @@ class GlucoseMonitorService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    private companion object {
+        const val STALE_CHECK_MILLIS = 60_000L
+    }
 }

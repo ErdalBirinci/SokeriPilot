@@ -35,6 +35,7 @@ import app.glcopilot.phone.MainActivity
  *    offers one-tap access to the cockpit.
  *  - **alert** notification: only out of range, high priority (briefly comes
  *    forward on the car screen), once every 10 minutes, and can be muted for 30 minutes.
+ *  - **stale** reminder: once per dead-sensor episode, when no reading arrived for 15 minutes.
  */
 class GlucoseNotifier(
     private val context: Context,
@@ -173,9 +174,32 @@ class GlucoseNotifier(
         }
     }
 
-    fun cancelAlert() {
-        NotificationManagerCompat.from(context).cancel(ALERT_ID)
+    /**
+     * One-shot reminder that no new reading arrived for 15 minutes. It appears in the
+     * car as a high-priority reminder and stays silent afterwards until fresh data
+     * returns, so a dead sensor does not leave a stale number looking current.
+     */
+    @Synchronized
+    fun notifyStale() {
+        if (!settings.notificationsEnabled()) return
+        if (!hasPermission()) return
+        ensureChannels()
+        try {
+            NotificationManagerCompat.from(context).notify(
+                STALE_ID,
+                highPriorityNotification(
+                    context.getString(R.string.notif_stale_alert_title),
+                    context.getString(R.string.notif_stale_alert_body)
+                )
+            )
+        } catch (_: SecurityException) {
+            // Stop silently if permission was revoked; the cockpit keeps working.
+        }
     }
+
+    fun cancelAlert() = NotificationManagerCompat.from(context).cancel(ALERT_ID)
+
+    fun cancelStale() = NotificationManagerCompat.from(context).cancel(STALE_ID)
 
     fun cancelStatus() {
         NotificationManagerCompat.from(context).cancel(STATUS_NOTIFICATION_ID)
@@ -191,8 +215,19 @@ class GlucoseNotifier(
             append(" · ").append(settings.glucoseRange().let { "${it.low}–${it.high} ${units.label}" })
             append(" · ").append(TimeAgo.format(System.currentTimeMillis(), reading.timestampMillis))
         }
+        return highPriorityNotification(title, text, mutePending())
+    }
+
+    /**
+     * High-priority notification that briefly comes forward on the car screen.
+     * [mute] adds the 30-minute mute action; the stale reminder has nothing to mute.
+     */
+    private fun highPriorityNotification(
+        title: String,
+        text: String,
+        mute: PendingIntent? = null
+    ): Notification {
         val cockpit = carAppPending(REQUEST_CAR_ALERT) ?: phonePending()
-        val mute = mutePending()
 
         val carExtender = CarAppExtender.Builder()
             .setImportance(NotificationManager.IMPORTANCE_HIGH)
@@ -200,7 +235,9 @@ class GlucoseNotifier(
             .setContentText(text)
             .setContentIntent(cockpit)
             .addAction(R.drawable.ic_open_car, context.getString(R.string.notif_action_cockpit), cockpit)
-            .addAction(R.drawable.ic_mute, context.getString(R.string.notif_action_mute), mute)
+            .apply {
+                mute?.let { addAction(R.drawable.ic_mute, context.getString(R.string.notif_action_mute), it) }
+            }
             .build()
 
         return NotificationCompat.Builder(context, CHANNEL_ALERTS)
@@ -212,8 +249,12 @@ class GlucoseNotifier(
             .setOnlyAlertOnce(true)
             .setAutoCancel(true)
             .setContentIntent(phonePending())
-            .addAction(R.drawable.ic_open_car, context.getString(R.string.notif_action_open), phonePending())
-            .addAction(R.drawable.ic_mute, context.getString(R.string.notif_action_mute), mute)
+            .apply {
+                if (mute != null) {
+                    addAction(R.drawable.ic_open_car, context.getString(R.string.notif_action_open), phonePending())
+                    addAction(R.drawable.ic_mute, context.getString(R.string.notif_action_mute), mute)
+                }
+            }
             .extend(carExtender)
             .build()
     }
@@ -269,6 +310,7 @@ class GlucoseNotifier(
         const val STATUS_NOTIFICATION_ID = 4100
 
         private const val ALERT_ID = 4101
+        private const val STALE_ID = 4102
         private const val REQUEST_PHONE = 10
         private const val REQUEST_CAR_STATUS = 11
         private const val REQUEST_CAR_ACTION = 12
