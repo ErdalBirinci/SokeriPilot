@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SokeriPilot — LinkedIn card</title>
+<style>
+  :root {
+    --mint: #0e9f7c;
+    --mint-2: #16c79b;
+    --mint-ink: #075b47;
+    --ink: #081815;
+    --ink-2: #33473f;
+    --muted: #667c74;
+    --canvas: #f4f8f6;
+    --line: rgba(8, 24, 21, 0.09);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1350px; overflow: hidden; }
+  body {
+    font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--canvas);
+    color: var(--ink);
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mesh { position: absolute; inset: 0; overflow: hidden; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.6; }
+  .b1 { width: 620px; height: 620px; left: -200px; top: -240px; background: #bdf0e1; }
+  .b2 { width: 540px; height: 540px; right: -180px; top: 40px; background: #dae9fb; }
+  .b3 { width: 520px; height: 520px; left: 480px; bottom: -260px; background: #fdf0d6; }
+
+  .page { position: relative; height: 100%; padding: 50px 62px 40px; display: flex; flex-direction: column; }
+
+  header { display: flex; align-items: center; gap: 14px; }
+  .mark { width: 48px; height: 48px; }
+  .brand { font-size: 31px; font-weight: 750; letter-spacing: -0.025em; }
+  .tag {
+    margin-left: auto; font-size: 16px; font-weight: 600; color: var(--mint-ink);
+    background: #e2f6ef; border: 1px solid #c6ebdf; padding: 9px 17px; border-radius: 999px;
+    letter-spacing: 0.01em;
+  }
+
+  h1 { margin-top: 30px; font-size: 63px; line-height: 1.05; letter-spacing: -0.035em; font-weight: 800; }
+  .grad {
+    background: linear-gradient(100deg, #0e9f7c 10%, #16c79b 55%, #2f9fd8);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .lede { margin-top: 16px; font-size: 23px; line-height: 1.45; color: var(--ink-2); max-width: 902px; }
+  .lede strong { color: var(--ink); font-weight: 650; }
+
+  .row { display: flex; gap: 20px; margin-top: 30px; }
+
+  .cockpit {
+    flex: 1 1 auto; width: 640px; height: 322px; border-radius: 26px; padding: 22px 26px;
+    background: linear-gradient(150deg, #0b211c 0%, #081815 55%, #0c2a23 100%);
+    color: #f2fffb; position: relative; overflow: hidden;
+    box-shadow: 0 30px 60px -34px rgba(6, 50, 38, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  .cockpit::after {
+    content: ""; position: absolute; width: 300px; height: 300px; right: -90px; top: -120px;
+    background: radial-gradient(circle, rgba(22, 199, 155, 0.35), transparent 68%);
+  }
+  .cockpit__top { display: flex; align-items: center; gap: 10px; font-size: 15px; color: #a8c6bd; letter-spacing: 0.02em; }
+  .cockpit__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mint-2); box-shadow: 0 0 0 4px rgba(22, 199, 155, 0.16); }
+  .cockpit__chip {
+    margin-left: auto; font-size: 14px; font-weight: 650; color: #06231c; background: #7ff0cd;
+    padding: 6px 12px; border-radius: 999px;
+  }
+  .value { display: flex; align-items: baseline; gap: 12px; margin-top: 16px; }
+  .value b { font-size: 92px; line-height: 0.95; font-weight: 800; letter-spacing: -0.045em; }
+  .value span { font-size: 24px; color: #9fbcb3; font-weight: 600; }
+  .value em { font-style: normal; font-size: 20px; color: #7ff0cd; margin-left: 6px; font-weight: 650; }
+  .spark { margin-top: 6px; }
+  .cockpit__meta { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .pill {
+    font-size: 14px; color: #cfe6df; border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.06); padding: 6px 11px; border-radius: 999px;
+  }
+  .pill--mint { color: #9bf6d9; border-color: rgba(22, 199, 155, 0.42); background: rgba(22, 199, 155, 0.12); }
+
+  .photo {
+    width: 288px; height: 322px; border-radius: 26px; overflow: hidden; position: relative;
+    box-shadow: 0 30px 60px -38px rgba(6, 50, 38, 0.55);
+  }
+  .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo__label {
+    position: absolute; left: 14px; right: 14px; bottom: 14px; padding: 10px 12px; border-radius: 14px;
+    background: rgba(8, 24, 21, 0.66); border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #eafff7; font-size: 13.5px; line-height: 1.35; backdrop-filter: blur(6px);
+  }
+
+  .render-note { margin-top: 10px; font-size: 13px; color: var(--muted); letter-spacing: 0.01em; }
+
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 26px; margin-top: 20px; }
+  .fact { display: flex; gap: 12px; align-items: flex-start; font-size: 19px; line-height: 1.35; color: var(--ink-2); }
+  .fact svg { flex: none; width: 22px; height: 22px; margin-top: 2px; }
+  .fact b { color: var(--ink); font-weight: 650; }
+
+  .strip {
+    margin-top: 20px; display: flex; align-items: center; gap: 14px;
+    border: 1px solid var(--line); background: rgba(255, 255, 255, 0.7); border-radius: 18px;
+    padding: 14px 18px; font-size: 16px; color: var(--muted);
+  }
+  .strip b { color: var(--ink); font-weight: 650; }
+  .strip .sep { width: 1px; height: 18px; background: var(--line); }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 22px; }
+  .step { background: rgba(255, 255, 255, 0.74); border: 1px solid var(--line); border-radius: 18px; padding: 15px 17px; }
+  .step__n { font-size: 12.5px; font-weight: 750; letter-spacing: 0.1em; color: var(--mint-ink); }
+  .step h3 { margin-top: 5px; font-size: 19px; font-weight: 700; letter-spacing: -0.015em; }
+  .step p { margin-top: 5px; font-size: 14.5px; line-height: 1.4; color: var(--muted); }
+
+  footer { margin-top: auto; border-top: 1px solid var(--line); padding-top: 18px; }
+  .links { display: flex; gap: 12px; }
+  .link {
+    display: inline-flex; align-items: center; gap: 9px; font-size: 17px; font-weight: 600;
+    color: var(--ink); background: #ffffff; border: 1px solid var(--line);
+    border-radius: 12px; padding: 11px 15px; letter-spacing: -0.01em;
+  }
+  .link svg { width: 18px; height: 18px; }
+  .link small { color: var(--muted); font-weight: 600; font-size: 14px; }
+  .legal { margin-top: 12px; display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="mesh"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+  <div class="page">
+    <header>
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="9" fill="#EAF6F1" />
+        <path d="M16 5C16 5 8.5 13.5 8.5 18.5a7.5 7.5 0 0 0 15 0C23.5 13.5 16 5 16 5Z" fill="#0E9F7C" />
+        <path d="M12 18h2.6l1.2-2.6 1.9 5.2 1.4-2.6H22" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <span class="brand">SokeriPilot</span>
+      <span class="tag">Android Auto · Type 1 diabetes</span>
+    </header>
+
+    <h1>Your glucose <span class="grad">in sight</span>,<br>your eyes on the road.</h1>
+
+    <p class="lede">
+      A silent car notification and a one-tap cockpit inside Android Auto — built for the ten seconds
+      you actually have at 80 km/h. It reads the CGM app <strong>already on the phone</strong>: one
+      system permission, nothing to configure, and no data leaves the device.
+    </p>
+
+    <div class="row">
+      <div class="cockpit">
+        <div class="cockpit__top">
+          <span class="cockpit__dot"></span> Live CGM · Dexcom G6
+          <span class="cockpit__chip">In range</span>
+        </div>
+        <div class="value"><b>128</b><span>mg/dL</span><em>→ steady</em></div>
+        <svg class="spark" width="586" height="86" viewBox="0 0 586 86" aria-hidden="true">
+          <defs>
+            <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#16c79b" stop-opacity="0.34" />
+              <stop offset="100%" stop-color="#16c79b" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+          <rect x="0" y="18" width="586" height="40" fill="rgba(22,199,155,0.10)" />
+          <path d="M0 58 L40 54 L80 60 L120 46 L160 50 L200 38 L240 44 L280 30 L320 34 L360 26 L400 32 L440 24 L480 30 L520 22 L560 28 L586 20"
+                fill="none" stroke="#16c79b" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M0 58 L40 54 L80 60 L120 46 L160 50 L200 38 L240 44 L280 30 L320 34 L360 26 L400 32 L440 24 L480 30 L520 22 L560 28 L586 20 L586 86 L0 86 Z"
+                fill="url(#fill)" />
+        </svg>
+        <div class="cockpit__meta">
+          <span class="pill pill--mint">70–180 mg/dL</span>
+          <span class="pill">90 min trend</span>
+          <span class="pill">Sensor 82%</span>
+          <span class="pill">Warns before range</span>
+        </div>
+      </div>
+
+      <div class="photo">
+        <img src="car.jpg" alt="Android Auto map on a car head unit">
+        <div class="photo__label">Maps and music keep the screen.<br>SokeriPilot stays a car notification.</div>
+      </div>
+    </div>
+
+    <p class="render-note">Cockpit values are an illustrative render, not a capture from a device.</p>
+
+    <div class="facts">
+      <div class="fact">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#0e9f7c" stroke-width="1.6"/><path d="m8 12.4 2.6 2.6L16.4 9" stroke="#0e9f7c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span><b>Reads any CGM app</b> — Dexcom, Libre, Diabox, xDrip+, Juggluco, Eversense</span>
+      </div>
+      <div class="fact">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#0e9f7c" stroke-width="1.6"/><path d="M12 7v5l3 2" stroke="#0e9f7c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span><b>Warns before you leave range</b> with a 15-minute projection, not after</span>
+      </div>
+      <div class="fact">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#0e9f7c" stroke-width="1.6"/><path d="M7 14.5 10 11l2.4 2.2L17 8" stroke="#0e9f7c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span><b>Trend, time in range, sensor health</b> and a four-number drive summary</span>
+      </div>
+      <div class="fact">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#0e9f7c" stroke-width="1.6"/><path d="M8.5 8.5 15.5 15.5M15.5 8.5 8.5 15.5" stroke="#0e9f7c" stroke-width="2" stroke-linecap="round"/></svg>
+        <span><b>No account, no analytics</b>, no dosing advice — Nightscout stays optional</span>
+      </div>
+    </div>
+
+    <div class="strip">
+      <b>Free &amp; open source · MIT</b>
+      <span class="sep"></span>
+      Kotlin · Android for Cars App Library
+      <span class="sep"></span>
+      Signed APK v1.2.1
+      <span class="sep"></span>
+      Android 8+
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step__n">01 · ONE PERMISSION</div>
+        <h3>Allow access once</h3>
+        <p>SokeriPilot reads the value your CGM app already posts — no login, no pairing, nothing to configure inside it.</p>
+      </div>
+      <div class="step">
+        <div class="step__n">02 · PLUG IN</div>
+        <h3>Monitoring starts with the car</h3>
+        <p>It begins when Android Auto connects and stops when you unplug. Nothing runs while you are not driving.</p>
+      </div>
+      <div class="step">
+        <div class="step__n">03 · GLANCE</div>
+        <h3>Value, trend, warning</h3>
+        <p>A silent car notification, an urgent-low alert that repeats until acknowledged, and one tap to the full cockpit.</p>
+      </div>
+    </div>
+
+    <footer>
+      <div class="links">
+        <span class="link">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#0e9f7c" stroke-width="1.7"/><path d="M3.5 12h17M12 3.4c2.6 2.4 4 5.4 4 8.6s-1.4 6.2-4 8.6c-2.6-2.4-4-5.4-4-8.6s1.4-6.2 4-8.6Z" stroke="#0e9f7c" stroke-width="1.5"/></svg>
+          <small>landing</small> erdalbirinci.github.io/SokeriPilot
+        </span>
+        <span class="link">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="#081815" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+          <small>github</small> ErdalBirinci/SokeriPilot
+        </span>
+      </div>
+      <div class="legal">
+        <span>Not a medical device. Does not recommend doses.</span>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
