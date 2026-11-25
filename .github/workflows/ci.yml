@@ -56,9 +56,10 @@ jobs:
         run: gradle -p android :app:testDebugUnitTest --rerun
       # The tests above write build/reports/phone-screen.png and trend-image.png;
       # this fails when docs/images no longer matches that layout.
-      # The images were produced from a Windows render; Skia's text antialiasing differs on
-      # this Linux runner, so compare the layout (card count, sizes, rough content) instead.
+      # Compares card count, sizes and rough content: the images carry reading ages and clock
+      # times, and Skia antialiases differently on this Linux runner than on the Windows
+      # machine they were produced on, so exact bytes never match.
       - name: README screenshots match the layout
         run: |
           python3 -m pip install --quiet --disable-pip-version-check pillow
-          python3 tools/doc-images.py --check --tolerate-renderer
+          python3 tools/doc-images.py --check

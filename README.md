@@ -141,14 +141,17 @@ and writes the seven card crops, the full screen, and copies the trend bitmap an
 fails loudly when the number of cards changes, so a new card cannot silently fall out of the
 README. It needs Python 3.9+ and Pillow.
 
-CI runs `python tools/doc-images.py --check --tolerate-renderer`. The runner is Linux and Skia
-antialiases text differently from the Windows render these images were cropped from, so exact
-bytes cannot match; in that mode the check compares the card count, the card sizes (±2 px) and a
-64×64 greyscale content difference. That difference measures 0.0–0.2/255 between the two
-platforms and the threshold is 2.0, so it fails on a layout change and on an edit that visibly
-repaints a card — a replaced value reads 2.7, a recoloured pill 5.7 — while a one-word copy edit
-(under 0.4) stays below it. Byte equality is what `--check` enforces on the machine that produced
-the screenshots.
+`--check` compares every committed image with a fresh crop. Byte-identical counts as current;
+otherwise it compares the card count, the card sizes (±2 px) and a 64×64 greyscale content
+difference. Two things legitimately move that difference: the clock (the card says “2 min ago” and
+the diagnostics list clock times, so the PNG changes as time passes) and the platform (the Linux CI
+runner differs from the Windows machine the images were made on by 0.0–0.2/255). The threshold is
+therefore 2.0, with ten times headroom, and CI simply runs `--check`.
+
+It fails on a layout change and on an edit that visibly repaints a card — a replaced value reads
+2.7, a recoloured status pill 5.7 — but a one-word copy edit stays under 0.4 and slips through.
+That case is caught by `--check --strict`, which requires byte equality and therefore only passes
+on the machine that just regenerated the images.
 
 ---
 
@@ -517,7 +520,7 @@ node tools/live-check.mjs         # 10 checks against the published site
 BASE_URL=https://glucopilot-civgdk-preview.freebuff.site node tools/live-check.mjs
 node tools/a11y-check.mjs         # 7 checks: structure, alt text, focus, WCAG AA contrast
 node tools/qr.mjs                 # the install QR decodes to the production origin
-python tools/doc-images.py --check  # the README screenshots match the current layout
+python tools/doc-images.py --check  # the README screenshots match the layout and content
 ```
 
 `live-check` verifies the page pins the current version, hash, QR code and archive, that every
@@ -578,10 +581,9 @@ mirror with `tools/pages-build.mjs`.
 - `node tools/smoke.mjs` — **17/17** HTTP 200.
 - `node tools/live-check.mjs` — **10/10** on preview and on production.
 - `node tools/qr.mjs` — decodes to `https://glucopilot-civgdk.freebuff.site/#download`.
-- `python tools/doc-images.py --check` — all 10 README images regenerate byte-identically from
-  the committed render. CI runs the same check with `--tolerate-renderer`: the two platforms differ
-  by 0.0–0.2/255, and against a 2.0 threshold it passes, comparing geometry and coarse content
-  instead of antialiasing.
+- `python tools/doc-images.py --check` — all 10 README images match the render: geometry and
+  content within 2.0/255 (the render carries clock times, and the two platforms differ by
+  0.0–0.2), and `--check --strict` passes immediately after regenerating.
 
 ### APK signing continuity (1.1.3 → 1.2.1)
 

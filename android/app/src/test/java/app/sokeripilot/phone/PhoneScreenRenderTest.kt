@@ -35,6 +35,9 @@ import java.io.File
 @Config(sdk = [34], qualifiers = "w411dp-h891dp-xhdpi")
 class PhoneScreenRenderTest {
 
+    // Real time: the card shows “2 min ago” and the diagnostics show clock times, so the PNG
+    // changes as the clock does. docs/images is therefore compared by layout and content, not
+    // by exact bytes — see tools/doc-images.py.
     private val now = System.currentTimeMillis()
 
     private fun event(

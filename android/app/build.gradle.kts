@@ -80,7 +80,31 @@ android {
     }
 }
 
+// Robolectric normally downloads its android-all jar from Maven the first time a test runs.
+// A CI runner starts without ~/.m2, so one network blip fails the whole suite and the PNG
+// renders the README depends on are never written. Resolve it through Gradle (cached with the
+// other dependencies) and point Robolectric at that directory in offline mode.
+val robolectricJars: Configuration by configurations.creating
+val robolectricJarDir = layout.buildDirectory.dir("robolectric-deps")
+
+val copyRobolectricJars by tasks.registering(Copy::class) {
+    from(robolectricJars)
+    into(robolectricJarDir)
+}
+
+tasks.withType<Test>().configureEach {
+    dependsOn(copyRobolectricJars)
+    // Matches @Config(sdk = [34]) in the tests.
+    systemProperty("robolectric.offline", "true")
+    systemProperty("robolectric.dependency.dir", robolectricJarDir.get().asFile.absolutePath)
+}
+
 dependencies {
+    // SDK 34 is what the tests ask for; 35 is loaded as well because the app manifest targets
+    // it, and Robolectric needs that jar to read the package.
+    robolectricJars("org.robolectric:android-all-instrumented:14-robolectric-10818077-i7")
+    robolectricJars("org.robolectric:android-all-instrumented:15-robolectric-12650502-i7")
+
     implementation("androidx.car.app:app:1.7.0")
     implementation("androidx.car.app:app-projected:1.7.0")
     implementation("androidx.core:core-ktx:1.13.1")

@@ -12,10 +12,10 @@ files the README shows:
 
 Run it after a UI change:
 
-    python tools/doc-images.py                        # crop the render that already exists
-    python tools/doc-images.py --gradle               # re-run the render tests first
-    python tools/doc-images.py --check                # exit 1 if the committed images are stale
-    python tools/doc-images.py --check --tolerate-renderer   # CI: another platform rendered it
+    python tools/doc-images.py            # crop the render that already exists
+    python tools/doc-images.py --gradle   # re-run the render tests first
+    python tools/doc-images.py --check    # exit 1 if the images no longer match the layout
+    python tools/doc-images.py --check --strict   # byte-for-byte, only after regenerating
 
 Requires Python 3.9+ and Pillow (pip install pillow).
 """
@@ -53,12 +53,13 @@ CARDS = [
     "phone-target-range",
 ]
 
-# Mean difference out of 255 between two renders of the same screen. Measured across the
-# Windows render the images come from and the Linux CI runner: 0.0-0.2, so 2.0 leaves about
-# ten times headroom. For scale, on a 782x558 card a replaced value reads 2.7, a recoloured
-# status pill 5.7, a tinted card 31; a one-word copy edit stays under 0.4 and is therefore
-# only caught by the byte check.
-RENDERER_TOLERANCE = 2.0
+# Mean difference out of 255 between two renders of the same screen. Two things move it:
+# the platform (Windows and the Linux runner differ by 0.0-0.2) and the clock (the card says
+# “2 min ago”, the diagnostics show clock times, so a later regeneration differs slightly).
+# 2.0 leaves about ten times headroom over both. For scale, on a 782x558 card a replaced value
+# reads 2.7, a recoloured status pill 5.7, a tinted card 31; a one-word copy edit stays under
+# 0.4 and is therefore only caught by --strict.
+CONTENT_TOLERANCE = 2.0
 SIZE_TOLERANCE = 2   # pixels a card may differ by before the layout counts as changed
 
 BACKGROUND_TOLERANCE = 4  # how far a pixel may sit from the canvas colour and still be canvas
@@ -179,23 +180,23 @@ def mean_difference(left: Image.Image, right: Image.Image) -> float:
     return sum(abs(x - y) for x, y in zip(a, b)) / len(a)
 
 
-def compare(path: Path, data: bytes, tolerate_renderer: bool) -> tuple[bool, str]:
+def compare(path: Path, data: bytes, strict: bool) -> tuple[bool, str]:
     """Return (is_current, note) for one generated image."""
     if path.exists() and path.read_bytes() == data:
         return True, ""
     if not path.exists():
-        return False, ""
-    if not tolerate_renderer:
-        return False, ""
+        return False, "not generated yet"
+    if strict:
+        return False, "bytes differ (the clock or the platform changed)"
 
     committed = Image.open(path).convert("RGB")
     fresh = Image.open(io.BytesIO(data)).convert("RGB")
     if abs(committed.width - fresh.width) > SIZE_TOLERANCE or abs(committed.height - fresh.height) > SIZE_TOLERANCE:
         return False, f"{committed.size} → {fresh.size}"
     difference = mean_difference(committed, fresh)
-    if difference > RENDERER_TOLERANCE:
+    if difference > CONTENT_TOLERANCE:
         return False, f"content changed (difference {difference:.1f}/255)"
-    return True, f"{path.name}: same layout, another renderer (difference {difference:.1f}/255)"
+    return True, f"{path.name}: same layout and content (difference {difference:.1f}/255)"
 
 
 def run_gradle() -> None:
@@ -217,9 +218,9 @@ def main() -> int:
     parser.add_argument("--gradle", action="store_true", help="run the render tests before cropping")
     parser.add_argument("--check", action="store_true", help="fail if the committed images are stale")
     parser.add_argument(
-        "--tolerate-renderer",
+        "--strict",
         action="store_true",
-        help="another platform rendered the PNG (CI): compare layout, not exact pixels",
+        help="require byte-identical images (only true right after regenerating)",
     )
     args = parser.parse_args()
 
@@ -235,7 +236,7 @@ def main() -> int:
     if args.check:
         stale, notes = [], []
         for path, data in outputs.items():
-            current, note = compare(path, data, args.tolerate_renderer)
+            current, note = compare(path, data, args.strict)
             if not current:
                 stale.append(f"{path.relative_to(ROOT)}{' — ' + note if note else ''}")
             elif note:
