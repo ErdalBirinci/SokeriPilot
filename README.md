@@ -389,8 +389,46 @@ value it found. Without a phone it exits with `No connected device`.
 - `node tools/smoke.mjs` — landing page 5/5 HTTP 200, including the signed APK download.
 - `node tools/live-check.mjs` — **3/3 PASS** on the published site: hero JPEG 97.7 KB, APK
   `application/vnd.android.package-archive` 898.6 KB (v1.2.0) with SHA-256 `464a15e4…`.
+- `apksigner.bat verify --print-certs` (build-tools 35.0.0) — 1.2.0 and 1.1.3 both **Verifies**
+  with the same signer certificate, SHA-256 `6d882da0…9f96` (details below).
 - Landing page measured at 1024 and 1200 px widths: no horizontal overflow, the notification
   stays inside the map, and the cockpit falls back to a single column on mobile (430 px).
+
+### APK signing continuity (1.1.3 → 1.2.0)
+
+Android only installs an update when the signing certificate matches the installed app, so the
+published APK was checked with the SDK's `apksigner.bat` (build-tools 35.0.0, local JDK). 1.1.3 is
+no longer on the site; recover it from git first.
+
+```powershell
+git show 609a124:landing/download/GlucoPilot-1.1.3.apk > "$env:TEMP\GlucoPilot-1.1.3.apk"
+
+& "$env:ANDROID_HOME\build-tools\35.0.0\apksigner.bat" verify --verbose --print-certs `
+  .\landing\download\GlucoPilot-1.2.0.apk
+& "$env:ANDROID_HOME\build-tools\35.0.0\apksigner.bat" verify --verbose --print-certs `
+  "$env:TEMP\GlucoPilot-1.1.3.apk"
+```
+
+| Check | 1.1.3 | 1.2.0 |
+|---|---|---|
+| APK SHA-256 | `d496ef20…7629` | `464a15e4…52cb` |
+| Signer certificate SHA-256 | `6d882da012221b76648e69d22bb951e43ca108b54fe920912b5d43299c929f96` | same |
+| Certificate DN | `CN=GlucoPilot, OU=Mobile, O=GlucoPilot, L=Istanbul, C=TR` | same |
+| Key | RSA 4096 | RSA 4096 |
+| Public key SHA-256 | `6f4d1fa6…3056` | `6f4d1fa6…3056` |
+| Signature schemes | v2 only | v2 only |
+| `apksigner` result | Verifies, 1 signer | Verifies, 1 signer |
+
+Both APKs carry the same certificate and public key, so 1.2.0 installs as an ordinary update over
+1.1.3; there is nothing to re-sign. v2-only is expected here: minSdk is 26, so JAR/v1 signing is
+not needed, and AGP signs with the v2 scheme.
+
+If the fingerprints ever differ, the update was signed with another key — a debug keystore, a
+regenerated keystore, or a build on a machine without `android/keystore.properties` (that release
+build is left unsigned). Android then rejects the update with
+`INSTALL_FAILED_UPDATE_INCOMPATIBLE`. The fix is to restore the original release key (encrypted
+backup in `backups/`) and rebuild/re-sign with it; deliberately changing keys requires
+uninstalling the old app, which deletes its local settings, or Play App Signing key rotation.
 
 **Not verified:** a real car or DHU connection, Play pre-review, a physical CGM source and an
 end-to-end Health Connect write (no Health Connect app on this machine) are not available in
