@@ -40,7 +40,7 @@ if (!ok && hook) {
     const response = await fetch(hook, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text: `GlucoPilot live check failed\n${base}\n\n${tail}` })
+      body: JSON.stringify({ text: `SokeriPilot live check failed\n${base}\n\n${tail}` })
     });
     console.log(`watch: webhook responded ${response.status}`);
   } catch (error) {

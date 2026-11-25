@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">GlucoPilot</string>
+    <string name="app_name">SokeriPilot</string>
     <string name="tagline">Driving cockpit for type 1 diabetes</string>
 
     <string name="section_live">Live glucose</string>
     <string name="section_source">CGM source</string>
     <string name="cgm_needs_access">Detected: %1$s · allow notification access once and values start arriving automatically.</string>
-    <string name="cgm_auto_on">GlucoPilot reads new values from %1$s automatically. No setup inside that app is needed.</string>
+    <string name="cgm_auto_on">SokeriPilot reads new values from %1$s automatically. No setup inside that app is needed.</string>
     <string name="cgm_not_found">No CGM app found yet. Install your sensor\'s app, or connect Nightscout.</string>
     <string name="access_title">Automatic CGM reading</string>
     <string name="access_on">Notification access is on. Every new CGM notification updates the car screen.</string>
@@ -43,13 +43,13 @@
     <string name="car_row_source">Source</string>
     <string name="car_row_range">Target range</string>
     <string name="car_row_status">Status</string>
-    <string name="car_waiting_body">Open GlucoPilot on your phone and allow notification access so values can be read from your CGM app.</string>
+    <string name="car_waiting_body">Open SokeriPilot on your phone and allow notification access so values can be read from your CGM app.</string>
     <string name="car_stale">The last reading is stale. Check the sensor and connection.</string>
     <string name="car_warning_title">Warning</string>
-    <string name="car_notify_permission">Car notifications are off: open GlucoPilot on your phone and grant notification permission. Until then, glucose is only visible on this screen.</string>
-    <string name="car_monitor_off">Driving mode is off: open GlucoPilot on your phone and turn on Driving mode so the notification appears while navigation or music is open.</string>
-    <string name="car_source_missing">No CGM source: open GlucoPilot on your phone and allow notification access (one tap), or connect Nightscout.</string>
-    <string name="car_service_failed">The driving monitor service could not start. Reopen GlucoPilot on your phone; if the problem persists, exclude the app from battery optimization.</string>
+    <string name="car_notify_permission">Car notifications are off: open SokeriPilot on your phone and grant notification permission. Until then, glucose is only visible on this screen.</string>
+    <string name="car_monitor_off">Driving mode is off: open SokeriPilot on your phone and turn on Driving mode so the notification appears while navigation or music is open.</string>
+    <string name="car_source_missing">No CGM source: open SokeriPilot on your phone and allow notification access (one tap), or connect Nightscout.</string>
+    <string name="car_service_failed">The driving monitor service could not start. Reopen SokeriPilot on your phone; if the problem persists, exclude the app from battery optimization.</string>
     <string name="car_title_recent">Recent readings</string>
     <string name="car_no_items">No readings yet.</string>
 
@@ -75,7 +75,7 @@
 
     <string name="monitor_title">Driving mode</string>
     <string name="monitor_switch">Show glucose while navigation or music is open</string>
-    <string name="monitor_note">Android Auto does not allow other apps to keep a persistent window on top. GlucoPilot uses a car notification instead: the value updates with every reading, a short alert appears when out of range, and one tap opens the cockpit.</string>
+    <string name="monitor_note">Android Auto does not allow other apps to keep a persistent window on top. SokeriPilot uses a car notification instead: the value updates with every reading, a short alert appears when out of range, and one tap opens the cockpit.</string>
     <string name="monitor_requires_source">Allow notification access for your CGM app first, or connect Nightscout.</string>
     <string name="monitor_start_failed">The driving monitor could not start. Battery optimization or a system restriction may be blocking it; reopen the app.</string>
     <string name="monitor_waiting_for_car">Monitoring starts when you connect the phone to Android Auto.</string>
@@ -84,14 +84,14 @@
     <string name="diag_last_none">Last reading: none yet</string>
     <string name="diag_last_reading">Last reading: %1$s</string>
     <string name="diag_value">%1$s %2$s</string>
-    <string name="diag_checked">GlucoPilot is looking at every CGM notification. The last %1$d are listed below, newest first.</string>
-    <string name="diag_no_access">Notification access is off, so GlucoPilot cannot see your CGM app yet. Allow it above.</string>
+    <string name="diag_checked">SokeriPilot is looking at every CGM notification. The last %1$d are listed below, newest first.</string>
+    <string name="diag_no_access">Notification access is off, so SokeriPilot cannot see your CGM app yet. Allow it above.</string>
     <string name="diag_empty">No CGM notification seen yet. Wait for your sensor app\'s next update; it should appear here within a minute. If it never does, the sensor app is not posting a value in its notification.</string>
     <string name="diag_row_accepted">%1$s · %2$s · accepted: %3$s</string>
     <string name="diag_row_rejected">%1$s · %2$s · rejected: %3$s</string>
     <string name="diag_clear">Clear list</string>
 
-    <string name="disclaimer">GlucoPilot is not a medical device. It does not recommend treatment or insulin doses. Alerts are advisory; always rely on your sensor\'s official app and your healthcare professional\'s guidance.</string>
+    <string name="disclaimer">SokeriPilot is not a medical device. It does not recommend treatment or insulin doses. Alerts are advisory; always rely on your sensor\'s official app and your healthcare professional\'s guidance.</string>
 
     <string name="error_url_required">Nightscout URL is required.</string>
     <string name="error_secret_required">Nightscout API key is required.</string>
@@ -122,7 +122,7 @@
     <string name="last_drive_none">No drive recorded yet.</string>
     <string name="section_health">Health data</string>
     <string name="health_switch">Write new readings to Health Connect</string>
-    <string name="health_unavailable">Health Connect is not installed. Readings stay in GlucoPilot.</string>
+    <string name="health_unavailable">Health Connect is not installed. Readings stay in SokeriPilot.</string>
     <string name="health_permission_off">Permission is off, so nothing is written.</string>
     <string name="health_permission_on">Each new reading is written once, on this phone.</string>
     <string name="health_permission_granted">Health Connect permission granted.</string>
@@ -133,5 +133,5 @@
     <string name="settings_exported">Settings exported.</string>
     <string name="settings_export_failed">The settings file could not be written.</string>
     <string name="settings_imported">Settings imported.</string>
-    <string name="settings_import_failed">That file is not a GlucoPilot settings export.</string>
+    <string name="settings_import_failed">That file is not a SokeriPilot settings export.</string>
 </resources>

@@ -1,11 +1,11 @@
 # Car app category rationale — `androidx.car.app.category.IOT`
 
-Play review can ask why GlucoPilot declares the IOT category instead of navigation or parking.
+Play review can ask why SokeriPilot declares the IOT category instead of navigation or parking.
 The answer is in the app's purpose and in what the car screen is allowed to do.
 
 ## What the app is
 
-GlucoPilot displays the reading of a continuous glucose monitor (a body-worn IoT health sensor)
+SokeriPilot displays the reading of a continuous glucose monitor (a body-worn IoT health sensor)
 inside Android Auto, and raises an advisory reminder when the value leaves the user's target
 range or when readings stop arriving. It is a viewer and reminder for a connected health device.
 

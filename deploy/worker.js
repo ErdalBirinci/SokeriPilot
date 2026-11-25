@@ -1,5 +1,5 @@
 /**
- * GlucoPilot landing — Cloudflare Worker with static assets.
+ * SokeriPilot landing — Cloudflare Worker with static assets.
  *
  * Files in ./landing are served directly by the asset layer (index.html,
  * styles.css, app.js, the hero image and the signed APK). This handler adds one

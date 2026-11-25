@@ -3,8 +3,8 @@
  * Bumps the landing to a new signed APK.
  * No dependencies; runs on Node 18+.
  *
- *   node tools/release.mjs --apk landing/download/GlucoPilot-1.3.0.apk            # dry run
- *   node tools/release.mjs --apk landing/download/GlucoPilot-1.3.0.apk --write    # apply
+ *   node tools/release.mjs --apk landing/download/SokeriPilot-1.3.0.apk            # dry run
+ *   node tools/release.mjs --apk landing/download/SokeriPilot-1.3.0.apk --write    # apply
  *
  * It reads the facts from the APK (size, SHA-256, and — when the portable SDK is
  * present — versionName and signing certificate), then rewrites the four places
@@ -32,7 +32,7 @@ const option = (name, fallback) => {
 
 const apkPath = option("apk");
 if (!apkPath || !existsSync(join(ROOT, apkPath))) {
-  console.error("usage: node tools/release.mjs --apk landing/download/GlucoPilot-<version>.apk [--write]");
+  console.error("usage: node tools/release.mjs --apk landing/download/SokeriPilot-<version>.apk [--write]");
   process.exit(2);
 }
 
@@ -47,7 +47,7 @@ const current = manifest.releases.find((release) => release.version === manifest
 const stamp = manifest.assetStamp;
 const absoluteApk = join(ROOT, apkPath);
 
-const version = option("version", /GlucoPilot-(\d+\.\d+\.\d+)\.apk$/.exec(basename(apkPath))?.[1]);
+const version = option("version", /SokeriPilot-(\d+\.\d+\.\d+)\.apk$/.exec(basename(apkPath))?.[1]);
 if (!version || !/^\d+\.\d+\.\d+$/.test(version)) {
   console.error(`cannot read the version from ${apkPath}; pass --version x.y.z`);
   process.exit(2);
@@ -138,7 +138,7 @@ const dateText = new Date(`${date}T00:00:00Z`).toLocaleDateString("en-GB", {
   year: "numeric",
   timeZone: "UTC"
 });
-const file = `GlucoPilot-${version}.apk`;
+const file = `SokeriPilot-${version}.apk`;
 const megabytes = (size / 1024 / 1024).toFixed(1);
 const oldMegabytes = (current.size / 1024 / 1024).toFixed(1);
 const nextStamp = `${version}-1`;
@@ -153,7 +153,7 @@ const nextManifest = {
 };
 
 let nextIndex = readFileSync(join(ROOT, index), "utf8");
-nextIndex = nextIndex.split(`download/GlucoPilot-${current.version}.apk`).join(`download/${file}`);
+nextIndex = nextIndex.split(`download/SokeriPilot-${current.version}.apk`).join(`download/${file}`);
 nextIndex = nextIndex.replace(`<span class="announce__tag">${current.version}</span>`, `<span class="announce__tag">${version}</span>`);
 nextIndex = nextIndex.replace(
   `<li><span>Version</span><strong>${current.version}</strong></li>`,
@@ -203,7 +203,7 @@ nextHeaders = nextHeaders.replace(`/download/${current.file}\n`, headerBlock + `
 
 // The install guide names the file, its size and the start of its hash; keep it current.
 let nextGuide = readFileSync(join(ROOT, guide), "utf8");
-nextGuide = nextGuide.split(`GlucoPilot-${current.version}.apk`).join(file);
+nextGuide = nextGuide.split(`SokeriPilot-${current.version}.apk`).join(file);
 nextGuide = nextGuide.replace(`${oldMegabytes} MB`, `${megabytes} MB`);
 nextGuide = nextGuide.replace(`<code>${current.sha256.slice(0, 8)}</code>`, `<code>${sha256.slice(0, 8)}</code>`);
 

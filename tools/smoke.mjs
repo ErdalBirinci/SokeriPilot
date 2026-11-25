@@ -16,7 +16,7 @@ const current = release.releases.find((item) => item.version === release.current
 const stamp = release.assetStamp;
 
 const targets = [
-  { path: "/", type: "text/html", mustInclude: "GlucoPilot" },
+  { path: "/", type: "text/html", mustInclude: "SokeriPilot" },
   { path: `/styles.css?v=${stamp}`, type: "text/css", mustInclude: "--mint" },
   { path: `/showcase.css?v=${stamp}`, type: "text/css", mustInclude: "float-card" },
   { path: `/signals.css?v=${stamp}`, type: "text/css", mustInclude: "dash__panel" },

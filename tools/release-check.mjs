@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Release consistency check for the published GlucoPilot landing.
+ * Release consistency check for the published SokeriPilot landing.
  * No dependencies; runs on Node 18+.
  *
  *   node tools/release-check.mjs
@@ -92,7 +92,7 @@ check("release: manifest is well formed", () => {
   const sorted = [...versions].sort(byVersion).reverse();
   assert(sorted.join(" ") === versions.join(" "), "releases are not ordered newest first");
   for (const release of releases) {
-    assert(release.file === `GlucoPilot-${release.version}.apk`, `${release.version} file name is not GlucoPilot-<version>.apk`);
+    assert(release.file === `SokeriPilot-${release.version}.apk`, `${release.version} file name is not SokeriPilot-<version>.apk`);
     assert(Number.isInteger(release.size) && release.size > 500_000, `${release.version} size ${release.size}`);
     assert(/^[0-9a-f]{64}$/.test(release.sha256), `${release.version} sha256 is not 64 hex characters`);
     assert(/^[0-9a-f]{64}$/.test(release.certSha256), `${release.version} certificate digest is not 64 hex characters`);
@@ -131,7 +131,7 @@ check("release: APK files match the manifest", () => {
 
 check("release: landing page pins the current release", () => {
   assert(html.includes(`href="download/${current.file}"`), `the page does not link ${current.file}`);
-  const links = [...html.matchAll(/href="download\/GlucoPilot-([0-9.]+)\.apk"/g)].map((match) => match[1]);
+  const links = [...html.matchAll(/href="download\/SokeriPilot-([0-9.]+)\.apk"/g)].map((match) => match[1]);
   assert(links.length >= 1, "no APK links on the page");
   const stale = links.filter((version) => version !== manifest.current);
   assert(stale.length === 0, `the page still links ${stale.join(", ")}`);
@@ -197,7 +197,7 @@ check("release: archive page lists every release", () => {
 
 check("release: install guide follows the current release", () => {
   const guide = read("landing/install/index.html");
-  const links = [...guide.matchAll(/download\/GlucoPilot-([0-9.]+)\.apk/g)].map((match) => match[1]);
+  const links = [...guide.matchAll(/download\/SokeriPilot-([0-9.]+)\.apk/g)].map((match) => match[1]);
   assert(links.length >= 1, "the install guide has no APK link");
   const stale = links.filter((version) => version !== manifest.current);
   assert(stale.length === 0, `the install guide still links ${stale.join(", ")}`);

@@ -16,11 +16,11 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
-    namespace = "app.glcopilot"
+    namespace = "app.sokeripilot"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "app.glcopilot"
+        applicationId = "app.sokeripilot"
         minSdk = 26
         targetSdk = 35
         versionCode = 6

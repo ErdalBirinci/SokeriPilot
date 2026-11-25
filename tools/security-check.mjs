@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * GlucoPilot static security and code checks.
+ * SokeriPilot static security and code checks.
  * No dependencies; runs on Node 18+.
  *
  *   node tools/security-check.mjs
@@ -90,7 +90,7 @@ check("manifest: only expected components exported", () => {
   const blocks = manifest.match(/<(activity|service|receiver|provider)[\s\S]*?(\/?)>/g) ?? [];
   const allowed = [
     "MainActivity",
-    "GlucoPilotCarAppService",
+    "SokeriPilotCarAppService",
     "XDripBroadcastReceiver",
     "CgmNotificationListener"
   ];
@@ -133,9 +133,9 @@ check("background: driving monitor service is restricted", () => {
   assert(manifest.includes("PROPERTY_SPECIAL_USE_FGS_SUBTYPE"), "specialUse subtype declaration missing");
   const service = /<service[\s\S]*?GlucoseMonitorService[\s\S]*?>/.exec(manifest)?.[0] ?? "";
   assert(service.includes('android:exported="false"'), "monitor service is exported");
-  assert(!exists("android/app/src/main/java/app/glcopilot/monitor/BootReceiver.kt"), "a boot receiver still starts the service");
+  assert(!exists("android/app/src/main/java/app/sokeripilot/monitor/BootReceiver.kt"), "a boot receiver still starts the service");
   assert(!manifest.includes("BOOT_COMPLETED"), "boot start is still declared in the manifest");
-  const monitor = read("android/app/src/main/java/app/glcopilot/monitor/GlucoseMonitorService.kt");
+  const monitor = read("android/app/src/main/java/app/sokeripilot/monitor/GlucoseMonitorService.kt");
   assert(monitor.includes("CarConnectionWatcher.observe"), "service does not observe the car connection");
   assert(monitor.includes("START_NOT_STICKY"), "service can be resurrected while unplugged");
   assert(!manifest.includes("SYSTEM_ALERT_WINDOW"), "overlay permission is present");
@@ -143,9 +143,9 @@ check("background: driving monitor service is restricted", () => {
 });
 
 check("car: monitoring on launch and start warning", () => {
-  const screen = read("android/app/src/main/java/app/glcopilot/car/GlucoseScreen.kt");
-  const launcher = read("android/app/src/main/java/app/glcopilot/monitor/MonitorLauncher.kt");
-  const activity = read("android/app/src/main/java/app/glcopilot/phone/MainActivity.kt");
+  const screen = read("android/app/src/main/java/app/sokeripilot/car/GlucoseScreen.kt");
+  const launcher = read("android/app/src/main/java/app/sokeripilot/monitor/MonitorLauncher.kt");
+  const activity = read("android/app/src/main/java/app/sokeripilot/phone/MainActivity.kt");
   assert(screen.includes("MonitorLauncher.start"), "car screen does not start monitoring");
   assert(screen.includes("car_notify_permission"), "notification permission warning missing");
   assert(screen.includes("car_monitor_off"), "driving mode warning missing");
@@ -161,24 +161,24 @@ check("CGM: automatic detection is narrowly scoped", () => {
   assert(!manifest.includes("android.permission.QUERY_ALL_PACKAGES"), "broad permission for all packages is present");
   assert(manifest.includes("<queries>") && manifest.includes("com.eveningoutpost.dexdrip"), "CGM package query missing");
   assert(manifest.includes("tk.glucodata"), "Juggluco query missing");
-  const detector = read("android/app/src/main/java/app/glcopilot/data/CgmAppDetector.kt");
+  const detector = read("android/app/src/main/java/app/sokeripilot/data/CgmAppDetector.kt");
   assert(detector.includes("getPackageInfo"), "installed-app detection missing");
   assert(detector.includes("CgmAppCatalog"), "testable catalog is not used");
   assert(manifest.includes("com.freestylelibre.app.tr"), "Libre TR package query missing");
   assert(manifest.includes("com.freestylelibre3.app.us"), "Libre 3 package query missing");
-  const app = read("android/app/src/main/java/app/glcopilot/GlucoPilotApp.kt");
+  const app = read("android/app/src/main/java/app/sokeripilot/SokeriPilotApp.kt");
   assert(app.includes("autoEnableXDrip"), "automatic listening enablement missing");
-  const activity = read("android/app/src/main/java/app/glcopilot/phone/MainActivity.kt");
+  const activity = read("android/app/src/main/java/app/sokeripilot/phone/MainActivity.kt");
   assert(activity.includes("renderCgmDetection"), "detection status is not shown on the phone");
   return "queries + auto-listening + status text";
 });
 
 check("CGM: Libre and Diabox classification tested", () => {
-  const catalog = read("android/app/src/main/java/app/glcopilot/data/CgmAppCatalog.kt");
+  const catalog = read("android/app/src/main/java/app/sokeripilot/data/CgmAppCatalog.kt");
   assert(catalog.includes("com.freestylelibre.app.tr") && catalog.includes("NOTIFICATION"), "Libre TR is not classified as notification-readable");
   assert(!catalog.includes("BRIDGE_REQUIRED"), "stale bridge-required classification is still present");
   assert(!/Diabox[\s\S]{0,80}XDRIP_BROADCAST/.test(catalog), "Diabox was treated as an xDrip broadcast without verification");
-  const test = read("android/app/src/test/java/app/glcopilot/data/CgmAppCatalogTest.kt");
+  const test = read("android/app/src/test/java/app/sokeripilot/data/CgmAppCatalogTest.kt");
   assert(test.includes("FreeStyle LibreLink (TR)"), "Libre detection test missing");
   assert(test.includes("verified broadcast source"), "Diabox claim is not tested");
   return "Libre/Dexcom notification-readable, Diabox and xDrip broadcast sources are tested";
@@ -194,11 +194,11 @@ check("CGM: notification access is the only extra grant and data stays local", (
     !manifest.includes('uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"'),
     "broad package visibility was added"
   );
-  const listener = read("android/app/src/main/java/app/glcopilot/data/CgmNotificationListener.kt");
-  assert(listener.includes("sbn.packageName == packageName"), "GlucoPilot's own notification is not filtered out");
-  const parser = read("android/app/src/main/java/app/glcopilot/data/CgmNotificationParser.kt");
+  const listener = read("android/app/src/main/java/app/sokeripilot/data/CgmNotificationListener.kt");
+  assert(listener.includes("sbn.packageName == packageName"), "SokeriPilot's own notification is not filtered out");
+  const parser = read("android/app/src/main/java/app/sokeripilot/data/CgmNotificationParser.kt");
   assert(parser.includes("MAX_MGDL"), "notification values are not range validated");
-  const test = read("android/app/src/test/java/app/glcopilot/data/CgmNotificationParserTest.kt");
+  const test = read("android/app/src/test/java/app/sokeripilot/data/CgmNotificationParserTest.kt");
   assert(test.includes("unitless value from an unrelated app is rejected"), "parser rejection is not tested");
   return "system-bound listener, self-filter, range validation and parser tests";
 });
@@ -226,7 +226,7 @@ check("device: single-command verification script", () => {
 });
 
 check("car: notification and cockpit shortcut while navigation is open", () => {
-  const notifier = read("android/app/src/main/java/app/glcopilot/notify/GlucoseNotifier.kt");
+  const notifier = read("android/app/src/main/java/app/sokeripilot/notify/GlucoseNotifier.kt");
   assert(notifier.includes("CarAppExtender"), "car notification (CarAppExtender) missing");
   assert(notifier.includes("CarPendingIntent.getCarApp"), "one-tap cockpit shortcut missing");
   assert(notifier.includes("IMPORTANCE_LOW"), "silent status notification missing");
@@ -236,7 +236,7 @@ check("car: notification and cockpit shortcut while navigation is open", () => {
 });
 
 check("car: host validation is restricted", () => {
-  const service = read("android/app/src/main/java/app/glcopilot/car/GlucoPilotCarAppService.kt");
+  const service = read("android/app/src/main/java/app/sokeripilot/car/SokeriPilotCarAppService.kt");
   assert(service.includes("createHostValidator"), "createHostValidator missing");
   assert(service.includes("FLAG_DEBUGGABLE"), "debug/release split missing");
   assert(service.includes("hosts_allowlist_sample"), "release allowlist missing");
@@ -249,9 +249,9 @@ check("car: host validation is restricted", () => {
 /* Network hardening                                                   */
 /* ------------------------------------------------------------------ */
 
-const client = read("android/app/src/main/java/app/glcopilot/data/NightscoutClient.kt");
-const security = read("android/app/src/main/java/app/glcopilot/data/NightscoutConfig.kt");
-const settings = read("android/app/src/main/java/app/glcopilot/data/SettingsRepository.kt");
+const client = read("android/app/src/main/java/app/sokeripilot/data/NightscoutClient.kt");
+const security = read("android/app/src/main/java/app/sokeripilot/data/NightscoutConfig.kt");
+const settings = read("android/app/src/main/java/app/sokeripilot/data/SettingsRepository.kt");
 
 check("network: redirects are rejected", () => {
   assert(client.includes("instanceFollowRedirects = false"), "instanceFollowRedirects=false missing");
@@ -299,7 +299,7 @@ check("secret: never logged", () => {
 });
 
 check("secret: not exposed in the UI", () => {
-  const activity = read("android/app/src/main/java/app/glcopilot/phone/MainActivity.kt");
+  const activity = read("android/app/src/main/java/app/sokeripilot/phone/MainActivity.kt");
   const layout = read("android/app/src/main/res/layout/activity_main.xml");
   assert(activity.includes('etSecret.setText("")'), "key field is not cleared");
   assert(layout.includes('android:inputType="textPassword"'), "password field is not masked");
@@ -308,8 +308,8 @@ check("secret: not exposed in the UI", () => {
 });
 
 check("data: incoming readings are validated", () => {
-  const parser = read("android/app/src/main/java/app/glcopilot/data/NightscoutEntryParser.kt");
-  const mapper = read("android/app/src/main/java/app/glcopilot/data/XDripReadingMapper.kt");
+  const parser = read("android/app/src/main/java/app/sokeripilot/data/NightscoutEntryParser.kt");
+  const mapper = read("android/app/src/main/java/app/sokeripilot/data/XDripReadingMapper.kt");
   assert(parser.includes("MIN_MGDL..GlucoseReading.MAX_MGDL"), "Nightscout range check missing");
   assert(mapper.includes("MIN_MGDL..GlucoseReading.MAX_MGDL"), "xDrip range check missing");
   assert(mapper.includes("FUTURE_TOLERANCE_MILLIS"), "time check missing");
@@ -343,7 +343,7 @@ check("build: R8 and resource shrinking enabled", () => {
 check("tests: unit tests present", () => {
   const tests = walk("android/app/src/test").filter((file) => file.endsWith(".kt"));
   assert(tests.length >= 8, `test file count ${tests.length}`);
-  const policy = read("android/app/src/test/java/app/glcopilot/notify/AlertPolicyTest.kt");
+  const policy = read("android/app/src/test/java/app/sokeripilot/notify/AlertPolicyTest.kt");
   assert(policy.includes("mute window") && policy.includes("throttled"), "alert policy tests missing");
   return `${tests.length} test files (including alert policy)`;
 });
@@ -461,7 +461,7 @@ check("landing: structured data matches the release", () => {
   assert(data["@type"] === "MobileApplication", `JSON-LD type is ${data["@type"]}`);
   assert(data.softwareVersion === release.current, `JSON-LD version is ${data.softwareVersion}`);
   assert(
-    data.downloadUrl.endsWith(`/download/GlucoPilot-${release.current}.apk`),
+    data.downloadUrl.endsWith(`/download/SokeriPilot-${release.current}.apk`),
     `JSON-LD downloadUrl is ${data.downloadUrl}`
   );
   return `MobileApplication ${data.softwareVersion}`;

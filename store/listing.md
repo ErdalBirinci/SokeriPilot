@@ -1,4 +1,4 @@
-# Play Store listing — GlucoPilot
+# Play Store listing — SokeriPilot
 
 Everything here is ready to paste into the Play Console. Submission itself needs the account
 owner: no tool in this repository can create the listing, upload an AAB or answer the review
@@ -7,7 +7,7 @@ questions on someone's behalf.
 ## App name (limit 30)
 
 ```
-GlucoPilot — CGM in your car
+SokeriPilot — CGM in your car
 ```
 27 characters.
 
@@ -21,7 +21,7 @@ CGM value and alerts beside Android Auto navigation. No account, no ads.
 ## Full description (limit 4000)
 
 ```
-GlucoPilot shows your CGM data where you actually look while driving: a silent, persistent
+SokeriPilot shows your CGM data where you actually look while driving: a silent, persistent
 Android Auto notification beside Maps or music, and a one-tap cockpit with the value, trend,
 band and reading age.
 
@@ -47,7 +47,7 @@ WHAT YOU GET
 PRIVATE BY DESIGN
 
 No account. No analytics, advertising or third-party SDK. Readings are shown as they arrive and
-are not archived by GlucoPilot. Settings stay in the app's private storage and are excluded from
+are not archived by SokeriPilot. Settings stay in the app's private storage and are excluded from
 cloud backup. The Nightscout key is stored as the SHA-1 digest the protocol requires, never as the
 raw value. Nothing leaves the phone unless you configure your own Nightscout server or turn on
 Health Connect.
@@ -59,7 +59,7 @@ Nightscout needs an HTTPS site.
 
 NOT A MEDICAL DEVICE
 
-GlucoPilot is a viewing and reminder tool. It does not recommend treatment or insulin doses and
+SokeriPilot is a viewing and reminder tool. It does not recommend treatment or insulin doses and
 does not replace your sensor's official app or your healthcare professional's guidance. Alerts
 are advisory.
 ```

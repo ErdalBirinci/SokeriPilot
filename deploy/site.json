@@ -1,6 +1,6 @@
 {
   "siteId": "bd531bd7-df35-46f1-aa23-bf49d6045f26",
-  "name": "GlucoPilot",
+  "name": "SokeriPilot",
   "manifest": "deploy/manifest.json",
   "urls": {
     "production": "https://glucopilot-civgdk.freebuff.site",

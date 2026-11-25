@@ -25,7 +25,7 @@ jobs:
           sleep 1
           node tools/smoke.mjs
       - name: Release tool is idempotent
-        run: node tools/release.mjs --apk landing/download/GlucoPilot-$(node -p "require('./landing/releases.json').current").apk
+        run: node tools/release.mjs --apk landing/download/SokeriPilot-$(node -p "require('./landing/releases.json').current").apk
 
   android:
     name: Unit tests

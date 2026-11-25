@@ -21,6 +21,10 @@ keystore.properties
 # Distribution packages (APK/AAB) — build output, not source
 dist/
 
+# Staging directory for the GitHub Pages mirror
+_site/
+_site-test/
+
 # Environment / secrets
 .env
 .env.*

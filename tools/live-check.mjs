@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Live-site verification for the published GlucoPilot landing.
+ * Live-site verification for the published SokeriPilot landing.
  * No dependencies; runs on Node 18+.
  *
  *   node tools/live-check.mjs

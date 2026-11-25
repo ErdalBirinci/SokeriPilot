@@ -13,15 +13,15 @@
 #
 # Environment variables (optional):
 #   ADB=adb          path to adb
-#   PACKAGE=...      package name (default: app.glcopilot.debug)
+#   PACKAGE=...      package name (default: app.sokeripilot.debug)
 #   APK=...          path to the APK
 #   WAIT=3           seconds to let the system settle after each step
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PACKAGE="${PACKAGE:-app.glcopilot.debug}"
+PACKAGE="${PACKAGE:-app.sokeripilot.debug}"
 APK="${APK:-$ROOT/android/app/build/outputs/apk/debug/app-debug.apk}"
-LISTENER="$PACKAGE/app.glcopilot.data.CgmNotificationListener"
+LISTENER="$PACKAGE/app.sokeripilot.data.CgmNotificationListener"
 WAIT="${WAIT:-3}"
 
 if [ -z "${ADB:-}" ]; then
@@ -78,11 +78,11 @@ fi
 access_grant="$("$ADB" shell cmd notification allow_listener "$LISTENER" 2>&1)"
 sleep 1
 listeners="$("$ADB" shell dumpsys notification 2>/dev/null || true)"
-if echo "$listeners" | grep -q "app.glcopilot"; then
+if echo "$listeners" | grep -q "app.sokeripilot"; then
   ok "Notification listener is approved and bound (CGM reading path)"
 else
   if echo "$access_grant" | grep -qi "unknown\|error\|exception"; then
-    warn "Could not grant notification access over adb; enable it manually: Settings → Apps → Special access → Notification access → GlucoPilot"
+    warn "Could not grant notification access over adb; enable it manually: Settings → Apps → Special access → Notification access → SokeriPilot"
   else
     bad "Notification listener is not bound (CGM values cannot be read)"
   fi

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Restore drill for the GlucoPilot release signing key.
+# Restore drill for the SokeriPilot release signing key.
 #
 #   KEYSTORE_PASSPHRASE='…' bash tools/keystore-drill.sh
 #

@@ -1,4 +1,4 @@
-# Releasing GlucoPilot
+# Releasing SokeriPilot
 
 `landing/releases.json` is the single description of a release. The page, the archive page,
 `landing/_headers`, every tool and the live check all read it, and `tools/release-check.mjs`
@@ -21,11 +21,11 @@ unsigned and cannot be installed over the previous version.
 
 ```bash
 BT=.toolchain/android-sdk/build-tools/35.0.0
-cp android/app/build/outputs/apk/release/app-release.apk landing/download/GlucoPilot-<version>.apk
-"$BT/aapt2.exe" dump badging landing/download/GlucoPilot-<version>.apk | head -1
-sha256sum landing/download/GlucoPilot-<version>.apk
-stat -c %s landing/download/GlucoPilot-<version>.apk
-JAVA_HOME="$PWD/.toolchain/jdk" "$BT/apksigner.bat" verify --print-certs landing/download/GlucoPilot-<version>.apk
+cp android/app/build/outputs/apk/release/app-release.apk landing/download/SokeriPilot-<version>.apk
+"$BT/aapt2.exe" dump badging landing/download/SokeriPilot-<version>.apk | head -1
+sha256sum landing/download/SokeriPilot-<version>.apk
+stat -c %s landing/download/SokeriPilot-<version>.apk
+JAVA_HOME="$PWD/.toolchain/jdk" "$BT/apksigner.bat" verify --print-certs landing/download/SokeriPilot-<version>.apk
 ```
 
 The `versionName` must equal the new version, and the certificate SHA-256 must equal the one already
@@ -38,8 +38,8 @@ Let the tool do the mechanical part; it reads size, SHA-256 and (with the portab
 versionName and certificate, and refuses a signer that differs from the published one:
 
 ```bash
-node tools/release.mjs --apk landing/download/GlucoPilot-<version>.apk          # dry run
-node tools/release.mjs --apk landing/download/GlucoPilot-<version>.apk --write  # apply
+node tools/release.mjs --apk landing/download/SokeriPilot-<version>.apk          # dry run
+node tools/release.mjs --apk landing/download/SokeriPilot-<version>.apk --write  # apply
 ```
 
 It writes the manifest entry, moves `current`, sets `assetStamp` to `<version>-1`, and updates:
@@ -98,7 +98,7 @@ rather than assuming success from the deploy receipt.
 ```bash
 git add -A
 git commit -m "Release <version>"
-git tag -a v<version> -m "GlucoPilot <version>"
+git tag -a v<version> -m "SokeriPilot <version>"
 ```
 
 After any change to the signing key or its backup, prove the backup still restores:
@@ -126,3 +126,13 @@ node tools/live-check.mjs
 ```
 
 Database and secrets are not touched by a deploy, so rolling the site back never deletes anything.
+
+## GitHub Pages mirror
+
+Every push to `master` that touches `landing/` also publishes a mirror through
+`.github/workflows/pages.yml`. GitHub Pages serves a project site from a subpath, so the workflow
+runs `node tools/pages-build.mjs _site`, which copies the same files, drops the Freebuff-specific
+`_headers`, adds the `/SokeriPilot/` prefix to the four root-absolute links and re-states the header
+policy as a meta tag (without `frame-ancestors`, which a meta policy cannot express). The source
+stays root-absolute for the primary site; only the published copy is rewritten. Run the same script
+locally to see exactly what Pages will get.

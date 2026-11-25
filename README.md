@@ -1,8 +1,12 @@
-# GlucoPilot
+# SokeriPilot
 
 A **bright, driver-focused Android Auto cockpit for people with type 1 diabetes**. It turns CGM
 data (xDrip+ local broadcasts or Nightscout) into a value that can be read at a glance on the car
 screen. It does not recommend doses and does not collect data.
+
+**Source:** <https://github.com/ErdalBirinci/SokeriPilot> · **GitHub Pages mirror:**
+<https://erdalbirinci.github.io/SokeriPilot/> · **Primary site:**
+<https://glucopilot-civgdk.freebuff.site>
 
 ```
 android/     Android app (Kotlin + Android for Cars App Library)
@@ -12,7 +16,7 @@ tools/       Security, release, smoke, live and scheduled checks; release and ke
 RELEASE.md   The release sequence: build, manifest, preview gate, tag, rollback
 ```
 
-> **Medical notice:** GlucoPilot is not a medical device. It does not recommend treatment or
+> **Medical notice:** SokeriPilot is not a medical device. It does not recommend treatment or
 > insulin doses. Alerts are advisory; always rely on your sensor's official app and your
 > healthcare professional's guidance.
 
@@ -29,7 +33,7 @@ The most solid, maintained and production-ready foundation is Google's own repos
 - **[android/car-codelabs](https://github.com/android/car-codelabs)** — starter/finished
   projects from the official "Car App Library fundamentals" codelab.
 
-GlucoPilot **borrows the architecture, not the code**: `CarAppService` + `Session` + `Screen`,
+SokeriPilot **borrows the architecture, not the code**: `CarAppService` + `Session` + `Screen`,
 template-based UI, `automotive_app_desc.xml`, the `com.google.android.gms.car.application`
 metadata and testing with the Desktop Head Unit (DHU). Version used:
 `androidx.car.app:app:1.7.0` (`app-projected` for Android Auto).
@@ -46,7 +50,7 @@ size and theme differences to the host and is the only official path that can pa
 - **[nightscout/cgm-remote-monitor](https://github.com/nightscout/cgm-remote-monitor)** — the
   Nightscout server; `/api/v1/entries/sgv.json` and the `api-secret` header.
 
-GlucoPilot **does not copy source code** from either project; it implements only the public,
+SokeriPilot **does not copy source code** from either project; it implements only the public,
 documented protocols. As a result:
 
 - It does not conflict with the sensor maker's official app (xDrip+/Nightscout own the data).
@@ -120,7 +124,7 @@ broadcast + Nightscout pair offers the widest device coverage and the most matur
 Android Auto host
    │  (template requests)
    ▼
-GlucoPilotCarAppService ──► Session ──► GlucoseScreen / TrendScreen
+SokeriPilotCarAppService ──► Session ──► GlucoseScreen / TrendScreen
                                               │ StateFlow
                                               ▼
                                    GlucoseRepository  ◄── XDripBroadcastReceiver
@@ -142,7 +146,7 @@ GlucoPilotCarAppService ──► Session ──► GlucoseScreen / TrendScreen
 ### Living alongside Android Auto's built-in features
 
 Android Auto does not allow third-party apps to open a persistent window (overlay) on top of
-navigation or media. GlucoPilot therefore does not take over the screen; it stays alongside the
+navigation or media. SokeriPilot therefore does not take over the screen; it stays alongside the
 default experience through four mechanisms:
 
 1. **Silent status notification** — while driving mode is on, a persistent, silent car
@@ -156,7 +160,7 @@ default experience through four mechanisms:
    leaves an old value looking current. It is cleared as soon as fresh data returns. A gap that
    predates the drive (sensor change, warm-up) stays visible as a reading age instead of an
    alarm, and the phone can pause the reminder for two hours while a new sensor settles.
-4. **One-tap cockpit** — tapping the notification opens GlucoPilot's car screen via
+4. **One-tap cockpit** — tapping the notification opens SokeriPilot's car screen via
    `CarPendingIntent`; Back returns the user to Maps or music.
 
 To keep notifications alive, `GlucoseMonitorService` runs as a `specialUse` foreground service;
@@ -200,7 +204,7 @@ Gradle, and `./gradlew` commands work as well. The repository intentionally does
 ### Signed release APK
 
 The release signature is read from `android/keystore.properties` (outside git) and
-`android/keystore/glucopilot-release.jks`:
+`android/keystore/sokeripilot-release.jks`:
 
 ```bash
 cd android
@@ -220,14 +224,14 @@ adb forward tcp:5277 tcp:5277
 # Start the DHU (desktop-head-unit inside the SDK)
 ```
 
-Enable Android Auto developer mode on the phone, allow "Unknown sources", start GlucoPilot and
+Enable Android Auto developer mode on the phone, allow "Unknown sources", start SokeriPilot and
 select the app in the `IOT` category in the DHU.
 
 ### CGM connection
 
 **Any CGM app — default, nothing to configure inside it:**
 
-1. Open GlucoPilot once and tap **Allow notification access** (a single system toggle).
+1. Open SokeriPilot once and tap **Allow notification access** (a single system toggle).
 2. Keep using the sensor app you already have (Dexcom, Libre 3, xDrip+, Juggluco, Diabox,
    Eversense…).
 3. Every new value that app posts is read from its notification and shown on the car screen.
@@ -243,7 +247,7 @@ not recognised as a CGM app, outside 20–600 mg/dL, older than 60 minutes). The
 memory only, disappears with the process and is never written to disk or logged, so no glucose
 history is created.
 
-**Car-bound monitoring:** GlucoPilot watches the official `androidx.car.app.connection` signal.
+**Car-bound monitoring:** SokeriPilot watches the official `androidx.car.app.connection` signal.
 The moment the phone is projected into a head unit, monitoring starts in the background and the
 current data is refreshed, so the cockpit and the car notification are ready without opening
 anything. When the connection ends, the foreground service and its notification are stopped —
@@ -253,19 +257,19 @@ The "Start automatically when Android Auto connects" switch controls this behavi
 **xDrip+ (optional, best quality):**
 
 1. xDrip+ → Settings → Inter-app settings → enable **Local broadcast**.
-2. GlucoPilot → "Listen to xDrip+ broadcasts" is enabled automatically when xDrip+ is installed.
+2. SokeriPilot → "Listen to xDrip+ broadcasts" is enabled automatically when xDrip+ is installed.
 3. When xDrip publishes a new reading, the car screen updates automatically.
 
 **Nightscout:**
 
 1. Define `API_SECRET` on your Nightscout site.
-2. In GlucoPilot, enter `https://your-site.example` and the API key.
+2. In SokeriPilot, enter `https://your-site.example` and the API key.
 3. Save → "Try now".
 
 > Only **HTTPS** is accepted. `http://` Nightscout installations on the LAN are rejected by
 > design; terminate TLS at a reverse proxy.
 
-**CGM app detection:** on launch, GlucoPilot queries only the known CGM apps declared in the
+**CGM app detection:** on launch, SokeriPilot queries only the known CGM apps declared in the
 manifest `<queries>` (no `QUERY_ALL_PACKAGES`):
 
 - **xDrip+ and Juggluco** — verified xDrip broadcast sources; listened to automatically, and their
@@ -280,7 +284,7 @@ When an xDrip-compatible source is found, the phone shows "Detected: …"; a cho
 on the switch is never overridden. The catalog is pure Kotlin and is covered by unit tests
 (`CgmAppCatalogTest`).
 
-Android has no public API for one app to read another app's database, so GlucoPilot reads the
+Android has no public API for one app to read another app's database, so SokeriPilot reads the
 notification the CGM app already posts (enabled once through the system notification-access
 grant) and keeps the xDrip+ broadcast path when a source publishes one. Values are validated and
 stay on the device; the CGM apps themselves need no setting at all.
@@ -307,7 +311,7 @@ stay on the device; the CGM apps themselves need no setting at all.
 | Background | `specialUse` foreground service, `exported=false`; no overlay permission |
 
 **Limits:** an xDrip broadcast can be spoofed by a malicious app that holds the same permission.
-GlucoPilot validates the value and timestamp, but there is no cryptographic proof of the source
+SokeriPilot validates the value and timestamp, but there is no cryptographic proof of the source
 (the xDrip protocol does not provide one). For critical decisions, rely on the sensor's official
 app. The Nightscout API key travels as a SHA-1 digest; that is the protocol's design, not a strong
 password-storage method — choose a long, random key.
@@ -464,16 +468,16 @@ the site actually serves.
 
 ```powershell
 & "$env:ANDROID_HOME\build-tools\35.0.0\apksigner.bat" verify --verbose --print-certs `
-  .\landing\download\GlucoPilot-1.2.0.apk
+  .\landing\download\SokeriPilot-1.2.0.apk
 & "$env:ANDROID_HOME\build-tools\35.0.0\apksigner.bat" verify --verbose --print-certs `
-  .\landing\download\GlucoPilot-1.1.3.apk
+  .\landing\download\SokeriPilot-1.1.3.apk
 ```
 
 | Check | 1.1.3 | 1.2.0 |
 |---|---|---|
 | APK SHA-256 | `d496ef20…7629` | `464a15e4…52cb` |
 | Signer certificate SHA-256 | `6d882da012221b76648e69d22bb951e43ca108b54fe920912b5d43299c929f96` | same |
-| Certificate DN | `CN=GlucoPilot, OU=Mobile, O=GlucoPilot, L=Istanbul, C=TR` | same |
+| Certificate DN | `CN=SokeriPilot, OU=Mobile, O=SokeriPilot, L=Istanbul, C=TR` | same |
 | Key | RSA 4096 | RSA 4096 |
 | Public key SHA-256 | `6f4d1fa6…3056` | `6f4d1fa6…3056` |
 | Signature schemes | v2 only | v2 only |
@@ -503,7 +507,7 @@ the user can exclude the app from battery optimization.
 
 `landing/releases.json` describes a release once, and `RELEASE.md` is the ordered checklist. In
 short: build and sign, copy the APK into `landing/download/`, then let
-`node tools/release.mjs --apk landing/download/GlucoPilot-<version>.apk --write` update the manifest,
+`node tools/release.mjs --apk landing/download/SokeriPilot-<version>.apk --write` update the manifest,
 the page version/size/hash/links, the `_headers` block, the archive row, the install guide and the
 `assetStamp` on every page. Update the announcement copy, then run `release-check`, `security-check`
 and `smoke`. Deploy to **preview** first and run `live-check`
@@ -527,5 +531,5 @@ version so the published hash stays tied to its source. Old versions stay downlo
 - Android for Cars App Library and Google samples: Apache-2.0.
 - xDrip+ and Nightscout are distributed under their own licenses; their source code is not in
   this repository, only the documented protocols are used.
-- GlucoPilot's app code and marketing site were written for this project.
+- SokeriPilot's app code and marketing site were written for this project.
 - Android Auto is a trademark of Google LLC.

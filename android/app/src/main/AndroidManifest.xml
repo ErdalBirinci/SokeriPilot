@@ -51,7 +51,7 @@
     </queries>
 
     <application
-        android:name=".GlucoPilotApp"
+        android:name=".SokeriPilotApp"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="false"
@@ -60,7 +60,7 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.GlucoPilot"
+        android:theme="@style/Theme.SokeriPilot"
         android:usesCleartextTraffic="false">
 
         <meta-data
@@ -83,7 +83,7 @@
         </activity>
 
         <service
-            android:name=".car.GlucoPilotCarAppService"
+            android:name=".car.SokeriPilotCarAppService"
             android:exported="true">
             <intent-filter>
                 <action android:name="androidx.car.app.CarAppService" />
@@ -125,7 +125,7 @@
             android:name=".notify.MuteAlertsReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="app.glcopilot.action.MUTE_ALERTS" />
+                <action android:name="app.sokeripilot.action.MUTE_ALERTS" />
             </intent-filter>
         </receiver>
 
@@ -134,7 +134,7 @@
             android:name=".notify.AcknowledgeAlertsReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="app.glcopilot.action.ACKNOWLEDGE_ALERT" />
+                <action android:name="app.sokeripilot.action.ACKNOWLEDGE_ALERT" />
             </intent-filter>
         </receiver>
 
@@ -143,7 +143,7 @@
             android:name=".notify.SensorChangeReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="app.glcopilot.action.SENSOR_CHANGE" />
+                <action android:name="app.sokeripilot.action.SENSOR_CHANGE" />
             </intent-filter>
         </receiver>
 
