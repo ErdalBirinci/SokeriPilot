@@ -19,6 +19,14 @@
  *   - the archive page lists every release, and every archived APK is served
  *   - releases.json is served and agrees with the page
  *   - the served QR code still decodes to the production origin
+ *   - every page carries the meta CSP the page itself controls
+ *
+ * GitHub Pages fixes `cache-control: max-age=600` on every response and cannot
+ * add response headers, so three expectations are recorded as host limits
+ * instead of failures: revalidating assets, `content-disposition` on the APK,
+ * and the CSP/HSTS/nosniff/frame headers written in landing/_headers. What the
+ * page itself controls stays strict on every host. HOST_HEADERS=1|0 overrides
+ * the hostname detection when another host serves the same files.
  */
 import { readFileSync, statSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -29,6 +37,11 @@ const ROOT = process.cwd();
 const BASE = (process.env.BASE_URL ?? "https://erdalbirinci.github.io/SokeriPilot").replace(/\/+$/, "");
 const HERO_PATH = "/assets/android-auto.jpg";
 const APK_MIME = "application/vnd.android.package-archive";
+// A host that reads landing/_headers (the Workers static-assets build) delivers
+// the full header contract; GitHub Pages does not, and pins `max-age=600`.
+const servesHeaders = process.env.HOST_HEADERS
+  ? process.env.HOST_HEADERS === "1"
+  : !/(^|\.)github\.io$/i.test(new URL(BASE).hostname);
 
 const manifest = JSON.parse(readFileSync(join(ROOT, "landing/releases.json"), "utf8"));
 const current = manifest.releases.find((release) => release.version === manifest.current);
@@ -50,6 +63,7 @@ const stylesheets = [
 ];
 
 const failures = [];
+const limits = [];
 let passed = 0;
 
 function pass(name, detail = "") {
@@ -60,6 +74,11 @@ function pass(name, detail = "") {
 function fail(name, reason) {
   failures.push(name);
   console.log(`FAIL  ${name} — ${reason}`);
+}
+
+function limit(name, detail) {
+  limits.push(name);
+  console.log(`LIMIT ${name} — ${detail}`);
 }
 
 function sha256(buffer) {
@@ -118,17 +137,32 @@ try {
 
 try {
   const details = [];
+  let cacheNote = "";
   for (const asset of stylesheets) {
     const { response, body, type } = await request(asset.path);
     if (response.status !== 200) throw new Error(`${asset.path} HTTP ${response.status}`);
-    if (type !== "text/css" && type !== "javascript" && type !== "text/javascript") {
+    if (type !== "text/css" && !/^(?:text|application)\/javascript$/.test(type)) {
       throw new Error(`${asset.path} content-type ${type || "(none)"}`);
     }
     const text = body.toString("utf8");
     if (!text.includes(asset.marker)) throw new Error(`${asset.path} is not the expected file`);
     const cache = response.headers.get("cache-control") ?? "";
-    if (!cache.includes("must-revalidate")) throw new Error(`${asset.path} cache-control "${cache}"`);
+    if (!cache) throw new Error(`${asset.path} has no cache-control`);
+    if (servesHeaders) {
+      if (!cache.includes("must-revalidate")) throw new Error(`${asset.path} cache-control "${cache}"`);
+    } else {
+      const maxAge = Number(/max-age=(\d+)/.exec(cache)?.[1] ?? NaN);
+      if (!Number.isFinite(maxAge)) throw new Error(`${asset.path} cache-control "${cache}"`);
+      if (maxAge > 600) throw new Error(`${asset.path} may be cached for ${maxAge}s, past the ?v= stamp`);
+      cacheNote = cache;
+    }
     details.push(`${asset.path.split("?")[0]} ${kb(body.length)}`);
+  }
+  if (!servesHeaders) {
+    limit(
+      "live: asset revalidation",
+      `every asset answers "${cacheNote}" here; freshness rests on the ?v= stamp and the byte checks above`
+    );
   }
   pass("live: stylesheets and script are current", details.join(" · "));
 } catch (error) {
@@ -169,9 +203,20 @@ try {
   if (type !== APK_MIME) throw new Error(`content-type ${type || "(none)"}, expected ${APK_MIME}`);
   if (body.length !== expected) throw new Error(`downloaded ${body.length} bytes, expected ${expected}`);
   if (!body.subarray(0, 2).equals(Buffer.from([0x50, 0x4b]))) throw new Error("body is not a ZIP/APK");
-  if (!/^attachment/i.test(disposition)) throw new Error(`content-disposition ${disposition || "(none)"}`);
-  if (!disposition.includes(`filename="${current.file}"`)) {
-    throw new Error(`content-disposition renames the file: ${disposition}`);
+
+  const servedName = new URL(response.url).pathname.split("/").pop();
+  if (servedName !== current.file) throw new Error(`the host serves the APK as "${servedName}"`);
+
+  if (servesHeaders) {
+    if (!/^attachment/i.test(disposition)) throw new Error(`content-disposition ${disposition || "(none)"}`);
+    if (!disposition.includes(`filename="${current.file}"`)) {
+      throw new Error(`content-disposition renames the file: ${disposition}`);
+    }
+  } else {
+    limit(
+      "live: APK download headers",
+      `no content-disposition here; the versioned filename stays in the URL and ${APK_MIME} is what makes the browser save it as an APK`
+    );
   }
 
   const liveHash = sha256(body);
@@ -240,7 +285,31 @@ try {
 }
 
 /* ------------------------------------------------------------------ */
-/* 8. Security headers                                                 */
+/* 8. Security policy carried by the pages (strict everywhere)          */
+/* ------------------------------------------------------------------ */
+
+try {
+  const required = ["default-src 'self'", "script-src 'self'", "object-src 'none'", "base-uri 'none'"];
+  const details = [];
+  for (const path of ["/", "/install/", "/privacy/"]) {
+    const { response, body } = await request(path);
+    if (response.status !== 200) throw new Error(`${path} HTTP ${response.status}`);
+    const meta = /<meta http-equiv="Content-Security-Policy" content="([^"]*)">/.exec(body.toString("utf8"));
+    if (!meta) throw new Error(`${path} has no meta CSP`);
+    const policy = meta[1];
+    for (const directive of required) {
+      if (!policy.includes(directive)) throw new Error(`${path} CSP is missing ${directive}`);
+    }
+    if (/unsafe-(?:inline|eval)/.test(policy)) throw new Error(`${path} CSP allows inline or eval`);
+    details.push(`${path} ${policy.split(";").length} directives`);
+  }
+  pass("live: document security policy", `${details.join(" · ")} · no unsafe-inline or eval`);
+} catch (error) {
+  fail("live: document security policy", error.message);
+}
+
+/* ------------------------------------------------------------------ */
+/* 9. Response headers (only a host reading landing/_headers can send)  */
 /* ------------------------------------------------------------------ */
 
 try {
@@ -254,14 +323,23 @@ try {
   if (header("x-content-type-options").toLowerCase() !== "nosniff") missing.push("nosniff");
   if (header("x-frame-options").toUpperCase() !== "DENY") missing.push("X-Frame-Options");
   if (header("referrer-policy") !== "no-referrer") missing.push("Referrer-Policy");
-  if (missing.length > 0) throw new Error(`missing or weak: ${missing.join(", ")}`);
-  pass("live: security headers", "CSP with frame-ancestors · HSTS · nosniff · DENY · no-referrer");
+
+  if (missing.length === 0) {
+    pass("live: response security headers", "CSP with frame-ancestors · HSTS · nosniff · DENY · no-referrer");
+  } else if (servesHeaders) {
+    throw new Error(`missing or weak: ${missing.join(", ")}`);
+  } else {
+    limit(
+      "live: response security headers",
+      `${new URL(BASE).hostname} sends none of ${missing.join(", ")}; the meta CSP above is the part the page controls`
+    );
+  }
 } catch (error) {
-  fail("live: security headers", error.message);
+  fail("live: response security headers", error.message);
 }
 
 /* ------------------------------------------------------------------ */
-/* 9. Guide pages and crawler files                                    */
+/* 10. Guide pages and crawler files                                   */
 /* ------------------------------------------------------------------ */
 
 try {
@@ -291,7 +369,7 @@ try {
 }
 
 /* ------------------------------------------------------------------ */
-/* 10. Unknown path                                                    */
+/* 11. Unknown path                                                    */
 /* ------------------------------------------------------------------ */
 
 try {
@@ -307,10 +385,16 @@ try {
 /* ------------------------------------------------------------------ */
 
 console.log("");
+if (limits.length > 0) {
+  console.log(`Host limits on ${new URL(BASE).hostname} (recorded, not failures):`);
+  for (const name of limits) console.log(`  · ${name}`);
+  console.log("");
+}
 if (failures.length > 0) {
   console.log(`RESULT: ${passed} passed, ${failures.length} failed.`);
   console.log("Failed checks: " + failures.join(", "));
   process.exit(1);
 }
 
-console.log(`RESULT: all ${passed} live checks passed (${BASE}).`);
+const noted = limits.length > 0 ? `, ${limits.length} host limit${limits.length === 1 ? "" : "s"} recorded` : "";
+console.log(`RESULT: all ${passed} live checks passed (${BASE})${noted}.`);

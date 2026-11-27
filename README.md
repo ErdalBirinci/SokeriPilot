@@ -515,7 +515,7 @@ node tools/release-check.mjs      # 13 checks: manifest, APK bytes, page, header
 ```bash
 python -m http.server 4173 --bind 127.0.0.1 --directory landing
 node tools/smoke.mjs              # 17 URLs answer 200
-node tools/live-check.mjs         # 10 checks against the published site
+node tools/live-check.mjs         # 11 checks; header-only ones are host limits on Pages
 BASE_URL=https://erdalbirinci.github.io/SokeriPilot node tools/live-check.mjs
 node tools/a11y-check.mjs         # 7 checks: structure, alt text, focus, WCAG AA contrast
 node tools/qr.mjs                 # the install QR decodes to the production origin
@@ -525,11 +525,20 @@ python tools/doc-images.py --check  # the README screenshots match the layout an
 `live-check` verifies the page pins the current version, hash, QR code and archive, that every
 stylesheet at the current `?v=` stamp is served fresh, that the hero image is a real JPEG of the
 expected size, that the APK arrives as `application/vnd.android.package-archive` with the exact
-size and a SHA-256 matching both the local file and the page, and that the archive page,
-`releases.json`, the security headers, the install/privacy pages, `robots.txt`, `sitemap.xml` and
-the branded 404 all agree. `release-check` fails when the page, `landing/_headers`, the archive page
-or the stylesheet stamp disagree with the manifest, or when an APK's bytes, versionName or signing
-certificate are not the ones users are told to expect.
+size and a SHA-256 matching both the local file and the page, that every page carries the meta CSP,
+and that the archive page, `releases.json`, the install/privacy pages, `robots.txt`, `sitemap.xml`
+and the branded 404 all agree. `release-check` fails when the page, `landing/_headers`, the archive
+page or the stylesheet stamp disagree with the manifest, or when an APK's bytes, versionName or
+signing certificate are not the ones users are told to expect.
+
+**Host limits are reported, not failed.** GitHub Pages pins `cache-control: max-age=600` on every
+response and cannot add response headers, so the checks only a host reading `landing/_headers` can
+satisfy — revalidating assets, `content-disposition` on the APK, and the CSP/HSTS/nosniff/frame
+headers — print as `LIMIT` lines and leave the exit code at 0. Everything the page itself controls
+stays a hard failure: served bytes, the package MIME type, the versioned filename in the URL, the
+meta CSP on every page, sizes, hashes and the branded 404. Run with `HOST_HEADERS=1` against a host
+that can send the headers to demand the full contract — a missing header is then a failure. The
+background is in [Known limits](#13-known-limits).
 
 **Scheduled watch** (cron or Task Scheduler):
 
@@ -578,7 +587,8 @@ mirror with `tools/pages-build.mjs`.
 - `node tools/release-check.mjs` — **13/13**.
 - `python tools/check_xml.py` — 19 files well formed.
 - `node tools/smoke.mjs` — **17/17** HTTP 200.
-- `node tools/live-check.mjs` — **10/10** on preview and on production.
+- `node tools/live-check.mjs` — **10/10 verifiable checks passed**, plus 3 header-only limits that
+  GitHub Pages cannot provide (see [Known limits](#13-known-limits)).
 - `node tools/qr.mjs` — decodes to `https://erdalbirinci.github.io/SokeriPilot/#download`.
 - `python tools/doc-images.py --check` — all 10 README images match the render: geometry and
   content within 2.0/255 (the render carries clock times, and the two platforms differ by
@@ -685,8 +695,8 @@ checklist. In short:
    manifest, the page version/size/hash/links, the `_headers` block, the archive row, the install
    guide and the `assetStamp` on every page.
 3. Update the announcement copy, then run `release-check`, `security-check` and `smoke`.
-4. Deploy to **preview**, run `live-check` against the preview URL; only then deploy production and
-   run it again.
+4. Push to `master`; the Pages workflow stages `landing/` and publishes it. Run `live-check`
+   against the published URL once that run is green.
 5. Tag the commit with the version, so the published hash stays tied to its source.
 
 Old versions stay downloadable from `/download/`; a bad release is rolled back by checking out the
@@ -738,6 +748,15 @@ tag and deploying again.
 - **No screenshots of the car screen** are published, because capturing them requires a DHU or a
   head unit. The phone renders in [section 1](#1-screenshots) are the real app UI; the trend bitmap is
   the real car-side output.
+- **GitHub Pages cannot set response headers.** The site is published from `landing/` by an Action,
+  and Pages answers with its own `cache-control: max-age=600`, no `content-disposition` and no
+  security headers — `landing/_headers` is dropped at publish time, because Pages would otherwise
+  serve that file as plain text. On the live site the CSP therefore travels in each page's `<meta>`
+  tag (which cannot express `frame-ancestors`), `nosniff`, `X-Frame-Options`, `Referrer-Policy` and
+  HSTS are absent, and the APK is downloaded because of its `application/vnd.android.package-archive`
+  type rather than an attachment header, so clickjacking protection rests on the host. Serving the
+  same `landing/_headers` from a header-capable host restores the full contract, and
+  `HOST_HEADERS=1 node tools/live-check.mjs` then enforces it.
 
 ---
 

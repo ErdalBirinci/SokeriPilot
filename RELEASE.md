@@ -81,9 +81,11 @@ BASE_URL=https://erdalbirinci.github.io/SokeriPilot node tools/live-check.mjs
 
 The live check compares the served bytes with the local APK, checks that each stylesheet response is
 fresh at the current `?v=` stamp (a cached document pairing with an old stylesheet is the failure
-this catches), and verifies the archive, the manifest, the QR asset, the security headers, the
+this catches), and verifies the archive, the manifest, the QR asset, the meta CSP on every page, the
 install and privacy pages with the crawler files, and that an unknown path answers with the branded
-404 page.
+404 page. On GitHub Pages the header-only checks — asset revalidation, `content-disposition` and the
+response security headers — print as `LIMIT` lines instead of failing, because Pages cannot set
+them; run with `HOST_HEADERS=1` against a header-capable host to enforce the full contract.
 
 ## 6. Production
 
