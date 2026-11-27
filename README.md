@@ -552,8 +552,11 @@ schtasks /Delete /TN "SokeriPilot site watch" /F
 
 The `Live site` workflow (`.github/workflows/live.yml`) runs the same command against the published
 site every day at 05:17 UTC, on demand, and after every successful `Pages` deploy, so a publication
-that breaks without a commit becomes a failed run. Set a `WATCH_WEBHOOK` repository secret to also
-receive the short message wherever you read it.
+that breaks without a commit becomes a failed run. A failed run opens a GitHub issue labelled
+`live-site` and assigned to the owner with the last lines of the check, so the break arrives as a
+GitHub notification; a repeat failure comments on that issue and the next green run closes it. A
+`workflow_dispatch` with a broken `base_url` is the way to prove the alert end to end, and a
+`WATCH_WEBHOOK` repository secret adds a Slack/Discord message on top.
 
 **Signing-key restore drill:**
 

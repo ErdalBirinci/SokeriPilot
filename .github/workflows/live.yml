@@ -5,17 +5,27 @@ name: Live site
 # header block, an APK replaced on disk. This runs the same check the release
 # checklist uses, every day and after each successful Pages deploy, so a silent
 # break turns into a failed run instead of a user telling us.
+#
+# A failed run also opens (or comments on) a GitHub issue labelled `live-site`
+# assigned to the owner, so GitHub's own notifications carry the news; a green
+# run closes it. Set a WATCH_WEBHOOK secret for a Slack/Discord message too.
 
 on:
   schedule:
     - cron: "17 5 * * *"
   workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Origin to check (empty = the published site). Point it at a broken path to prove the alert."
+        required: false
+        default: ""
   workflow_run:
     workflows: ["Pages"]
     types: [completed]
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: live
@@ -36,7 +46,7 @@ jobs:
       # WATCH_WEBHOOK when that secret is set; its exit code is the job result.
       - name: Live checks against the published site
         env:
-          BASE_URL: https://erdalbirinci.github.io/SokeriPilot
+          BASE_URL: ${{ inputs.base_url != '' && inputs.base_url || 'https://erdalbirinci.github.io/SokeriPilot' }}
           WATCH_WEBHOOK: ${{ secrets.WATCH_WEBHOOK }}
         run: node tools/watch.mjs
       - name: Keep the recorded result
@@ -46,3 +56,19 @@ jobs:
           name: watch-result
           path: dist/watch.json
           if-no-files-found: ignore
+      - name: Open or update the failure issue
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          WATCH_FILE: dist/watch.json
+        run: node tools/report-live-failure.mjs open
+      - name: Close the issue once the site is green again
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          WATCH_FILE: dist/watch.json
+        run: node tools/report-live-failure.mjs close
