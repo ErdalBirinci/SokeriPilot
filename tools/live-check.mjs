@@ -4,7 +4,7 @@
  * No dependencies; runs on Node 18+.
  *
  *   node tools/live-check.mjs
- *   BASE_URL=https://glucopilot-civgdk-preview.freebuff.site node tools/live-check.mjs
+ *   BASE_URL=https://erdalbirinci.github.io/SokeriPilot node tools/live-check.mjs
  *
  * Everything release-specific comes from landing/releases.json, so the same
  * command verifies the preview and production. Verifies, against the deployed
@@ -26,7 +26,7 @@ import { join } from "node:path";
 import { decodeQrSvg } from "./qr.mjs";
 
 const ROOT = process.cwd();
-const BASE = (process.env.BASE_URL ?? "https://glucopilot-civgdk.freebuff.site").replace(/\/+$/, "");
+const BASE = (process.env.BASE_URL ?? "https://erdalbirinci.github.io/SokeriPilot").replace(/\/+$/, "");
 const HERO_PATH = "/assets/android-auto.jpg";
 const APK_MIME = "application/vnd.android.package-archive";
 

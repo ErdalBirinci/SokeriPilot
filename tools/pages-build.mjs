@@ -2,8 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 // Stages landing/ for GitHub Pages, which serves a project site from a subpath
-// (https://<user>.github.io/SokeriPilot/). The Freebuff deployment keeps serving
-// the same files from the domain root, so the source stays root-absolute and the
+// (https://erdalbirinci.github.io/SokeriPilot/). The source stays root-absolute and the
 // prefix is added here, at publish time, instead of being baked into every page.
 
 const BASE = "/SokeriPilot/";
@@ -14,7 +13,7 @@ const out = path.resolve(root, process.argv[2] ?? "_site");
 if (fs.existsSync(out)) fs.rmSync(out, { recursive: true, force: true });
 fs.cpSync(source, out, { recursive: true });
 
-// _headers is a Cloudflare/Freebuff file; Pages ignores it and would serve it as text.
+// _headers is a host-specific file; Pages ignores it and would serve it as text.
 fs.rmSync(path.join(out, "_headers"), { force: true });
 fs.writeFileSync(path.join(out, ".nojekyll"), "");
 

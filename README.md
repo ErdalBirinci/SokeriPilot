@@ -15,8 +15,7 @@ and reading age. No dosing advice, no account, no analytics, nothing uploaded.
 [![Pages](https://github.com/ErdalBirinci/SokeriPilot/actions/workflows/pages.yml/badge.svg)](https://github.com/ErdalBirinci/SokeriPilot/actions/workflows/pages.yml)
 
 **Source:** <https://github.com/ErdalBirinci/SokeriPilot> ·
-**Site:** <https://glucopilot-civgdk.freebuff.site> ·
-**GitHub Pages mirror:** <https://erdalbirinci.github.io/SokeriPilot/>
+**Site:** <https://erdalbirinci.github.io/SokeriPilot/>
 
 > **Medical notice:** SokeriPilot is not a medical device. It does not recommend treatment or
 > insulin doses. Alerts are advisory; always rely on your sensor's official app and your healthcare
@@ -325,7 +324,7 @@ grant.
 ### Install
 
 - **Signed APK:** [SokeriPilot-1.2.1.apk](landing/download/SokeriPilot-1.2.1.apk) — or from the
-  [download page](landing/download/index.html) / the [site](https://glucopilot-civgdk.freebuff.site/#download).
+  [download page](landing/download/index.html) / the [site](https://erdalbirinci.github.io/SokeriPilot/#download).
   SHA-256 `457a885fe146a9575eba9511fe38a8ccff3a1b83644500508f2f0c6d016f3434`.
 - **Older versions** stay downloadable from `landing/download/` and the archive page.
 - **Play:** the listing copy, data-safety answers, category rationale, icon and feature graphic are
@@ -517,7 +516,7 @@ node tools/release-check.mjs      # 13 checks: manifest, APK bytes, page, header
 python -m http.server 4173 --bind 127.0.0.1 --directory landing
 node tools/smoke.mjs              # 17 URLs answer 200
 node tools/live-check.mjs         # 10 checks against the published site
-BASE_URL=https://glucopilot-civgdk-preview.freebuff.site node tools/live-check.mjs
+BASE_URL=https://erdalbirinci.github.io/SokeriPilot node tools/live-check.mjs
 node tools/a11y-check.mjs         # 7 checks: structure, alt text, focus, WCAG AA contrast
 node tools/qr.mjs                 # the install QR decodes to the production origin
 python tools/doc-images.py --check  # the README screenshots match the layout and content
@@ -580,7 +579,7 @@ mirror with `tools/pages-build.mjs`.
 - `python tools/check_xml.py` — 19 files well formed.
 - `node tools/smoke.mjs` — **17/17** HTTP 200.
 - `node tools/live-check.mjs` — **10/10** on preview and on production.
-- `node tools/qr.mjs` — decodes to `https://glucopilot-civgdk.freebuff.site/#download`.
+- `node tools/qr.mjs` — decodes to `https://erdalbirinci.github.io/SokeriPilot/#download`.
 - `python tools/doc-images.py --check` — all 10 README images match the render: geometry and
   content within 2.0/255 (the render carries clock times, and the two platforms differ by
   0.0–0.2), and `--check --strict` passes immediately after regenerating.

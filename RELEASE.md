@@ -76,7 +76,7 @@ JSON-LD block and that `robots.txt`/`sitemap.xml` use the production origin.
 Deploy to the `preview` environment first, then run the live checks against it:
 
 ```bash
-BASE_URL=https://glucopilot-civgdk-preview.freebuff.site node tools/live-check.mjs
+BASE_URL=https://erdalbirinci.github.io/SokeriPilot node tools/live-check.mjs
 ```
 
 The live check compares the served bytes with the local APK, checks that each stylesheet response is
@@ -134,7 +134,7 @@ Database and secrets are not touched by a deploy, so rolling the site back never
 
 Every push to `master` that touches `landing/` also publishes a mirror through
 `.github/workflows/pages.yml`. GitHub Pages serves a project site from a subpath, so the workflow
-runs `node tools/pages-build.mjs _site`, which copies the same files, drops the Freebuff-specific
+runs `node tools/pages-build.mjs _site`, which copies the same files, drops the host-specific
 `_headers`, adds the `/SokeriPilot/` prefix to the four root-absolute links and re-states the header
 policy as a meta tag (without `frame-ancestors`, which a meta policy cannot express). The source
 stays root-absolute for the primary site; only the published copy is rewritten. Run the same script

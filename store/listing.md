@@ -76,7 +76,7 @@ are advisory.
 | In-app purchases | None |
 | Content rating | Complete the questionnaire; declare health/medical content honestly (advisory alerts, no diagnosis) |
 | Target audience | 18+ (driving and chronic condition management) |
-| Privacy policy URL | `https://glucopilot-civgdk.freebuff.site/privacy/` |
+| Privacy policy URL | `https://erdalbirinci.github.io/SokeriPilot/privacy/` |
 | Data safety | Answers below in `store/data-safety.md` |
 | Contact email | The developer address on the Play account (not stored in this repository) |
 | App access | No login; all functionality available without credentials |

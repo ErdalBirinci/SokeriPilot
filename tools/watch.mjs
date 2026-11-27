@@ -4,7 +4,7 @@
  * No dependencies; runs on Node 18+.
  *
  *   node tools/watch.mjs
- *   BASE_URL=https://glucopilot-civgdk-preview.freebuff.site node tools/watch.mjs
+ *   BASE_URL=https://erdalbirinci.github.io/SokeriPilot node tools/watch.mjs
  *   WATCH_WEBHOOK=https://hooks.example/… node tools/watch.mjs
  *
  * Runs `live-check.mjs`, records the result in dist/watch.json (git-ignored) and,
@@ -16,7 +16,7 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 
 const startedAt = new Date().toISOString();
-const base = process.env.BASE_URL ?? "https://glucopilot-civgdk.freebuff.site";
+const base = process.env.BASE_URL ?? "https://erdalbirinci.github.io/SokeriPilot";
 const run = spawnSync(process.execPath, ["tools/live-check.mjs"], {
   encoding: "utf8",
   env: process.env

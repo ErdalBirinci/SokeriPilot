@@ -1,9 +1,7 @@
 {
-  "siteId": "bd531bd7-df35-46f1-aa23-bf49d6045f26",
   "name": "SokeriPilot",
-  "manifest": "deploy/manifest.json",
   "urls": {
-    "production": "https://glucopilot-civgdk.freebuff.site",
-    "preview": "https://glucopilot-civgdk-preview.freebuff.site"
+    "production": "https://erdalbirinci.github.io/SokeriPilot",
+    "preview": "https://erdalbirinci.github.io/SokeriPilot"
   }
 }
