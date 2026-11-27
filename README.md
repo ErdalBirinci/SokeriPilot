@@ -550,6 +550,11 @@ schtasks /Query  /TN "SokeriPilot site watch"                 # the daily 09:00 
 schtasks /Delete /TN "SokeriPilot site watch" /F
 ```
 
+The `Live site` workflow (`.github/workflows/live.yml`) runs the same command against the published
+site every day at 05:17 UTC, on demand, and after every successful `Pages` deploy, so a publication
+that breaks without a commit becomes a failed run. Set a `WATCH_WEBHOOK` repository secret to also
+receive the short message wherever you read it.
+
 **Signing-key restore drill:**
 
 ```bash

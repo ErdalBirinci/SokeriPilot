@@ -1,0 +1,48 @@
+name: Live site
+
+# The published site can break without a commit: an expired asset, a Pages
+# build that served the previous document, a host that stopped sending the
+# header block, an APK replaced on disk. This runs the same check the release
+# checklist uses, every day and after each successful Pages deploy, so a silent
+# break turns into a failed run instead of a user telling us.
+
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Pages"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live
+  cancel-in-progress: true
+
+jobs:
+  live:
+    name: Verify the published site
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # watch.mjs runs live-check.mjs, writes dist/watch.json and posts to
+      # WATCH_WEBHOOK when that secret is set; its exit code is the job result.
+      - name: Live checks against the published site
+        env:
+          BASE_URL: https://erdalbirinci.github.io/SokeriPilot
+          WATCH_WEBHOOK: ${{ secrets.WATCH_WEBHOOK }}
+        run: node tools/watch.mjs
+      - name: Keep the recorded result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: watch-result
+          path: dist/watch.json
+          if-no-files-found: ignore
